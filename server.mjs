@@ -469,10 +469,16 @@ function broadcast(data) {
 }
 
 // === Sweep Cycle ===
+const SWEEP_STALE_MS = 12 * 60 * 1000;
 async function runSweepCycle() {
   if (sweepInProgress) {
-    console.log('[Crucix] Sweep already in progress, skipping');
-    return;
+    const age = sweepStartedAt ? Date.now() - new Date(sweepStartedAt).getTime() : 0;
+    if (age < SWEEP_STALE_MS) {
+      console.log('[Crucix] Sweep already in progress, skipping');
+      return;
+    }
+    // A sweep that started outside a request on a CPU-throttled host can stall; don't let it block forever
+    console.warn(`[Crucix] Previous sweep has been running ${Math.round(age / 1000)}s — treating as stale and starting a new one`);
   }
 
   sweepInProgress = true;
@@ -648,16 +654,17 @@ async function start() {
       console.log('[Crucix] No existing data found — first sweep required');
     }
 
-    // Run first sweep (refreshes data in background)
-    console.log('[Crucix] Running initial sweep...');
-    runSweepCycle().catch(err => {
-      console.error('[Crucix] Initial sweep failed:', err.message || err);
-    });
-
-    // Schedule recurring sweeps — or leave it to an external scheduler (Cloud Scheduler → /api/internal/sweep)
     if (config.sweep.mode === 'external') {
-      console.log('[Crucix] SWEEP_MODE=external — recurring sweeps are triggered via POST /api/internal/sweep');
+      // Cloud Run-style hosts only give CPU during requests, so the scheduler's POST *is* the sweep.
+      // Running one here would crawl and block the first scheduled sweep.
+      console.log('[Crucix] SWEEP_MODE=external — sweeps run on POST /api/internal/sweep (no startup sweep)');
     } else {
+      // Run first sweep (refreshes data in background)
+      console.log('[Crucix] Running initial sweep...');
+      runSweepCycle().catch(err => {
+        console.error('[Crucix] Initial sweep failed:', err.message || err);
+      });
+      // Schedule recurring sweeps
       setInterval(runSweepCycle, config.refreshIntervalMinutes * 60 * 1000);
     }
   });

@@ -16,7 +16,7 @@ export default {
   // 'internal' = in-process timer; 'external' = a scheduler POSTs /api/internal/sweep with SWEEP_TRIGGER_TOKEN
   sweep: {
     mode: (process.env.SWEEP_MODE || 'internal').toLowerCase(),
-    triggerToken: process.env.SWEEP_TRIGGER_TOKEN || null,
+    triggerToken: (process.env.SWEEP_TRIGGER_TOKEN || '').trim() || null, // trimmed: secret managers often append a newline
   },
 
   llm: {
