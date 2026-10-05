@@ -257,8 +257,34 @@ app.get('/api/healthz', (req, res) => res.json({ status: 'ok', uptime: Math.floo
 
 if (AUTH_ENABLED) {
   const loginHtml = readFileSync(join(ROOT, 'dashboard/auth/login.html'), 'utf-8');
+  const webConfig = authLib.parseWebConfig();
+  const firebaseAuthOrigin = `https://${webConfig.projectId}.firebaseapp.com`;
+
+  // Same-origin auth helper. Browsers now block the third-party storage that Firebase's popup/redirect
+  // flow needs when authDomain is *.firebaseapp.com, so we serve /__/auth/* from our own hostname and
+  // tell the SDK to use this host as authDomain (Firebase's documented "proxy" option).
+  app.use('/__/auth', async (req, res) => {
+    try {
+      const upstream = await fetch(`${firebaseAuthOrigin}/__/auth${req.url}`, {
+        method: req.method,
+        headers: { 'accept': req.headers.accept || '*/*', 'user-agent': req.headers['user-agent'] || 'crucix' },
+        redirect: 'manual',
+      });
+      res.status(upstream.status);
+      for (const h of ['content-type', 'cache-control', 'location', 'content-security-policy']) {
+        const v = upstream.headers.get(h);
+        if (v) res.setHeader(h, v);
+      }
+      res.send(Buffer.from(await upstream.arrayBuffer()));
+    } catch (err) {
+      console.error('[Auth] helper proxy failed:', err.message);
+      res.status(502).send('auth helper unavailable');
+    }
+  });
+  app.get('/__/firebase/init.json', (req, res) => res.json({ ...webConfig, authDomain: req.hostname }));
+
   app.get('/login', (req, res) => {
-    const cfg = JSON.stringify(authLib.parseWebConfig()).replace(/<\/script>/gi, '<\\/script>');
+    const cfg = JSON.stringify({ ...webConfig, authDomain: req.hostname }).replace(/<\/script>/gi, '<\\/script>');
     const boot = `<script>window.__FIREBASE_CONFIG__=${cfg};window.__ALLOW_SIGNUP__=${authLib.allowSignup};</script>`;
     res.type('html').send(loginHtml.replace('</head>', `${boot}\n</head>`));
   });
