@@ -2,7 +2,9 @@
 
 # Crucix
 
-**Your own intelligence terminal. 27 sources. One command. Zero cloud.**
+**Your own intelligence terminal. 27 sources. One command. Zero cloud — or 100% cloud.**
+
+> **This fork** ([texas697/Crucix](https://github.com/texas697/Crucix)) adds a **Firebase login gate**, **bring-your-own-key LLM ideas per user**, and a one-command **Google Cloud Run deployment** (Cloud Scheduler sweeps, persistent state, Secret Manager). It also folds in community fixes upstream hasn't merged: live-data fetch in Docker (#143), stored-XSS hardening (#150), rule-based ideas fallback (#153), 5-digit `PORT` crash (#128), LLM prompt field names (#124), OFAC/NOAA source fixes (#130/#129), 429-aware `safeFetch` (#121) and OpenAI-compatible base URLs (#55). See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md).
 
 ## [Visit The Live Site: crucix.live](https://www.crucix.live/)
 
@@ -94,6 +96,14 @@ The dashboard opens automatically at `http://localhost:3117` and immediately beg
 
 **Requirements:** Node.js 22+ (uses native `fetch`, top-level `await`, ESM)
 
+### Cloud (Google Cloud Run)
+
+```bash
+PROJECT=my-crucix ./deploy/cloudrun.sh
+```
+
+Full walkthrough, cost notes and other hosts: [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md).
+
 ### Docker
 
 ```bash
@@ -184,6 +194,17 @@ Alerts are delivered as rich embeds with color-coded sidebars: red for FLASH, ye
 **Webhook fallback:** If you don't want to run a full bot, set `DISCORD_WEBHOOK_URL` instead. This enables one-way alerts (no slash commands) with zero dependencies — no `discord.js` needed.
 
 **Optional dependency:** The full bot requires `discord.js`. Install it with `npm install discord.js`. If it's not installed, Crucix automatically falls back to webhook-only mode.
+
+### Login + Bring Your Own Key (this fork)
+
+Every page and API call requires a signed-in Firebase user (`AUTH_MODE=firebase`). After signing in,
+click **AI KEY** in the top bar to add your own Anthropic / OpenAI / Gemini / OpenRouter / Grok / Mistral /
+MiniMax key (or any OpenAI-compatible endpoint). The key is AES-256-GCM encrypted in Firestore and is used
+only to generate *your* trade ideas — on demand (**Generate ideas now**) or automatically after each sweep.
+Operators can still set a server-wide `LLM_PROVIDER`/`LLM_API_KEY` for Telegram/Discord alerts.
+
+Lock the app down with `AUTH_ALLOWED_EMAILS` / `AUTH_ALLOWED_DOMAINS`, or set `AUTH_ALLOW_SIGNUP=false`
+and create accounts in the Firebase console. For a private laptop you can set `AUTH_MODE=off`.
 
 ### Optional LLM Layer
 Connect any of 8 LLM providers for enhanced analysis:
