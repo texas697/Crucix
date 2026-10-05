@@ -281,10 +281,14 @@ if (AUTH_ENABLED) {
       res.status(502).send('auth helper unavailable');
     }
   });
-  app.get('/__/firebase/init.json', (req, res) => res.json({ ...webConfig, authDomain: req.hostname }));
+  // Same-origin authDomain needs `https://<host>/__/auth/handler` added to the Google OAuth client's
+  // redirect URIs (Cloud Console → APIs & Services → Credentials). Until then keep Firebase's default.
+  const sameOriginAuth = (process.env.AUTH_SAME_ORIGIN_HELPER || 'false').toLowerCase() === 'true';
+  const configFor = (req) => (sameOriginAuth ? { ...webConfig, authDomain: req.hostname } : webConfig);
+  app.get('/__/firebase/init.json', (req, res) => res.json(configFor(req)));
 
   app.get('/login', (req, res) => {
-    const cfg = JSON.stringify({ ...webConfig, authDomain: req.hostname }).replace(/<\/script>/gi, '<\\/script>');
+    const cfg = JSON.stringify(configFor(req)).replace(/<\/script>/gi, '<\\/script>');
     const boot = `<script>window.__FIREBASE_CONFIG__=${cfg};window.__ALLOW_SIGNUP__=${authLib.allowSignup};</script>`;
     res.type('html').send(loginHtml.replace('</head>', `${boot}\n</head>`));
   });
