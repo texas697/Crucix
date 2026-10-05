@@ -16,11 +16,24 @@ import { createLLMProvider } from './lib/llm/index.mjs';
 import { generateLLMIdeas } from './lib/llm/ideas.mjs';
 import { TelegramAlerter } from './lib/alerts/telegram.mjs';
 import { DiscordAlerter } from './lib/alerts/discord.mjs';
+import * as users from './lib/auth/users.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
-const RUNS_DIR = join(ROOT, 'runs');
+const RUNS_DIR = config.runsDir || join(ROOT, 'runs');
 const MEMORY_DIR = join(RUNS_DIR, 'memory');
+const IN_CONTAINER = !!process.env.K_SERVICE || existsSync('/.dockerenv');
+
+// === Auth (Firebase) — loaded lazily so AUTH_MODE=off needs no Firebase at all ===
+const AUTH_ENABLED = config.auth.mode !== 'off';
+let authLib = null;
+if (AUTH_ENABLED) {
+  authLib = await import('./lib/auth/firebase.mjs');
+  authLib.initFirebase();
+  console.log(`[Crucix] Auth enabled (Firebase project ${authLib.parseWebConfig()?.projectId || process.env.FIREBASE_PROJECT_ID})`);
+} else {
+  console.warn('[Crucix] AUTH_MODE=off — dashboard and API are PUBLIC. Do not expose this to the internet.');
+}
 
 // Ensure directories exist
 for (const dir of [RUNS_DIR, MEMORY_DIR, join(MEMORY_DIR, 'cold')]) {
@@ -234,7 +247,64 @@ if (discordAlerter.isConfigured) {
 
 // === Express Server ===
 const app = express();
-app.use(express.static(join(ROOT, 'dashboard/public')));
+app.set('trust proxy', true);
+app.disable('x-powered-by');
+app.use(express.json({ limit: '32kb' }));
+
+// ─── Public routes (no auth) ───────────────────────────────────────────────
+// Minimal liveness probe for Docker/Cloud Run — leaks nothing.
+app.get('/healthz', (req, res) => res.json({ status: 'ok', uptime: Math.floor((Date.now() - startTime) / 1000) }));
+
+if (AUTH_ENABLED) {
+  const loginHtml = readFileSync(join(ROOT, 'dashboard/auth/login.html'), 'utf-8');
+  app.get('/login', (req, res) => {
+    const cfg = JSON.stringify(authLib.parseWebConfig()).replace(/<\/script>/gi, '<\\/script>');
+    const boot = `<script>window.__FIREBASE_CONFIG__=${cfg};window.__ALLOW_SIGNUP__=${authLib.allowSignup};</script>`;
+    res.type('html').send(loginHtml.replace('</head>', `${boot}\n</head>`));
+  });
+
+  // Exchange a fresh Firebase ID token for an httpOnly session cookie
+  app.post('/api/session', async (req, res) => {
+    try {
+      const idToken = String(req.body?.idToken || '');
+      if (!idToken) return res.status(400).json({ error: 'idToken required' });
+      const { cookie, user } = await authLib.createSession(idToken);
+      authLib.setSessionCookie(req, res, cookie);
+      users.touchUser(user).catch(() => {});
+      res.json({ ok: true, user });
+    } catch (err) {
+      const status = err.status || 401;
+      if (status >= 500) console.error('[Auth] session error:', err.message);
+      res.status(status).json({ error: status === 401 ? 'Invalid or expired sign-in token' : err.message });
+    }
+  });
+
+  app.post('/api/logout', async (req, res) => {
+    const cookie = authLib.readCookie(req, authLib.COOKIE_NAME);
+    authLib.clearSessionCookie(req, res);
+    if (cookie) {
+      try { const u = await authLib.verifySession(cookie); await authLib.revokeSessions(u.uid); } catch { /* already invalid */ }
+    }
+    res.json({ ok: true });
+  });
+
+  // Everything below this line requires a valid session
+  const gate = authLib.requireAuth();
+  app.use((req, res, next) => (req.path === '/api/internal/sweep' ? next() : gate(req, res, next)));
+}
+
+// External sweep trigger (Cloud Scheduler / cron). Shared secret in header, never a cookie.
+app.post('/api/internal/sweep', async (req, res) => {
+  const token = config.sweep.triggerToken;
+  if (!token) return res.status(404).json({ error: 'External sweep trigger disabled (SWEEP_TRIGGER_TOKEN unset)' });
+  const given = req.headers['x-sweep-token'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (given !== token) return res.status(401).json({ error: 'bad token' });
+  if (sweepInProgress) return res.status(202).json({ status: 'already-running', sweepStartedAt });
+  await runSweepCycle();
+  res.json({ status: 'done', lastSweep: lastSweepTime, sourcesOk: currentData?.meta?.sourcesOk ?? null });
+});
+
+app.use(express.static(join(ROOT, 'dashboard/public'), { index: false }));
 
 // Serve loading page until first sweep completes, then the dashboard with injected locale
 app.get('/', (req, res) => {
@@ -274,6 +344,9 @@ app.get('/api/health', (req, res) => {
     sourcesFailed: currentData?.meta?.sourcesFailed || 0,
     llmEnabled: !!config.llm.provider,
     llmProvider: config.llm.provider,
+    authEnabled: AUTH_ENABLED,
+    byokEnabled: AUTH_ENABLED && !!process.env.BYOK_ENCRYPTION_KEY,
+    sweepMode: config.sweep.mode,
     telegramEnabled: !!(config.telegram.botToken && config.telegram.chatId),
     refreshIntervalMinutes: config.refreshIntervalMinutes,
     language: currentLanguage,
@@ -294,12 +367,99 @@ app.get('/events', (req, res) => {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'X-Accel-Buffering': 'no',
   });
   res.write('data: {"type":"connected"}\n\n');
   sseClients.add(res);
-  req.on('close', () => sseClients.delete(res));
+  // Keep proxies (Cloud Run, Cloudflare) from closing idle streams
+  const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch { /* closed */ } }, 25000);
+  req.on('close', () => { clearInterval(ping); sseClients.delete(res); });
 });
+
+// ─── Per-user BYOK (bring your own key) + personal ideas ───────────────────
+const ideaJobs = new Map();          // uid -> Promise (in-flight guard)
+const ideaLastRun = new Map();       // uid -> epoch ms (rate limit)
+const IDEAS_MIN_INTERVAL_MS = (parseInt(process.env.BYOK_IDEAS_MIN_INTERVAL_S) || 60) * 1000;
+
+async function generateIdeasForUser(uid, { force = false } = {}) {
+  if (!currentData) throw Object.assign(new Error('No sweep data yet — try again in a minute'), { status: 503 });
+  if (ideaJobs.has(uid)) return ideaJobs.get(uid);
+  const last = ideaLastRun.get(uid) || 0;
+  if (!force && Date.now() - last < IDEAS_MIN_INTERVAL_MS) {
+    throw Object.assign(new Error(`Rate limited — wait ${Math.ceil((IDEAS_MIN_INTERVAL_MS - (Date.now() - last)) / 1000)}s`), { status: 429 });
+  }
+  const job = (async () => {
+    const provider = await users.providerForUser(uid);
+    if (!provider) throw Object.assign(new Error('No LLM key configured — add one in Settings'), { status: 400 });
+    ideaLastRun.set(uid, Date.now());
+    const previous = (await users.getUser({ uid })).ideas?.ideas || [];
+    const ideas = await generateLLMIdeas(provider, currentData, memory.getLastDelta(), previous);
+    if (!ideas) throw Object.assign(new Error('Provider returned no usable ideas (check key/model)'), { status: 502 });
+    const payload = {
+      ideas, generatedAt: new Date().toISOString(), sweepTimestamp: currentData.meta?.timestamp || null,
+      provider: provider.name, model: provider.model || null,
+    };
+    await users.saveUserIdeas(uid, payload);
+    return payload;
+  })().finally(() => ideaJobs.delete(uid));
+  ideaJobs.set(uid, job);
+  return job;
+}
+
+// After each sweep, refresh ideas for users who opted into auto mode (their key, their cost).
+async function runAutoIdeas() {
+  if (!AUTH_ENABLED) return;
+  let list = [];
+  try { list = await users.listAutoIdeaUsers(); } catch (err) { console.error('[BYOK] auto-ideas query failed:', err.message); return; }
+  if (!list.length) return;
+  console.log(`[BYOK] Auto-generating ideas for ${list.length} user(s)`);
+  const queue = [...list];
+  const worker = async () => {
+    while (queue.length) {
+      const { uid, email } = queue.shift();
+      try {
+        const r = await generateIdeasForUser(uid, { force: true });
+        console.log(`[BYOK] ${email}: ${r.ideas.length} ideas via ${r.provider}`);
+      } catch (err) { console.error(`[BYOK] ${email}: ${err.message}`); }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(3, queue.length) }, worker));
+}
+
+if (AUTH_ENABLED) {
+  app.get('/api/me', async (req, res) => {
+    try {
+      const me = await users.getUser(req.user);
+      res.json({ ...me, providers: users.SUPPORTED_PROVIDERS, byokEnabled: !!process.env.BYOK_ENCRYPTION_KEY });
+    } catch (err) { console.error('[BYOK] /api/me:', err.message); res.status(500).json({ error: 'Failed to load profile' }); }
+  });
+
+  app.put('/api/me/llm', async (req, res) => {
+    try { res.json({ ok: true, llm: await users.saveLlmSettings(req.user, req.body || {}) }); }
+    catch (err) { res.status(err.status || 500).json({ error: err.message }); }
+  });
+
+  app.delete('/api/me/llm', async (req, res) => {
+    try { await users.clearLlmSettings(req.user); res.json({ ok: true }); }
+    catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
+  // Cheap round-trip to prove the key works before the user relies on it
+  app.post('/api/me/llm/test', async (req, res) => {
+    try {
+      const provider = await users.providerForUser(req.user.uid);
+      if (!provider) return res.status(400).json({ error: 'No LLM configured' });
+      const t0 = Date.now();
+      const r = await provider.complete('You are a connectivity check. Reply with exactly: OK', 'ping', { maxTokens: 16, timeout: 20000 });
+      res.json({ ok: true, provider: provider.name, model: provider.model, ms: Date.now() - t0, reply: String(r?.text || '').slice(0, 40) });
+    } catch (err) { res.status(502).json({ error: `Provider call failed: ${err.message}` }); }
+  });
+
+  app.post('/api/ideas', async (req, res) => {
+    try { res.json(await generateIdeasForUser(req.user.uid)); }
+    catch (err) { res.status(err.status || 500).json({ error: err.message }); }
+  });
+}
 
 function broadcast(data) {
   const msg = `data: ${JSON.stringify(data)}\n\n`;
@@ -391,6 +551,9 @@ async function runSweepCycle() {
     // 6. Push to all connected browsers
     broadcast({ type: 'update', data: currentData });
 
+    // 7. Per-user BYOK ideas for opted-in users (non-blocking)
+    runAutoIdeas().catch(err => console.error('[BYOK] auto-ideas error:', err.message));
+
     console.log(`[Crucix] Sweep complete — ${currentData.meta.sourcesOk}/${currentData.meta.sourcesQueried} sources OK`);
     console.log(`[Crucix] ${currentData.ideas.length} ideas (${synthesized.ideasSource}) | ${currentData.news.length} news | ${currentData.newsFeed.length} feed items`);
     if (delta?.summary) console.log(`[Crucix] Delta: ${delta.summary.totalChanges} changes, ${delta.summary.criticalChanges} critical, direction: ${delta.summary.direction}`);
@@ -438,8 +601,9 @@ async function start() {
   console.log(renderBanner('CRUCIX INTELLIGENCE ENGINE', 'Local Palantir · 29 Sources', [
     ['Dashboard:', `http://localhost:${port}`],
     ['Health:', `http://localhost:${port}/api/health`],
-    ['Refresh:', `Every ${config.refreshIntervalMinutes} min`],
-    ['LLM:', config.llm.provider || 'disabled'],
+    ['LLM:', config.llm.provider || 'disabled (users may BYOK)'],
+    ['Auth:', AUTH_ENABLED ? 'firebase' : 'OFF'],
+    ['Sweeps:', config.sweep.mode === 'external' ? 'external trigger' : `every ${config.refreshIntervalMinutes} min`],
     ['Telegram:', config.telegram.botToken ? 'enabled' : 'disabled'],
     ['Discord:', config.discord?.botToken ? 'enabled' : config.discord?.webhookUrl ? 'webhook only' : 'disabled'],
   ]));
@@ -465,11 +629,13 @@ async function start() {
     // Auto-open browser
     // NOTE: On Windows, `start` in PowerShell is an alias for Start-Service, not cmd's start.
     // We must use `cmd /c start ""` to ensure it works in both cmd.exe and PowerShell.
-    const openCmd = process.platform === 'win32' ? 'cmd /c start ""' :
-                    process.platform === 'darwin' ? 'open' : 'xdg-open';
-    exec(`${openCmd} "http://localhost:${port}"`, (err) => {
-      if (err) console.log('[Crucix] Could not auto-open browser:', err.message);
-    });
+    if (!IN_CONTAINER && process.env.CRUCIX_OPEN_BROWSER !== 'false') {
+      const openCmd = process.platform === 'win32' ? 'cmd /c start ""' :
+                      process.platform === 'darwin' ? 'open' : 'xdg-open';
+      exec(`${openCmd} "http://localhost:${port}"`, (err) => {
+        if (err) console.log('[Crucix] Could not auto-open browser:', err.message);
+      });
+    }
 
     // Try to load existing data first for instant display (await so dashboard shows immediately)
     try {
@@ -488,8 +654,12 @@ async function start() {
       console.error('[Crucix] Initial sweep failed:', err.message || err);
     });
 
-    // Schedule recurring sweeps
-    setInterval(runSweepCycle, config.refreshIntervalMinutes * 60 * 1000);
+    // Schedule recurring sweeps — or leave it to an external scheduler (Cloud Scheduler → /api/internal/sweep)
+    if (config.sweep.mode === 'external') {
+      console.log('[Crucix] SWEEP_MODE=external — recurring sweeps are triggered via POST /api/internal/sweep');
+    } else {
+      setInterval(runSweepCycle, config.refreshIntervalMinutes * 60 * 1000);
+    }
   });
 }
 

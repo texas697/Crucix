@@ -57,20 +57,11 @@ export async function safeFetch(url, opts = {}) {
     try {
       const fetchOpts = {
         signal: controller.signal,
-<<<<<<< HEAD
         method,
-        headers: { 'User-Agent': 'Crucix/1.0', ...headers },
+        headers: { 'User-Agent': 'Crucix/2.0', ...headers },
       };
       if (body && method !== 'GET') {
         fetchOpts.body = typeof body === 'string' ? body : JSON.stringify(body);
-=======
-        headers: { 'User-Agent': 'Crucix/2.0', ...headers },
-      });
-      clearTimeout(timer);
-      if (!res.ok) {
-        const body = await res.text().catch(() => '');
-        throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
->>>>>>> 3b8a674 (fix: wrong delta property names in LLM prompt, stale source counts)
       }
 
       const res = await fetch(url, fetchOpts);

@@ -6,5 +6,5 @@ services:
     env_file:
       - .env
     volumes:
-      - ./runs:/app/runs
+      - ./runs:/data/runs
     restart: unless-stopped

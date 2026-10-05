@@ -6,6 +6,18 @@ export default {
   port: parseInt(process.env.PORT) || 3117,
   publicUrl: process.env.PUBLIC_URL || null,
   refreshIntervalMinutes: parseInt(process.env.REFRESH_INTERVAL_MINUTES) || 15,
+  runsDir: process.env.RUNS_DIR || null, // persistent state dir (e.g. a mounted volume in the cloud)
+
+  // Login gate. 'firebase' (default) requires FIREBASE_WEB_CONFIG; 'off' makes the dashboard public (local use only).
+  auth: {
+    mode: (process.env.AUTH_MODE || 'firebase').toLowerCase(),
+  },
+
+  // 'internal' = in-process timer; 'external' = a scheduler POSTs /api/internal/sweep with SWEEP_TRIGGER_TOKEN
+  sweep: {
+    mode: (process.env.SWEEP_MODE || 'internal').toLowerCase(),
+    triggerToken: process.env.SWEEP_TRIGGER_TOKEN || null,
+  },
 
   llm: {
     provider: process.env.LLM_PROVIDER || null, // anthropic | openai | openai-compatible | gemini | codex | openrouter | minimax | mistral | ollama | grok
