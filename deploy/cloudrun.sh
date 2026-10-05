@@ -80,6 +80,9 @@ curl -s -X PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJ
   -H "Authorization: Bearer $ACCESS" -H "x-goog-user-project: $PROJECT" -H "Content-Type: application/json" \
   -d "{\"authorizedDomains\":$DOMS}" >/dev/null
 
+echo "▶ Kicking off a sweep now (startup sweeps run CPU-throttled; a scheduler-driven one is fast)"
+gcloud scheduler jobs run crucix-sweep --project "$PROJECT" --location "$REGION" --quiet >/dev/null 2>&1 || true
+
 echo
 echo "✔ Deployed: $URL"
 echo "  Login:    $URL/login"
