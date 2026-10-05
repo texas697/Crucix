@@ -197,7 +197,7 @@ Alerts are delivered as rich embeds with color-coded sidebars: red for FLASH, ye
 
 ### Login + Bring Your Own Key (this fork)
 
-Every page and API call requires a signed-in Firebase user (`AUTH_MODE=firebase`). After signing in,
+Every page and API call requires a signed-in Firebase user (`AUTH_MODE=firebase`); sign in with Google or email/password. After signing in,
 click **AI KEY** in the top bar to add your own Anthropic / OpenAI / Gemini / OpenRouter / Grok / Mistral /
 MiniMax key (or any OpenAI-compatible endpoint). The key is AES-256-GCM encrypted in Firestore and is used
 only to generate *your* trade ideas — on demand (**Generate ideas now**) or automatically after each sweep.
