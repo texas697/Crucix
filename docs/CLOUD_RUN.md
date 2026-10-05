@@ -71,7 +71,7 @@ Useful overrides: `AUTH_ALLOWED_EMAILS=a@x.com,b@y.com` (lock the app to specifi
 |---|---|---|
 | Login | `AUTH_MODE=firebase`, `FIREBASE_WEB_CONFIG` | Session cookie `crucix_session`, 14 days (`AUTH_SESSION_DAYS`). `AUTH_MODE=off` only for a private laptop. |
 | BYOK | `BYOK_ENCRYPTION_KEY` (Secret Manager) | Rotating this key invalidates every stored user key; users just re-enter theirs. |
-| Sweeps | `SWEEP_MODE=external`, `SWEEP_TRIGGER_TOKEN` | Cloud Run throttles CPU outside requests, so the scheduler's request *is* the sweep. Switch to `internal` + `--no-cpu-throttling` if you prefer the in-process timer (≈5× the cost). |
+| Sweeps | `SWEEP_MODE=external`, `SWEEP_TRIGGER_TOKEN` | Cloud Run throttles CPU outside requests, so the scheduler's request *is* the sweep; there is no startup sweep in this mode (the deploy script fires one). Telegram/Discord bots need `internal` mode + `--no-cpu-throttling` (≈5× the cost). |
 | State | `RUNS_DIR=/data/runs` | Cloud Storage FUSE volume. Delta memory and `latest.json` survive redeploys. |
 | Health | `/api/healthz` (public) | `/api/health` with full detail requires login. Google's front end swallows a bare `/healthz`, hence the prefix. |
 
