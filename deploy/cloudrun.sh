@@ -75,7 +75,7 @@ echo "▶ Authorizing $URL for Firebase Auth"
 HOST="${URL#https://}"
 ACCESS="$(gcloud auth print-access-token)"
 CUR="$(curl -s "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config" -H "Authorization: Bearer $ACCESS" -H "x-goog-user-project: $PROJECT")"
-DOMS="$(printf '%s' "$CUR" | python3 -c 'import json,sys;d=json.load(sys.stdin).get("authorizedDomains",[]);d+=[h for h in sys.argv[1:] if h and h not in d];print(json.dumps(d))' "$HOST" "${PUBLIC_URL#https://}")"
+DOMS="$(printf '%s' "$CUR" | python3 -c 'import json,sys;d=json.load(sys.stdin).get("authorizedDomains",[]);d+=[h for h in sys.argv[1:] if h and h not in d];print(json.dumps(d))' "$HOST" "${PUBLIC_URL:+${PUBLIC_URL#https://}}")"
 curl -s -X PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config?updateMask=authorizedDomains" \
   -H "Authorization: Bearer $ACCESS" -H "x-goog-user-project: $PROJECT" -H "Content-Type: application/json" \
   -d "{\"authorizedDomains\":$DOMS}" >/dev/null

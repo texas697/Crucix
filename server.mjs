@@ -252,8 +252,8 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '32kb' }));
 
 // ─── Public routes (no auth) ───────────────────────────────────────────────
-// Minimal liveness probe for Docker/Cloud Run — leaks nothing.
-app.get('/healthz', (req, res) => res.json({ status: 'ok', uptime: Math.floor((Date.now() - startTime) / 1000) }));
+// Minimal liveness probe for Docker/Cloud Run — leaks nothing. (Google's front end swallows a bare /healthz.)
+app.get('/api/healthz', (req, res) => res.json({ status: 'ok', uptime: Math.floor((Date.now() - startTime) / 1000) }));
 
 if (AUTH_ENABLED) {
   const loginHtml = readFileSync(join(ROOT, 'dashboard/auth/login.html'), 'utf-8');

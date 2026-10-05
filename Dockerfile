@@ -18,6 +18,6 @@ USER node
 EXPOSE 3117
 
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 \
-  CMD wget -qO- "http://localhost:${PORT:-3117}/healthz" || exit 1
+  CMD wget -qO- "http://localhost:${PORT:-3117}/api/healthz" || exit 1
 
 CMD ["node", "server.mjs"]
