@@ -159,8 +159,12 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .map-legend{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;background:rgba(7,9,14,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:12px;color:#a2abbd;letter-spacing:0;text-transform:none;z-index:5}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:6px;height:6px;border-radius:50%}
-.map-hint{position:absolute;top:14px;right:14px;font-family:var(--sans);font-size:12px;color:var(--dim-2);z-index:5;letter-spacing:0;text-transform:none;opacity:1}
-.map-hint-id{display:none}
+.map-regions{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
+.map-bar-spacer{flex:1}
+.map-bar-live{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text)}
+.map-bar-live .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.map-bar-meta{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.map-bar-hint{font-size:12px;color:var(--dim-2);white-space:nowrap}
 .map-controls{position:absolute;top:14px;left:14px;z-index:6;display:flex;flex-direction:column;gap:1px;background:rgba(10,13,20,0.9);border:1px solid rgba(255,255,255,0.07);border-radius:6px;overflow:hidden;backdrop-filter:blur(8px)}
 .map-ctrl-btn{width:34px;height:34px;border:0;background:transparent;color:var(--text-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;font-family:var(--sans)}
 .map-ctrl-btn:hover{background:var(--raised);color:#fff}
@@ -378,7 +382,7 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
   #rightRail{order:2}
   #leftRail{order:3}
   .map-container{min-height:420px}
-  .map-hint{font-size:9px;right:8px}
+  .map-bar-hint{display:none}
   .map-legend{left:8px;right:8px;bottom:8px;gap:4px}
   .leg-item{font-size:10px}
   .lower .lp-news,.lower .lp-osint,.lower .lp-macro,.lower .lp-ideas{flex:1 1 100%;max-width:none}
@@ -428,7 +432,6 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
       <svg id="flatMapSvg" style="display:none;width:100%;height:100%;position:absolute;top:0;left:0;cursor:grab"></svg>
       <div class="map-loading" id="mapLoading"><div class="map-loading-card"><div class="map-loading-ring"></div><div class="map-loading-text" id="mapLoadingText">Initializing 3D Globe</div></div></div>
       <div class="map-legend" id="mapLegend"></div>
-      <div class="map-hint" id="mapHint">SCROLL TO ZOOM · DRAG TO PAN</div>
       <div class="map-controls">
         <button class="map-ctrl-btn" onclick="mapZoom(1.5)" title="Zoom in">+</button>
         <button class="map-ctrl-btn" onclick="mapZoom(0.67)" title="Zoom out">&minus;</button>
@@ -841,8 +844,21 @@ function renderRegionControls(){
     mapRegionBar.style.display = 'none';
     return;
   }
-  mapRegionBar.innerHTML = getRegionControlsMarkup();
+  const urgent = D.tg?.urgent?.length || 0;
+  const news = (D.newsFeed || D.news || []).length;
+  const markers = (D.air?.length||0) + (D.thermal?.reduce((s,t)=>s+(t.fires?.length||0),0)||0) + urgent;
+  mapRegionBar.innerHTML = `
+    <div class="map-regions">${getRegionControlsMarkup()}</div>
+    <div class="map-bar-spacer"></div>
+    <span class="map-bar-live"><span class="dot"></span>Live</span>
+    <span class="map-bar-meta">${D.meta.sourcesOk}/${D.meta.sourcesQueried} sources &#183; ${markers} markers &#183; ${news} news &#183; ${urgent} urgent</span>
+    <span class="map-bar-hint" id="mapHint">Scroll to zoom &#183; drag to pan</span>`;
   mapRegionBar.style.display = 'flex';
+}
+
+function setMapHint(text){
+  const el = document.getElementById('mapHint');
+  if(el) el.textContent = text;
 }
 
 function renderTopbar(){
@@ -988,7 +1004,7 @@ function initMap(){
     document.getElementById('globeViz').style.display = 'none';
     document.getElementById('flatMapSvg').style.display = 'block';
     document.getElementById('projToggle').textContent = 'GLOBE MODE';
-    document.getElementById('mapHint').textContent = 'SCROLL TO ZOOM · DRAG TO PAN';
+    setMapHint('Scroll to zoom · drag to pan');
     if(!flatSvg) initFlatMap();
     else { flatG.selectAll('*').remove(); drawFlatMap(); }
     setMapLoading(false);
@@ -1004,7 +1020,7 @@ function initMap(){
       document.getElementById('globeViz').style.display = 'none';
       document.getElementById('flatMapSvg').style.display = 'block';
       document.getElementById('projToggle').textContent = 'GLOBE MODE';
-      document.getElementById('mapHint').textContent = '3D LOAD FAILED · FLAT MODE';
+      setMapHint('3D load failed · flat mode');
       if(!flatSvg) initFlatMap();
       else { flatG.selectAll('*').remove(); drawFlatMap(); }
       setMapLoading(false);
@@ -1018,7 +1034,7 @@ function initGlobe(){
     document.getElementById('globeViz').style.display = 'block';
     document.getElementById('flatMapSvg').style.display = 'none';
     document.getElementById('projToggle').textContent = 'FLAT MODE';
-    document.getElementById('mapHint').textContent = 'DRAG TO ROTATE · SCROLL TO ZOOM';
+    setMapHint('Drag to rotate · scroll to zoom');
     return;
   }
   const container = document.getElementById('mapContainer');
@@ -1123,7 +1139,7 @@ function initGlobe(){
     document.getElementById('globeViz').style.display = 'block';
     document.getElementById('flatMapSvg').style.display = 'none';
     document.getElementById('projToggle').textContent = 'FLAT MODE';
-    document.getElementById('mapHint').textContent = 'DRAG TO ROTATE · SCROLL TO ZOOM';
+    setMapHint('Drag to rotate · scroll to zoom');
   }
 
   globeInitialized = true;
@@ -1425,9 +1441,8 @@ const flatRegionBounds = {
 function toggleMapMode(){
   isFlat = !isFlat;
   const btn = document.getElementById('projToggle');
-  const hint = document.getElementById('mapHint');
   btn.textContent = isFlat ? 'GLOBE MODE' : 'FLAT MODE';
-  hint.textContent = isFlat ? 'SCROLL TO ZOOM · DRAG TO PAN' : 'DRAG TO ROTATE · SCROLL TO ZOOM';
+  setMapHint(isFlat ? 'Scroll to zoom · drag to pan' : 'Drag to rotate · scroll to zoom');
   const globeEl = document.getElementById('globeViz');
   const flatEl = document.getElementById('flatMapSvg');
   if(isFlat){
@@ -1793,16 +1808,6 @@ function renderRight(){
   // CROSS-SOURCE SIGNALS — moved from lower grid to right rail
   const signals=D.tSignals.slice(0,6).map((s,i)=>`<div class="signal-row"><strong>Signal ${i+1}</strong><p>${esc(s)}</p></div>`).join('');
 
-  // OSINT TICKER — Telegram + WHO as flowing cards
-  const signalMetrics=[
-    {l:'Incident Tempo',v:D.tg.urgent.length,p:70},
-    {l:'Air Theaters',v:D.air.length,p:60},
-    {l:'Thermal Spikes',v:D.thermal.reduce((s,t)=>s+t.hc,0),p:80},
-    {l:'SDR Nodes',v:D.sdr.total,p:92},
-    {l:'Chokepoints',v:D.chokepoints.length,p:50},
-    {l:'WHO Alerts',v:D.who.length,p:40}
-  ];
-
   // DELTA PANEL — what changed since last sweep
   const delta = D.delta || {};
   const ds = delta.summary || {};
@@ -1829,10 +1834,6 @@ function renderRight(){
   const deltaHtml = hasDelta ? deltaRows.join('') : `<div style="padding:12px;text-align:center;color:var(--dim);font-family:var(--sans);font-size:12px">${t('delta.noChanges','No changes since last sweep')}</div>`;
 
   document.getElementById('rightRail').innerHTML=`
-    <div class="g-panel right-core">
-      <div class="sec-head"><h3>${t('panels.signalCore','Signal core')}</h3><span class="badge">Hot metrics</span></div>
-      ${signalMetrics.map(s=>`<div class="sm"><div class="sm-top"><span class="sml">${s.l}</span><span class="smv">${s.v}</span></div><div class="smb"><span style="width:${s.p}%"></span></div></div>`).join('')}
-    </div>
     ${mobile ? '' : buildOsintPanel('right-osint', 420)}
     <div class="g-panel right-delta">
       <div class="sec-head"><h3>${t('panels.sweepDelta','Sweep delta')}</h3><span class="badge ${dirClass}">${ds.direction?t('delta.'+ds.direction,ds.direction.toUpperCase()):t('delta.baseline','Baseline')}</span></div>
