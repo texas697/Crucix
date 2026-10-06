@@ -261,6 +261,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .meta-pill.btn{cursor:pointer;background:rgba(255,255,255,0.02)}
 .meta-pill.btn:hover{border-color:var(--border-bright);color:var(--text)}
 .meta-pill .v.on{color:var(--accent)}
+.byok-cta{cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 14px;color:#041410;background:var(--accent);border:1px solid var(--accent);box-shadow:0 0 0 0 rgba(100,240,200,0.6);animation:byokPulse 2.2s infinite}
+.byok-cta:hover{background:#8bffdd}
+.byok-cta .k{display:inline-block;margin-right:6px}
+@keyframes byokPulse{0%{box-shadow:0 0 0 0 rgba(100,240,200,0.55)}70%{box-shadow:0 0 0 10px rgba(100,240,200,0)}100%{box-shadow:0 0 0 0 rgba(100,240,200,0)}}
+.byok-banner{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:0 0 10px;padding:10px 16px;border:1px solid rgba(100,240,200,0.45);background:linear-gradient(90deg,rgba(100,240,200,0.12),rgba(68,204,255,0.08));font-size:12px;color:var(--text)}
+.byok-banner strong{color:var(--accent);font-family:var(--mono);letter-spacing:0.08em;text-transform:uppercase;font-size:11px}
+.byok-banner .dismiss{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+.byok-empty{padding:18px 14px;text-align:center;border:1px dashed rgba(100,240,200,0.45);background:rgba(100,240,200,0.05)}
+.byok-empty .big{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:0.12em;color:var(--accent);margin-bottom:6px}
+.byok-empty .why{font-size:11px;color:var(--text);opacity:0.85;line-height:1.5;max-width:340px;margin:0 auto 12px}
+.byok-empty .ideas-gen{font-size:11px;padding:8px 16px;background:var(--accent);color:#041410;border-color:var(--accent);font-weight:700}
+.byok-empty .providers{font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:10px;letter-spacing:0.06em}
+body.low-perf .byok-cta{animation:none}
 .set-field{margin-bottom:10px}
 .set-field label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
 .set-field input,.set-field select{width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 10px;outline:none}
@@ -398,8 +411,8 @@ body.low-perf .ticker-wrap::-webkit-scrollbar-thumb{background:rgba(100,240,200,
   <div class="glossary-panel">
     <div class="glossary-head">
       <div>
-        <div class="glossary-kicker">Your LLM · Bring your own key</div>
-        <div class="glossary-title">AI settings</div>
+        <div class="glossary-kicker">Step 1 of 1 · Bring your own key</div>
+        <div class="glossary-title">Enter your LLM API key</div>
         <div class="glossary-sub" id="settingsWho">Trade ideas are generated with your own provider account. Your key is encrypted at rest and only used for your requests.</div>
       </div>
       <button class="glossary-close" onclick="closeSettings()" aria-label="Close settings">&times;</button>
@@ -407,7 +420,7 @@ body.low-perf .ticker-wrap::-webkit-scrollbar-thumb{background:rgba(100,240,200,
     <div class="glossary-body">
       <form id="llmForm" onsubmit="saveLlmSettings(event)">
         <div class="set-field"><label for="llmProvider">Provider</label><select id="llmProvider" onchange="onProviderChange()"></select></div>
-        <div class="set-field"><label for="llmKey">API key</label><input id="llmKey" type="password" autocomplete="off" spellcheck="false" placeholder="paste key"><div class="hint" id="llmKeyHint"></div></div>
+        <div class="set-field"><label for="llmKey">API key</label><input id="llmKey" type="password" autocomplete="off" spellcheck="false" placeholder="paste your key here (e.g. sk-ant-… / sk-… / AIza…)" style="border-color:var(--border-bright)"><div class="hint" id="llmKeyHint"></div></div>
         <div class="set-field"><label for="llmModel">Model <span style="text-transform:none;letter-spacing:0">(optional)</span></label><input id="llmModel" type="text" autocomplete="off" spellcheck="false" placeholder="provider default"><div class="hint" id="llmModelHint"></div></div>
         <div class="set-field" id="llmBaseUrlField" style="display:none"><label for="llmBaseUrl">Base URL</label><input id="llmBaseUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://api.groq.com/openai/v1"><div class="hint">Any OpenAI-compatible chat/completions endpoint (Groq, Together, DeepSeek, a public LM Studio tunnel…).</div></div>
         <label class="set-check"><input id="llmAuto" type="checkbox"> Auto-refresh my ideas after every sweep (uses your key ~4×/hour)</label>
@@ -481,6 +494,27 @@ function applyUserIdeas(d) {
 async function logout() {
   try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); } catch {}
   location.replace('/login');
+}
+
+// --- BYOK banner (shown until the user adds a key or dismisses it for this session) ---
+function renderByokBanner() {
+  let el = document.getElementById('byokBanner');
+  const show = !!ME && !ME.llm && ME.byokEnabled !== false && !sessionStorage.getItem('crucix_byok_banner_dismissed');
+  if (!show) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement('div'); el.id = 'byokBanner'; el.className = 'byok-banner';
+    const topbar = document.getElementById('topbar');
+    topbar.parentNode.insertBefore(el, topbar.nextSibling);
+  }
+  el.innerHTML = `<strong>&#9889; Bring your own AI key</strong><span>Enter your Anthropic, OpenAI, Gemini or OpenRouter key to turn every sweep into personalised trade ideas. Stored encrypted, used only for you.</span><button class="byok-cta" onclick="openSettings()">Enter API key</button><button class="dismiss" title="Hide for now" onclick="sessionStorage.setItem('crucix_byok_banner_dismissed','1');renderByokBanner()">&times;</button>`;
+}
+let byokPromptShown = false;
+function maybePromptForKey() {
+  if (byokPromptShown || !ME || ME.llm || ME.byokEnabled === false) return;
+  byokPromptShown = true;
+  if (localStorage.getItem('crucix_byok_prompted')) return;
+  localStorage.setItem('crucix_byok_prompted', '1');
+  setTimeout(() => { if (!ME.llm) openSettings(); }, 1500);
 }
 
 // --- Settings modal ---
@@ -767,11 +801,14 @@ function renderTopbar(){
       <span class="meta-pill">${d} <span class="v">${timeStr}</span></span>
       <span class="meta-pill">${t('dashboard.sources','SOURCES')} <span class="v">${D.meta.sourcesOk}/${D.meta.sourcesQueried}</span></span>
       ${D.delta?.summary ? `<span class="meta-pill">${t('dashboard.delta','DELTA')} <span class="v">${D.delta.summary.direction==='risk-off'?'&#x25B2; '+t('dashboard.riskOff','RISK-OFF'):D.delta.summary.direction==='risk-on'?'&#x25BC; '+t('dashboard.riskOn','RISK-ON'):'&#x25C6; '+t('dashboard.mixed','MIXED')}</span></span>` : ''}
-      ${ME ? `<button class="meta-pill btn" onclick="openSettings()" title="Bring your own LLM key">AI KEY <span class="v ${ME.llm?'on':''}">${ME.llm ? esc(ME.llm.provider.toUpperCase()) : 'OFF'}</span></button>
+      ${ME ? (ME.llm
+        ? `<button class="meta-pill btn" onclick="openSettings()" title="Your LLM key settings">AI KEY <span class="v on">${esc(ME.llm.provider.toUpperCase())}</span></button>`
+        : `<button class="byok-cta" onclick="openSettings()" title="Enter your Anthropic / OpenAI / Gemini / OpenRouter key to unlock AI trade ideas"><span class="k">&#9889;</span>Add your AI key</button>`)
       <button class="meta-pill btn" onclick="logout()" title="Sign out ${esc(ME.email)}">${esc((ME.email||'').split('@')[0]).toUpperCase()} <span class="v">EXIT</span></button>` : ''}
       <button class="guide-btn" onclick="openGlossary()">${t('dashboard.guideBtn','What Signals Mean')}</button>
       <span class="alert-badge">${t('dashboard.highAlert','HIGH ALERT')}</span>
     </div>`;
+  renderByokBanner();
   renderRegionControls();
 }
 
@@ -1622,7 +1659,7 @@ function renderLower(){
       <div style="font-size:24px;margin-bottom:8px;opacity:0.3">&#9888;</div>
       ${ME ? (ME.llm
         ? `<div>NO AI IDEAS YET</div><div style="font-size:9px;margin-top:6px;opacity:0.6">Your ${esc(ME.llm.provider)} key is saved.</div><div style="margin-top:10px"><button class="ideas-gen" onclick="generateMyIdeas()">Generate ideas now</button></div>`
-        : `<div>ADD YOUR OWN LLM KEY</div><div style="font-size:9px;margin-top:6px;opacity:0.6">Bring your own Anthropic / OpenAI / Gemini / OpenRouter key to get AI-generated trade ideas from this sweep.</div><div style="margin-top:10px"><button class="ideas-gen" onclick="openSettings()">Add API key</button></div>`)
+        : `<div class="byok-empty"><div class="big">&#9889; UNLOCK AI TRADE IDEAS</div><div class="why">The ideas below are rule-based. Enter your own LLM API key and Crucix will have your model read every sweep and write ideas just for you.</div><button class="ideas-gen" onclick="openSettings()">Enter my API key</button><div class="providers">ANTHROPIC · OPENAI · GEMINI · OPENROUTER · GROK · MISTRAL · ANY OPENAI-COMPATIBLE</div></div>`)
         : `<div>LLM NOT CONFIGURED</div><div style="font-size:9px;margin-top:6px;opacity:0.6">Set LLM_PROVIDER + credentials in .env to enable AI-powered trade ideas</div>`}
     </div>`;
   const ideasBadge = D.ideasSource==='mine'
@@ -1969,7 +2006,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Server mode: always fetch live data from API (ignore any stale inline D)
     loadMe().then(() => fetch('/api/data', { credentials: 'same-origin' }))
       .then(r => { if (r.status === 401) { location.replace('/login?next=/'); throw new Error('unauthenticated'); } return r.json(); })
-      .then(data => { if (!data || !data.meta) throw new Error(data?.error || 'no data'); D = applyUserIdeas(data); init(); connectSSE(); })
+      .then(data => { if (!data || !data.meta) throw new Error(data?.error || 'no data'); D = applyUserIdeas(data); init(); connectSSE(); maybePromptForKey(); })
       .catch((e) => {
         if (String(e.message).includes('unauthenticated')) return;
         // Server returns 503 before the first sweep finishes — go back to the loading page
