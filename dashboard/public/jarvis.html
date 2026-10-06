@@ -804,7 +804,7 @@ function renderTopbar(){
       ${ME ? (ME.llm
         ? `<button class="meta-pill btn" onclick="openSettings()" title="Your LLM key settings">AI KEY <span class="v on">${esc(ME.llm.provider.toUpperCase())}</span></button>`
         : `<button class="byok-cta" onclick="openSettings()" title="Enter your Anthropic / OpenAI / Gemini / OpenRouter key to unlock AI trade ideas"><span class="k">&#9889;</span>Add your AI key</button>`)
-      <button class="meta-pill btn" onclick="logout()" title="Sign out ${esc(ME.email)}">${esc((ME.email||'').split('@')[0]).toUpperCase()} <span class="v">EXIT</span></button>` : ''}
+      + `<button class="meta-pill btn" onclick="logout()" title="Sign out ${esc(ME.email)}">${esc((ME.email||'').split('@')[0]).toUpperCase()} <span class="v">EXIT</span></button>` : ''}
       <button class="guide-btn" onclick="openGlossary()">${t('dashboard.guideBtn','What Signals Mean')}</button>
       <span class="alert-badge">${t('dashboard.highAlert','HIGH ALERT')}</span>
     </div>`;
