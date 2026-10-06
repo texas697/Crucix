@@ -6,7 +6,7 @@
   const hasFn = (n) => typeof window[n] === 'function';
   const _api = (p, o) => hasFn('api') ? window.api(p, o) : fetch(p, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, ...(o || {}) }).then(async r => { const b = await r.json().catch(() => ({})); if (!r.ok) throw new Error(b.error || `HTTP ${r.status}`); return b; });
   const _esc = (s) => hasFn('esc') ? window.esc(s) : String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  const me = () => window.ME || null;
+  const me = () => { try { return (typeof ME !== 'undefined' && ME) ? ME : (window.ME || null); } catch { return window.ME || null; } };
 
   // --- tiny safe markdown → html ------------------------------------------------
   function inline(s) {
