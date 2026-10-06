@@ -206,6 +206,18 @@ Operators can still set a server-wide `LLM_PROVIDER`/`LLM_API_KEY` for Telegram/
 Lock the app down with `AUTH_ALLOWED_EMAILS` / `AUTH_ALLOWED_DOMAINS`, or set `AUTH_ALLOW_SIGNUP=false`
 and create accounts in the Firebase console. For a private laptop you can set `AUTH_MODE=off`.
 
+### Readers Digest (this fork)
+
+`/digest` is a reading library in the spirit of the Reading Room: 30 curated feeds — think tanks (Brookings,
+CFR, RAND, Atlantic Council, Hoover, Heritage, AEI, Stimson, Crisis Group, Lowy, War on the Rocks, NBER, Foreign
+Affairs) plus the policy, defense and markets press — with sports, weather and entertainment filtered out.
+Every piece gets a write-up (TL;DR, key points, why it matters, watch-for) from the operator model when one is
+configured, or on demand from the reader's own key. Thumbs up/down are always visible and feed a per-topic
+affinity model that re-ranks the library once you have rated five pieces. **Read more about it** gathers fresh
+related coverage (Bing, DuckDuckGo, GDELT, your own library, optional Tavily), reads it, and has your model write
+a cited deep dive. News cards on the dashboard open in the same reader. Ingest runs after every sweep and from a
+30-minute scheduler job (`POST /api/internal/digest`).
+
 ### Optional LLM Layer
 Connect any of 8 LLM providers for enhanced analysis:
 - **AI trade ideas** — quantitative analyst producing 5-8 actionable ideas citing specific data

@@ -84,6 +84,15 @@ Useful overrides: `AUTH_ALLOWED_EMAILS=a@x.com,b@y.com` (lock the app to specifi
 | State | `RUNS_DIR=/data/runs` | Cloud Storage FUSE volume. Delta memory and `latest.json` survive redeploys. |
 | Health | `/api/healthz` (public) | `/api/health` with full detail requires login. Google's front end swallows a bare `/healthz`, hence the prefix. |
 
+## Readers Digest in the cloud
+
+Articles and write-ups live in Firestore (`digest/{id}`), votes and deep dives under each user
+(`users/{uid}/digest_votes`, `users/{uid}/digest_research`). Ingest runs inside the sweep request and from the
+`crucix-digest` scheduler job (every 30 min), so it gets CPU on a throttled instance. Some publishers (NYT,
+France 24, MarketWatch, Heritage) block article fetches from Google IPs; those pieces keep their RSS summary and
+link out to the original. Set a server-wide `LLM_PROVIDER`/`LLM_API_KEY` in `deploy/extra-env.yaml` to have
+every new piece written up automatically; otherwise readers generate write-ups with their own key when they open a piece.
+
 ## Cost (approximate, us-central1)
 
 One always-on instance with CPU throttling: ≈ $7–10/month idle + a few dollars of request time for
