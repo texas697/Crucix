@@ -1,7 +1,7 @@
 /* Shared article reader modal + digest cards (used by the dashboard and the Readers Digest page) */
 .rd-overlay{position:fixed;inset:0;z-index:1300;background:rgba(2,6,10,0.78);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .2s}
 .rd-overlay.show{opacity:1;pointer-events:auto}
-.rd-modal{position:absolute;inset:16px;margin:auto;max-width:980px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:#06101a;border:1px solid var(--border-bright,rgba(100,240,200,0.3));box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+.rd-modal{position:absolute;left:16px;right:16px;top:3vh;margin:0 auto;max-width:980px;max-height:94vh;display:flex;flex-direction:column;background:#06101a;border:1px solid var(--border-bright,rgba(100,240,200,0.3));box-shadow:0 30px 80px rgba(0,0,0,0.6)}
 .rd-head{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;gap:14px;padding:14px 18px 12px;border-bottom:1px solid var(--border,rgba(100,240,200,0.12));background:rgba(6,16,26,0.98)}
 .rd-head .rd-meta{flex:1;min-width:0}
 .rd-kicker{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
