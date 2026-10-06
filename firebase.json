@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "public": "hosting",
+    "ignore": ["**/.*"],
+    "cleanUrls": false,
+    "rewrites": [
+      { "source": "**", "run": { "serviceId": "crucix", "region": "us-central1" } }
+    ]
+  }
+}

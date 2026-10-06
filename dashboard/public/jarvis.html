@@ -1920,6 +1920,18 @@ function connectSSE(){
     }, 5000);
   };
 }
+// Polling safety net: some edges (Firebase Hosting) don't stream SSE, so also check for a new sweep every 60s
+let lastSeenSweep = null;
+async function pollForNewSweep() {
+  try {
+    const h = await api('/api/health');
+    if (h.lastSweep && h.lastSweep !== lastSeenSweep && D?.meta?.timestamp && new Date(h.lastSweep) > new Date(D.meta.timestamp)) {
+      const data = await api('/api/data');
+      if (data?.meta) { lastSeenSweep = h.lastSweep; D = applyUserIdeas(data); reinit(); if (ME?.llm?.autoIdeas) setTimeout(refreshMyIdeasFromServer, 90000); }
+    } else if (h.lastSweep) lastSeenSweep = h.lastSweep;
+  } catch {}
+}
+setInterval(pollForNewSweep, 60000);
 async function refreshMyIdeasFromServer() {
   try { const me = await api('/api/me'); if (me.ideas?.ideas?.length && me.ideas.generatedAt !== MY_IDEAS?.generatedAt) { MY_IDEAS = me.ideas; refreshIdeasPanel(); } } catch {}
 }

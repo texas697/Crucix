@@ -249,6 +249,7 @@ if (discordAlerter.isConfigured) {
 const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
+app.use((req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); });
 app.use(express.json({ limit: '32kb' }));
 
 // ─── Public routes (no auth) ───────────────────────────────────────────────
@@ -283,8 +284,11 @@ if (AUTH_ENABLED) {
   });
   // Same-origin authDomain needs `https://<host>/__/auth/handler` added to the Google OAuth client's
   // redirect URIs (Cloud Console → APIs & Services → Credentials). Until then keep Firebase's default.
+  // On Firebase Hosting domains (*.firebaseapp.com / *.web.app) the helper is served natively by Hosting
+  // and the OAuth client already trusts them, so same-origin auth works there with no extra setup.
   const sameOriginAuth = (process.env.AUTH_SAME_ORIGIN_HELPER || 'false').toLowerCase() === 'true';
-  const configFor = (req) => (sameOriginAuth ? { ...webConfig, authDomain: req.hostname } : webConfig);
+  const isHostingDomain = (h) => /\.firebaseapp\.com$|\.web\.app$/i.test(h || '');
+  const configFor = (req) => ((sameOriginAuth || isHostingDomain(req.hostname)) ? { ...webConfig, authDomain: req.hostname } : webConfig);
   app.get('/__/firebase/init.json', (req, res) => res.json(configFor(req)));
 
   app.get('/login', (req, res) => {
