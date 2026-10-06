@@ -34,7 +34,7 @@ AUTH_ALLOW_SIGNUP: "$ALLOW_SIGNUP"
 RUNS_DIR: "/data/runs"
 SWEEP_MODE: "external"
 REFRESH_INTERVAL_MINUTES: "$REFRESH_MINUTES"
-PUBLIC_URL: "${PUBLIC_URL:-}"
+PUBLIC_URL: "${PUBLIC_URL:-https://${PROJECT}.firebaseapp.com}"
 NODE_ENV: "production"
 YAML
 # Optional operator keys: anything in deploy/extra-env.yaml (gitignored) is merged in
@@ -75,7 +75,7 @@ echo "▶ Authorizing $URL for Firebase Auth"
 HOST="${URL#https://}"
 ACCESS="$(gcloud auth print-access-token)"
 CUR="$(curl -s "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config" -H "Authorization: Bearer $ACCESS" -H "x-goog-user-project: $PROJECT")"
-DOMS="$(printf '%s' "$CUR" | python3 -c 'import json,sys;d=json.load(sys.stdin).get("authorizedDomains",[]);d+=[h for h in sys.argv[1:] if h and h not in d];print(json.dumps(d))' "$HOST" "${PUBLIC_URL:+${PUBLIC_URL#https://}}")"
+DOMS="$(printf '%s' "$CUR" | python3 -c 'import json,sys;d=json.load(sys.stdin).get("authorizedDomains",[]);d+=[h for h in sys.argv[1:] if h and h not in d];print(json.dumps(d))' "$HOST" "${PROJECT}.firebaseapp.com" "${PUBLIC_URL:+${PUBLIC_URL#https://}}")"
 curl -s -X PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config?updateMask=authorizedDomains" \
   -H "Authorization: Bearer $ACCESS" -H "x-goog-user-project: $PROJECT" -H "Content-Type: application/json" \
   -d "{\"authorizedDomains\":$DOMS}" >/dev/null
@@ -84,6 +84,6 @@ echo "▶ Kicking off a sweep now (startup sweeps run CPU-throttled; a scheduler
 gcloud scheduler jobs run crucix-sweep --project "$PROJECT" --location "$REGION" --quiet >/dev/null 2>&1 || true
 
 echo
-echo "✔ Deployed: $URL"
+echo "✔ Deployed: $URL  (front door: https://${PROJECT}.firebaseapp.com — run: firebase deploy --only hosting)"
 echo "  Login:    $URL/login"
 echo "  Logs:     gcloud run services logs tail $SERVICE --project $PROJECT --region $REGION"

@@ -53,8 +53,17 @@ openssl rand -hex 24 | gcloud secrets create SWEEP_TRIGGER_TOKEN --data-file=-
 ## Deploy / redeploy
 
 ```bash
-PROJECT=my-crucix ./deploy/cloudrun.sh
+PROJECT=my-crucix PUBLIC_URL=https://my-crucix.firebaseapp.com ./deploy/cloudrun.sh   # Cloud Run service
+firebase deploy --only hosting --project my-crucix                                     # Hosting front door
 ```
+
+**Use the Firebase Hosting URL (`https://<project>.firebaseapp.com`) as the app's address.** `firebase.json`
+rewrites every request to the Cloud Run service. This matters for Google sign-in: Hosting serves Firebase's
+`/__/auth/*` helper on the same origin, so popups and redirects work under third-party-cookie blocking with
+no OAuth-client changes. The raw `*.run.app` URL still works for email/password login, but Google sign-in
+there needs the redirect URI added to the OAuth client (then set `AUTH_SAME_ORIGIN_HELPER=true`).
+Hosting only forwards the `__session` cookie, which is why the session cookie has that name.
+Hosting does not stream SSE, so the dashboard also polls for new sweeps every 60 s.
 
 The script builds the image with Cloud Build, deploys with the env below, creates or updates the
 `crucix-sweep` scheduler job, and adds the service hostname to Firebase's authorized domains.
