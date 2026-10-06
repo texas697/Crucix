@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRUCIX — Sign in</title>
+<title>MFB Services Intelligence — Sign in</title>
+<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="apple-touch-icon" href="/brand/icon-192.png">
+<meta property="og:title" content="MFB Services Intelligence">
+<meta property="og:description" content="Live OSINT, markets and AI trade ideas from 29 sources.">
+<meta property="og:image" content="/brand/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -39,9 +44,9 @@ button{cursor:pointer;font-family:var(--mono);letter-spacing:0.1em;text-transfor
 </head>
 <body>
 <div class="card">
-  <div class="brand"><span class="blink"></span>Crucix Monitor</div>
-  <h1 id="title">Sign in</h1>
-  <div class="sub" id="sub">Access to this intelligence terminal requires an account.</div>
+  <div style="text-align:center;margin-bottom:6px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" style="width:100%;max-width:320px;height:auto" aria-label="MFB Services Intelligence">  <defs>    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">      <stop offset="0" stop-color="#64f0c8"/>      <stop offset="1" stop-color="#44ccff"/>    </linearGradient>    <clipPath id="hex"><path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z"/></clipPath>  </defs>  <g>    <path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z" fill="#050d14" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>    <g clip-path="url(#hex)">      <circle cx="80" cy="80" r="56" fill="none" stroke="#64f0c8" stroke-opacity="0.16"/>      <circle cx="80" cy="80" r="36" fill="none" stroke="#64f0c8" stroke-opacity="0.2"/>      <path d="M80 80 L80 14 A66 66 0 0 1 137 47 Z" fill="url(#g)" opacity="0.16"/>      <line x1="80" y1="80" x2="137" y2="47" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/>      <circle cx="110" cy="58" r="2.6" fill="#64f0c8"/>    </g>    <text x="80" y="94" text-anchor="middle" font-family="'Space Grotesk','IBM Plex Mono',Arial,sans-serif" font-weight="700" font-size="40" letter-spacing="1" fill="#e8f4f0">MFB</text>    <line x1="42" y1="103" x2="118" y2="103" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>  </g>  <text x="172" y="78" font-family="'Space Grotesk',Arial,sans-serif" font-weight="700" font-size="52" letter-spacing="2" fill="#e8f4f0">MFB SERVICES</text>  <text x="174" y="122" font-family="'IBM Plex Mono',monospace" font-weight="600" font-size="24" letter-spacing="11" fill="url(#g)">INTELLIGENCE</text></svg></div>
+  <h1 id="title" style="text-align:center">Sign in</h1>
+  <div class="sub" id="sub" style="text-align:center">Access to this intelligence terminal requires an account.</div>
   <button class="google" id="google" type="button">
     <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.5l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.3 0 11.7-2.1 15.6-5.7l-7.7-6c-2.1 1.4-4.8 2.3-7.9 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
     Continue with Google
@@ -60,7 +65,7 @@ button{cursor:pointer;font-family:var(--mono);letter-spacing:0.1em;text-transfor
     <button class="link" id="toggle" type="button">Need an account? Create one</button>
     <button class="link" id="reset" type="button">Forgot password</button>
   </div>
-  <div class="foot">Your own LLM API key can be added after sign-in and is stored encrypted. Keys are only used to generate your trade ideas.</div>
+  <div class="foot">Your own LLM API key can be added after sign-in and is stored encrypted. Keys are only used to generate your trade ideas.<br><span style="opacity:0.6">MFB Services, Inc. · built on the open-source Crucix engine</span></div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>

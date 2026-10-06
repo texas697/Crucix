@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRUCIX — Intelligence Terminal</title>
+<title>MFB Services Intelligence</title>
+<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="apple-touch-icon" href="/brand/icon-192.png">
+<meta property="og:title" content="MFB Services Intelligence">
+<meta property="og:description" content="Live OSINT, markets and AI trade ideas from 29 sources.">
+<meta property="og:image" content="/brand/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -47,7 +52,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 /* TOPBAR */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border:1px solid var(--border);background:var(--panel);backdrop-filter:blur(20px);flex-wrap:wrap;gap:10px}
 .top-left{display:flex;align-items:center;gap:14px}
-.brand{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:0.12em;text-transform:uppercase}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--sans);font-weight:700;font-size:15px;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;line-height:1.1}
+.brand .brand-mark{width:34px;height:34px;flex:none}
+.brand .sub{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:0.22em;color:var(--accent);display:block;margin-top:2px}
+.boot-logo{width:min(560px,90vw);height:auto;opacity:0}
 .regime-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid rgba(255,95,99,0.3);color:#ffd8d9;background:rgba(255,95,99,0.08)}
 .regime-chip .blink{width:6px;height:6px;border-radius:50%;background:var(--danger);box-shadow:0 0 8px var(--danger);animation:pulse-blink 1.5s ease-in-out infinite}
 @keyframes pulse-blink{0%,100%{opacity:1}50%{opacity:0.3}}
@@ -361,7 +369,7 @@ body.low-perf .ticker-wrap::-webkit-scrollbar-thumb{background:rgba(100,240,200,
 </head>
 <body>
 <div id="boot">
-  <div class="logo-ring"><span class="logo-text">CRUCIX</span></div>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" class="boot-logo" aria-label="MFB Services Intelligence">  <defs>    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">      <stop offset="0" stop-color="#64f0c8"/>      <stop offset="1" stop-color="#44ccff"/>    </linearGradient>    <clipPath id="hex"><path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z"/></clipPath>  </defs>  <g>    <path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z" fill="#050d14" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>    <g clip-path="url(#hex)">      <circle cx="80" cy="80" r="56" fill="none" stroke="#64f0c8" stroke-opacity="0.16"/>      <circle cx="80" cy="80" r="36" fill="none" stroke="#64f0c8" stroke-opacity="0.2"/>      <path d="M80 80 L80 14 A66 66 0 0 1 137 47 Z" fill="url(#g)" opacity="0.16"/>      <line x1="80" y1="80" x2="137" y2="47" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/>      <circle cx="110" cy="58" r="2.6" fill="#64f0c8"/>    </g>    <text x="80" y="94" text-anchor="middle" font-family="'Space Grotesk','IBM Plex Mono',Arial,sans-serif" font-weight="700" font-size="40" letter-spacing="1" fill="#e8f4f0">MFB</text>    <line x1="42" y1="103" x2="118" y2="103" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>  </g>  <text x="172" y="78" font-family="'Space Grotesk',Arial,sans-serif" font-weight="700" font-size="52" letter-spacing="2" fill="#e8f4f0">MFB SERVICES</text>  <text x="174" y="122" font-family="'IBM Plex Mono',monospace" font-weight="600" font-size="24" letter-spacing="11" fill="url(#g)">INTELLIGENCE</text></svg>
   <div id="bootLines"></div>
   <div id="bootFinal">TERMINAL ACTIVE</div>
 </div>
@@ -791,7 +799,7 @@ function renderTopbar(){
   const timeStr = ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
   document.getElementById('topbar').innerHTML=`
     <div class="top-left">
-      <span class="brand">CRUCIX MONITOR</span>
+      <span class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" class="brand-mark" aria-hidden="true">  <defs>    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">      <stop offset="0" stop-color="#64f0c8"/>      <stop offset="1" stop-color="#44ccff"/>    </linearGradient>    <clipPath id="hex"><path d="M128 14 L226 71 L226 185 L128 242 L30 185 L30 71 Z"/></clipPath>  </defs>  <!-- hex shield -->  <path d="M128 14 L226 71 L226 185 L128 242 L30 185 L30 71 Z" fill="#050d14" stroke="url(#g)" stroke-width="6" stroke-linejoin="round"/>  <path d="M128 34 L208 81 L208 175 L128 222 L48 175 L48 81 Z" fill="none" stroke="#64f0c8" stroke-opacity="0.22" stroke-width="1.5"/>  <!-- radar rings + sweep -->  <g clip-path="url(#hex)" opacity="0.9">    <circle cx="128" cy="128" r="92" fill="none" stroke="#64f0c8" stroke-opacity="0.14" stroke-width="1"/>    <circle cx="128" cy="128" r="62" fill="none" stroke="#64f0c8" stroke-opacity="0.18" stroke-width="1"/>    <path d="M128 128 L128 20 A108 108 0 0 1 221 74 Z" fill="url(#g)" opacity="0.16"/>    <line x1="128" y1="128" x2="221" y2="74" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/>    <circle cx="176" cy="92" r="4" fill="#64f0c8"/>    <circle cx="92" cy="166" r="3" fill="#44ccff" opacity="0.8"/>    <circle cx="72" cy="104" r="2.5" fill="#ffb84c" opacity="0.9"/>  </g>  <!-- MFB monogram with signature underline -->  <text x="128" y="151" text-anchor="middle" font-family="'Space Grotesk','IBM Plex Mono',Arial,sans-serif" font-weight="700" font-size="66" letter-spacing="2" fill="#e8f4f0">MFB</text>  <line x1="64" y1="166" x2="192" y2="166" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>  <text x="128" y="194" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-weight="600" font-size="15" letter-spacing="5" fill="#64f0c8">INTEL</text></svg><span><span>MFB Services</span><span class="sub">INTELLIGENCE</span></span></span>
       <span class="regime-chip"><span class="blink"></span>WARTIME STAGFLATION RISK</span>
     </div>
     ${mobile ? `<div class="top-center">${getRegionControlsMarkup()}</div>` : ''}
@@ -1667,7 +1675,7 @@ function renderLower(){
     : D.ideasSource==='llm' ? '<span class="ideas-src llm">'+t('ideas.aiEnhanced','AI ENHANCED')+'</span>'
     : D.ideasSource==='rules' ? '<span class="ideas-src static">'+t('ideas.signalBased','SIGNAL BASED')+'</span>'
     : '<span class="ideas-src static">'+t('ideas.pending','PENDING')+'</span>';
-  const ideasActions = ME?.llm ? `<span class="ideas-actions">${D.ideasSource==='mine'&&D.ideasMeta?.generatedAt?`<span class="ideas-meta">${getAge(D.ideasMeta.generatedAt)}</span>`:''}<button class="ideas-gen" id="ideasGenBtn" onclick="generateMyIdeas()">${hasIdeas?'Regenerate':'Generate'}</button></span>` : '';
+  const ideasActions = (ME && !ME.llm) ? `<button class="ideas-gen" onclick="openSettings()" title="Enter your LLM API key for AI-generated ideas">&#9889; Add AI key</button>` : ME?.llm ? `<span class="ideas-actions">${D.ideasSource==='mine'&&D.ideasMeta?.generatedAt?`<span class="ideas-meta">${getAge(D.ideasMeta.generatedAt)}</span>`:''}<button class="ideas-gen" id="ideasGenBtn" onclick="generateMyIdeas()">${hasIdeas?'Regenerate':'Generate'}</button></span>` : '';
 
 
   const tickerPanel = `<div class="g-panel lp-ticker" style="display:flex;flex-direction:column">
@@ -1778,7 +1786,7 @@ function safeExternalUrl(raw){try{const u=new URL(raw,location.href);return u.pr
 function runBoot(){
   const acledStatus = D.acled?.totalEvents > 0 ? `<span class="ok">${D.acled.totalEvents} EVENTS</span>` : '<span style="color:var(--warn)">DEGRADED</span>';
   const lines=[
-    {text:t('boot.initializing','INITIALIZING CRUCIX ENGINE v2.1.0'),delay:0},
+    {text:t('boot.initializing','INITIALIZING MFB INTELLIGENCE ENGINE v2.1.0'),delay:0},
     {text:t('boot.connecting','CONNECTING {count} OSINT SOURCES...').replace('{count}',D.meta.sourcesQueried),delay:400},
     {text:'&#9500;&#9472; '+t('boot.sourceGroup1','OPENSKY · FIRMS · KIWISDR · MARITIME'),delay:700},
     {text:'&#9500;&#9472; '+t('boot.sourceGroup2','FRED · BLS · EIA · TREASURY · GSCPI'),delay:900},
@@ -1792,7 +1800,7 @@ function runBoot(){
   const container=document.getElementById('bootLines');
   document.getElementById('bootFinal').textContent=t('dashboard.terminalActive','TERMINAL ACTIVE');
   const tl=gsap.timeline();
-  tl.to('.logo-ring',{opacity:1,duration:0.6,ease:'power2.out'},0);
+  tl.to('.boot-logo',{opacity:1,duration:0.8,ease:'power2.out'},0);
   tl.to(container,{opacity:1,duration:0.3},0.3);
   lines.forEach(line=>{
     tl.call(()=>{
