@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Readers Digest — MFB Services Intelligence</title>
+<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/reader.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#020408;--panel:rgba(6,14,22,0.82);--glass:rgba(10,20,32,0.55);--border:rgba(100,240,200,0.12);--border-bright:rgba(100,240,200,0.3);--text:#e8f4f0;--dim:#6a8a82;--accent:#64f0c8;--accent2:#44ccff;--warn:#ffb84c;--danger:#ff5f63;--mono:'IBM Plex Mono',monospace;--sans:'Space Grotesk',sans-serif}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:10px 16px 40px;background-image:radial-gradient(ellipse at 20% 0%,rgba(100,240,200,0.05),transparent 50%),radial-gradient(ellipse at 90% 100%,rgba(68,204,255,0.05),transparent 50%)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 18px;border:1px solid var(--border);background:var(--panel)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;line-height:1.1;text-decoration:none;color:var(--text)}
+.brand svg{width:34px;height:34px}
+.brand .sub{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.22em;color:var(--accent);display:block;margin-top:2px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:5px 10px;border:1px solid var(--border);color:var(--dim);text-decoration:none;background:rgba(255,255,255,0.02);cursor:pointer}
+.pill:hover{border-color:var(--border-bright);color:var(--text)}
+.pill.active{color:var(--accent);border-color:var(--border-bright);background:rgba(100,240,200,0.08)}
+.pill .v{color:var(--text);font-weight:600}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:14px 0 10px}
+.hero h1{font-size:22px;font-weight:600}
+.hero p{font-size:12px;color:var(--dim);max-width:720px;line-height:1.5}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.filters input{flex:1;min-width:200px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 10px;outline:none}
+.filters input:focus{border-color:var(--border-bright)}
+.topics{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.topic{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border:1px solid rgba(255,255,255,0.08);color:var(--dim);cursor:pointer}
+.topic:hover,.topic.active{border-color:var(--border-bright);color:var(--accent)}
+.status{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.08em;margin:6px 0 10px}
+.empty{padding:40px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:11px;border:1px dashed var(--border)}
+.taste{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.08em;margin-bottom:10px}
+.taste b{color:var(--accent)}
+.byok-cta{cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;color:#041410;background:var(--accent);border:1px solid var(--accent)}
+@media (max-width:640px){body{padding:8px 10px 30px}.topbar{padding:10px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="/" title="Back to the dashboard">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#64f0c8"/><stop offset="1" stop-color="#44ccff"/></linearGradient></defs><path d="M32 3 L57 17.5 L57 46.5 L32 61 L7 46.5 L7 17.5 Z" fill="#050d14" stroke="url(#g)" stroke-width="3" stroke-linejoin="round"/><line x1="32" y1="32" x2="54" y2="19" stroke="url(#g)" stroke-width="2" stroke-linecap="round" opacity="0.9"/><text x="32" y="40" text-anchor="middle" font-family="'Space Grotesk',Arial,sans-serif" font-weight="800" font-size="21" fill="#e8f4f0">MFB</text><line x1="16" y1="45" x2="48" y2="45" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/></svg>
+    <span><span>MFB Services</span><span class="sub">INTELLIGENCE</span></span>
+  </a>
+  <div class="nav" id="nav">
+    <a class="pill" href="/">DASHBOARD</a>
+    <a class="pill active" href="/digest">READERS DIGEST</a>
+  </div>
+</div>
+<div class="hero">
+  <div><h1>Readers Digest</h1><p>Long-form analysis and reporting from think tanks and the policy press, written up for fast reading. Rate pieces with &#128077;/&#128078; and the feed learns what you care about. Open any piece for the AI write-up and a cited deep dive on your own key.</p></div>
+  <div class="status" id="status"></div>
+</div>
+<div class="filters">
+  <span class="pill active" data-filter="all">ALL</span>
+  <span class="pill" data-filter="foryou">FOR YOU</span>
+  <span class="pill" data-filter="thinktank">THINK TANKS</span>
+  <span class="pill" data-filter="news">NEWS</span>
+  <input id="q" type="search" placeholder="search titles, topics, write-ups…" autocomplete="off">
+</div>
+<div class="topics" id="topics"></div>
+<div class="taste" id="taste"></div>
+<div class="dg-grid" id="grid"></div>
+<script>
+let ME = null;
+const state = { filter: 'all', topic: '', q: '', items: [] };
+const $ = (s) => document.querySelector(s);
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
+  if (r.status === 401) { location.replace('/login?next=' + encodeURIComponent(location.pathname)); throw new Error('unauthenticated'); }
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || `HTTP ${r.status}`);
+  return body;
+}
+function openSettings(){ location.href = '/?settings=1'; }
+function ago(d){const ms=Date.now()-new Date(d).getTime();const h=Math.floor(ms/3600000);if(h<1)return 'just now';if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago'}
+
+async function loadMe(){ try { const r = await fetch('/api/me', { credentials:'same-origin' }); if (r.status===401) return location.replace('/login?next=/digest'); if (r.ok) ME = await r.json(); } catch {} renderNav(); }
+function renderNav(){
+  if (!ME) return;
+  const nav = $('#nav');
+  nav.insertAdjacentHTML('beforeend', ME.llm
+    ? `<span class="pill" onclick="openSettings()">AI KEY <span class="v">${esc(ME.llm.provider.toUpperCase())}</span></span>`
+    : `<button class="byok-cta" onclick="openSettings()">&#9889; Add your AI key</button>`);
+  nav.insertAdjacentHTML('beforeend', `<span class="pill" onclick="logout()">${esc((ME.email||'').split('@')[0]).toUpperCase()} <span class="v">EXIT</span></span>`);
+}
+async function logout(){ try{ await fetch('/api/logout',{method:'POST',credentials:'same-origin'}); }catch{} location.replace('/login'); }
+
+let loadSeq = 0;
+async function load(){
+  const seq = ++loadSeq;
+  $('#status').textContent = 'LOADING…';
+  const qs = new URLSearchParams({ filter: state.filter, topic: state.topic, q: state.q }).toString();
+  try {
+    const r = await api('/api/digest/list?' + qs);
+    if (seq !== loadSeq) return;
+    state.items = r.items;
+    renderTopics(r.topics); renderTaste(r); render();
+    $('#status').textContent = `${r.total} PIECES · ${r.storeSize} IN LIBRARY · ${r.mode === 'affinity' ? 'RANKED FOR YOU' : `CHRONOLOGICAL${r.votes < r.minVotesForAffinity ? ` (${r.minVotesForAffinity - r.votes} MORE RATINGS TO PERSONALISE)` : ''}`}`;
+  } catch (e) { if (!String(e.message).includes('unauthenticated')) $('#status').textContent = 'ERROR: ' + e.message; }
+}
+function renderTopics(topics){
+  $('#topics').innerHTML = topics.map(t => `<span class="topic ${state.topic===t.topic?'active':''}" data-topic="${esc(t.topic)}">${esc(t.topic)} <span style="opacity:.6">${t.count}</span></span>`).join('');
+  document.querySelectorAll('.topic').forEach(el => el.onclick = () => { state.topic = state.topic === el.dataset.topic ? '' : el.dataset.topic; load(); });
+}
+function renderTaste(r){
+  const likes = (r.taste?.likes||[]).slice(0,6), dislikes=(r.taste?.dislikes||[]).slice(0,4);
+  $('#taste').innerHTML = (likes.length||dislikes.length) ? `<span>YOUR TASTE:</span>${likes.map(l=>`<b>+${esc(l.topic)}</b>`).join('')}${dislikes.map(l=>`<span style="color:var(--danger)">−${esc(l.topic)}</span>`).join('')}` : '';
+}
+function card(a){
+  return `<div class="dg-card ${a.vote>0?'voted-up':a.vote<0?'voted-down':''}" data-id="${esc(a.id)}">
+    <div class="dg-top"><span class="rd-src ${a.kind==='thinktank'?'thinktank':''}">${esc(a.source)}</span><span>${a.publishedAt?esc(ago(a.publishedAt)):''}</span></div>
+    <div class="dg-title">${esc(a.title)}</div>
+    <div class="dg-desc">${esc(a.description||'')}</div>
+    <div class="dg-foot">
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${a.hasWriteup?'<span class="dg-tag ai">AI WRITE-UP</span>':''}${(a.topics||[]).slice(0,3).map(t=>`<span class="dg-tag">${esc(t)}</span>`).join('')}</div>
+      <div class="dg-thumbs" onclick="event.stopPropagation()"><button class="rd-thumb up ${a.vote>0?'on':''}" data-vote="1" title="More like this">&#128077;</button><button class="rd-thumb down ${a.vote<0?'on':''}" data-vote="-1" title="Less like this">&#128078;</button></div>
+    </div></div>`;
+}
+function render(){
+  const grid = $('#grid');
+  if (!state.items.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1">NOTHING HERE YET.<br><br>The library fills as the digest ingests feeds (every 30 minutes). Try ALL, or come back shortly.</div>`; return; }
+  grid.innerHTML = state.items.map(card).join('');
+  grid.querySelectorAll('.dg-card').forEach(el => {
+    el.onclick = () => MFBReader.open({ id: el.dataset.id });
+    el.querySelectorAll('.rd-thumb').forEach(b => b.onclick = async (e) => {
+      e.stopPropagation();
+      try { const r = await api(`/api/digest/${el.dataset.id}/feedback`, { method:'POST', body: JSON.stringify({ rating: parseInt(b.dataset.vote) }) }); applyVote(el.dataset.id, r.rating); } catch (err) { alert(err.message); }
+    });
+  });
+}
+function applyVote(id, rating){
+  const a = state.items.find(x => x.id === id); if (a) a.vote = rating;
+  const el = document.querySelector(`.dg-card[data-id="${CSS.escape(id)}"]`); if (!el) return;
+  el.classList.toggle('voted-up', rating>0); el.classList.toggle('voted-down', rating<0);
+  el.querySelector('.rd-thumb.up').classList.toggle('on', rating>0); el.querySelector('.rd-thumb.down').classList.toggle('on', rating<0);
+}
+document.addEventListener('digest:vote', e => applyVote(e.detail.id, e.detail.rating));
+document.addEventListener('digest:topic', e => { MFBReader.close(); state.topic = e.detail; load(); });
+document.querySelectorAll('.pill[data-filter]').forEach(p => p.onclick = () => { document.querySelectorAll('.pill[data-filter]').forEach(x=>x.classList.remove('active')); p.classList.add('active'); state.filter = p.dataset.filter; load(); });
+let qT; $('#q').oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim(); load(); }, 250); };
+loadMe().then(load);
+const openId = new URLSearchParams(location.search).get('open'); if (openId) setTimeout(() => MFBReader.open({ id: openId }), 300);
+</script>
+<script src="/js/reader.js"></script>
+</body>
+</html>

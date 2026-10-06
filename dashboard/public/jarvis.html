@@ -9,6 +9,7 @@
 <meta property="og:title" content="MFB Services Intelligence">
 <meta property="og:description" content="Live OSINT, markets and AI trade ideas from 29 sources.">
 <meta property="og:image" content="/brand/og-image.png">
+<link rel="stylesheet" href="/css/reader.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -167,6 +168,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .lower .lp-ticker{flex:1.2 1 240px;max-width:380px}
 .right-delta .delta-list{max-height:200px}
 .lower .lp-macro{flex:2.5 1 360px}
+.lower .lp-ideas{flex:2 1 360px}
 .lower .lp-ideas{flex:1.5 1 300px}
 .lower-wide{width:100%}
 .metrics-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
@@ -267,6 +269,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .ideas-src.static{color:var(--dim);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.03)}
 .ideas-src.mine{color:var(--accent);border-color:rgba(100,240,200,0.4);background:rgba(100,240,200,0.08)}
 .meta-pill.btn{cursor:pointer;background:rgba(255,255,255,0.02)}
+.meta-pill.nav{color:var(--accent2);border-color:rgba(68,204,255,0.3);text-decoration:none}
+.collapsible .sec-head{cursor:pointer;margin-bottom:0;user-select:none}
+.collapsible .sec-head:hover h3{color:var(--text)}
+.collapsible .collapse-body{margin-top:10px}
+.collapsible.collapsed .collapse-body{display:none}
+.collapsible .badge.toggle{cursor:pointer}
+.collapsible.collapsed .badge.toggle::before{content:'\25B8 SHOW '}
+.collapsible:not(.collapsed) .badge.toggle::before{content:'\25BE HIDE '}
 .meta-pill.btn:hover{border-color:var(--border-bright);color:var(--text)}
 .meta-pill .v.on{color:var(--accent)}
 .byok-cta{cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 14px;color:#041410;background:var(--accent);border:1px solid var(--accent);box-shadow:0 0 0 0 rgba(100,240,200,0.6);animation:byokPulse 2.2s infinite}
@@ -467,6 +477,14 @@ let globe = null;
 let globeInitialized = false;
 let flightsVisible = true;
 let lowPerfMode = localStorage.getItem('crucix_low_perf') === 'true';
+
+// === MARKETS PANEL (right rail, collapsed by default) ===
+let MACRO_INNER = '', MACRO_LIVE = false;
+let marketsOpen = localStorage.getItem('crucix_markets_open') === 'true';
+function toggleMarkets(){
+  marketsOpen = !marketsOpen; localStorage.setItem('crucix_markets_open', String(marketsOpen));
+  const p = document.getElementById('marketsPanel'); if (p) p.classList.toggle('collapsed', !marketsOpen);
+}
 
 // === AUTH + BYOK STATE ===
 let ME = null;          // /api/me payload: {uid,email,llm,ideas,providers,byokEnabled} or null when auth is off
@@ -813,6 +831,7 @@ function renderTopbar(){
         ? `<button class="meta-pill btn" onclick="openSettings()" title="Your LLM key settings">AI KEY <span class="v on">${esc(ME.llm.provider.toUpperCase())}</span></button>`
         : `<button class="byok-cta" onclick="openSettings()" title="Enter your Anthropic / OpenAI / Gemini / OpenRouter key to unlock AI trade ideas"><span class="k">&#9889;</span>Add your AI key</button>`)
       + `<button class="meta-pill btn" onclick="logout()" title="Sign out ${esc(ME.email)}">${esc((ME.email||'').split('@')[0]).toUpperCase()} <span class="v">EXIT</span></button>` : ''}
+      <a class="meta-pill nav" href="/digest" title="Think-tank and policy press write-ups, rated and personalised">READERS DIGEST</a>
       <button class="guide-btn" onclick="openGlossary()">${t('dashboard.guideBtn','What Signals Mean')}</button>
       <span class="alert-badge">${t('dashboard.highAlert','HIGH ALERT')}</span>
     </div>`;
@@ -1647,7 +1666,7 @@ function renderLower(){
   const tickerCards = feed.map(n => {
     const sc = srcClass(n.source);
     const age = n.timestamp ? getAge(n.timestamp) : '';
-    const urlAttr = n.url ? ` data-url="${String(n.url).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"` : '';
+    const urlAttr = n.url ? ` data-url="${String(n.url).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" data-title="${esc(n.headline||'')}" data-source="${esc(n.source||'')}"` : '';
     return `<div class="tk-card ${n.urgent?'urgent':''} ${n.url?'clickable':''}"${urlAttr}><span class="tk-src ${sc}">${(n.source||'NEWS').substring(0,12)}</span><span class="tk-time">${age}</span><div class="tk-head">${cleanText(n.headline||'')}</div>${n.url?'<span class="tk-link">&#8599;</span>':''}</div>`;
   }).join('');
   const tickerDuration = Math.max(20, feed.length * 2.5);
@@ -1685,9 +1704,7 @@ function renderLower(){
       </div>
     </div>`;
   const osintPanel = mobile ? buildOsintPanel('lp-osint', 240) : '';
-  const macroPanel = `<div class="g-panel lp-macro">
-      <div class="sec-head"><h3>${t('panels.macroMarkets','Macro + Markets')}</h3><span class="badge">${mkt.timestamp?t('badges.live','LIVE'):t('badges.delayed','DELAYED')}</span></div>
-      ${hasMarkets?`<div style="margin-bottom:8px">
+  MACRO_INNER = `${hasMarkets?`<div style="margin-bottom:8px">
         <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:4px;letter-spacing:1px">INDEXES</div>
         <div class="metrics-row">${indexCards}</div>
       </div>
@@ -1705,14 +1722,14 @@ function renderLower(){
       <div style="margin-top:6px">
         <div style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:4px">WTI 5-DAY</div>
         <div class="spark">${sparkHtml}</div>
-      </div>
-    </div>`;
+      </div>`;
+  MACRO_LIVE = !!mkt.timestamp;
   const ideasPanel = `<div class="g-panel lp-ideas">
       <div class="sec-head"><h3>${t('panels.tradeIdeas','Leverageable Ideas')}${ideasBadge}</h3>${ideasActions}</div>
       ${ideasHtml}
       <div class="disclosure">FOR INFORMATIONAL PURPOSES ONLY. This is not financial advice, a recommendation to buy or sell any security, or a solicitation of any kind. All signal-based observations are derived from publicly available OSINT data and should not be relied upon for investment decisions. Consult a licensed financial advisor before making any investment. Past performance does not guarantee future results.</div>
     </div>`;
-  document.getElementById('lowerGrid').innerHTML=`${tickerPanel}${osintPanel}${macroPanel}${ideasPanel}`;
+  document.getElementById('lowerGrid').innerHTML=`${tickerPanel}${osintPanel}${ideasPanel}`;
 }
 
 // === RIGHT RAIL ===
@@ -1759,6 +1776,10 @@ function renderRight(){
     <div class="g-panel right-signals">
       <div class="sec-head"><h3>${t('panels.crossSourceSignals','Cross-Source Signals')}</h3><span class="badge">${t('badges.worldview','WORLDVIEW')}</span></div>
       ${signals}
+    </div>
+    <div class="g-panel right-markets collapsible ${marketsOpen?'':'collapsed'}" id="marketsPanel">
+      <div class="sec-head" onclick="toggleMarkets()"><h3>${t('panels.macroMarkets','Macro + Markets')}</h3><span class="badge toggle">${MACRO_LIVE?t('badges.live','LIVE'):t('badges.delayed','DELAYED')}</span></div>
+      <div class="collapse-body">${MACRO_INNER}</div>
     </div>
     ${mobile ? '' : buildOsintPanel('right-osint', 260)}
     <div class="g-panel right-core">
@@ -1997,7 +2018,9 @@ function init(){
     const card=e.target.closest('.tk-card[data-url]');
     if(card){
       const url=safeExternalUrl(card.dataset.url);
-      if(url) window.open(url,'_blank','noopener');
+      if(!url) return;
+      if(window.MFBReader) MFBReader.open({url, title: card.dataset.title, source: card.dataset.source});
+      else window.open(url,'_blank','noopener');
     }
   });
   document.addEventListener('keydown',e=>{
@@ -2014,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Server mode: always fetch live data from API (ignore any stale inline D)
     loadMe().then(() => fetch('/api/data', { credentials: 'same-origin' }))
       .then(r => { if (r.status === 401) { location.replace('/login?next=/'); throw new Error('unauthenticated'); } return r.json(); })
-      .then(data => { if (!data || !data.meta) throw new Error(data?.error || 'no data'); D = applyUserIdeas(data); init(); connectSSE(); maybePromptForKey(); })
+      .then(data => { if (!data || !data.meta) throw new Error(data?.error || 'no data'); D = applyUserIdeas(data); init(); connectSSE(); maybePromptForKey(); if (new URLSearchParams(location.search).get('settings') === '1' && ME) setTimeout(openSettings, 1200); })
       .catch((e) => {
         if (String(e.message).includes('unauthenticated')) return;
         // Server returns 503 before the first sweep finishes — go back to the loading page
@@ -2027,5 +2050,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+<script src="/js/reader.js"></script>
 </body>
 </html>

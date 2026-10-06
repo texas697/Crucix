@@ -80,6 +80,17 @@ curl -s -X PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJ
   -H "Authorization: Bearer $ACCESS" -H "x-goog-user-project: $PROJECT" -H "Content-Type: application/json" \
   -d "{\"authorizedDomains\":$DOMS}" >/dev/null
 
+echo "▶ Ensuring Cloud Scheduler digest job (every 30 min)"
+if gcloud scheduler jobs describe crucix-digest --project "$PROJECT" --location "$REGION" >/dev/null 2>&1; then
+  gcloud scheduler jobs update http crucix-digest --project "$PROJECT" --location "$REGION" \
+    --schedule "7,37 * * * *" --uri "$URL/api/internal/digest" --http-method POST \
+    --update-headers "X-Sweep-Token=$TOKEN" --attempt-deadline 900s --quiet >/dev/null
+else
+  gcloud scheduler jobs create http crucix-digest --project "$PROJECT" --location "$REGION" \
+    --schedule "7,37 * * * *" --uri "$URL/api/internal/digest" --http-method POST \
+    --headers "X-Sweep-Token=$TOKEN" --attempt-deadline 900s --quiet >/dev/null
+fi
+
 echo "▶ Kicking off a sweep now (startup sweeps run CPU-throttled; a scheduler-driven one is fast)"
 gcloud scheduler jobs run crucix-sweep --project "$PROJECT" --location "$REGION" --quiet >/dev/null 2>&1 || true
 

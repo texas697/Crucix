@@ -17,6 +17,7 @@ import { generateLLMIdeas } from './lib/llm/ideas.mjs';
 import { TelegramAlerter } from './lib/alerts/telegram.mjs';
 import { DiscordAlerter } from './lib/alerts/discord.mjs';
 import * as users from './lib/auth/users.mjs';
+import { createDigest } from './lib/digest/index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -57,6 +58,11 @@ const telegramAlerter = new TelegramAlerter(config.telegram);
 const discordAlerter = new DiscordAlerter(config.discord || {});
 
 if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmProvider.model})`);
+
+// === Readers Digest ===
+const digest = createDigest({ db: () => authLib.db(), authEnabled: AUTH_ENABLED, operatorProvider: llmProvider?.isConfigured ? llmProvider : null });
+if (AUTH_ENABLED) digest.init().catch(err => console.error('[Digest] init failed:', err.message));
+const DIGEST_AFTER_SWEEP = (process.env.DIGEST_AFTER_SWEEP || 'true').toLowerCase() !== 'false';
 if (telegramAlerter.isConfigured) {
   console.log('[Crucix] Telegram alerts enabled');
 
@@ -324,8 +330,20 @@ if (AUTH_ENABLED) {
 
   // Everything below this line requires a valid session
   const gate = authLib.requireAuth();
-  app.use((req, res, next) => (req.path === '/api/internal/sweep' ? next() : gate(req, res, next)));
+  app.use((req, res, next) => (req.path.startsWith('/api/internal/') ? next() : gate(req, res, next)));
+} else {
+  app.use((req, res, next) => { req.user = { uid: 'local', email: 'local@localhost' }; next(); });
 }
+
+// External digest ingest trigger (Cloud Scheduler). Same shared secret as the sweep.
+app.post('/api/internal/digest', async (req, res) => {
+  const token = config.sweep.triggerToken;
+  if (!token) return res.status(404).json({ error: 'External trigger disabled (SWEEP_TRIGGER_TOKEN unset)' });
+  const given = req.headers['x-sweep-token'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (given !== token) return res.status(401).json({ error: 'bad token' });
+  try { res.json(await digest.ingest()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // External sweep trigger (Cloud Scheduler / cron). Shared secret in header, never a cookie.
 app.post('/api/internal/sweep', async (req, res) => {
@@ -495,6 +513,55 @@ if (AUTH_ENABLED) {
   });
 }
 
+// ─── Readers Digest ───────────────────────────────────────────────────────
+const digestHtml = readFileSync(join(ROOT, 'dashboard/public/digest.html'), 'utf-8');
+app.get('/digest', (req, res) => {
+  res.type('html').send(digestHtml.replace('</head>', `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>\n</head>`));
+});
+const userProvider = async (req) => (AUTH_ENABLED ? users.providerForUser(req.user.uid) : (llmProvider?.isConfigured ? llmProvider : null));
+const sendErr = (res, err) => res.status(err.status || 500).json({ error: err.message });
+
+app.get('/api/digest/list', async (req, res) => {
+  try { res.json(await digest.list({ uid: req.user.uid, filter: String(req.query.filter || 'all'), q: String(req.query.q || '').slice(0, 100), topic: String(req.query.topic || '').slice(0, 40), limit: Math.min(300, parseInt(req.query.limit) || 120) })); }
+  catch (err) { console.error('[Digest] list:', err.message); sendErr(res, err); }
+});
+app.get('/api/digest/article/:id', async (req, res) => {
+  try { const a = await digest.getFull(String(req.params.id).slice(0, 40), req.user.uid); if (!a) return res.status(404).json({ error: 'Article not found' }); res.json(a); }
+  catch (err) { sendErr(res, err); }
+});
+app.post('/api/digest/open', async (req, res) => {
+  try {
+    const url = String(req.body?.url || '');
+    let u; try { u = new URL(url); } catch { return res.status(400).json({ error: 'url required' }); }
+    if (!['http:', 'https:'].includes(u.protocol)) return res.status(400).json({ error: 'http(s) only' });
+    const a = await digest.openByUrl({ url: u.toString(), title: String(req.body?.title || '').slice(0, 220), source: String(req.body?.source || '').slice(0, 60) });
+    res.json(await digest.getFull(a.id, req.user.uid));
+  } catch (err) { console.error('[Digest] open:', err.message); sendErr(res, err); }
+});
+app.post('/api/digest/:id/feedback', async (req, res) => {
+  try { const rating = Math.sign(parseInt(req.body?.rating) || 0); res.json(await digest.vote(req.user.uid, String(req.params.id).slice(0, 40), rating)); }
+  catch (err) { sendErr(res, err); }
+});
+app.post('/api/digest/:id/summarize', async (req, res) => {
+  try { await digest.summarize(String(req.params.id).slice(0, 40), await userProvider(req), AUTH_ENABLED ? 'user' : 'operator'); res.json(await digest.getFull(String(req.params.id).slice(0, 40), req.user.uid)); }
+  catch (err) { sendErr(res, err); }
+});
+app.post('/api/digest/:id/research', async (req, res) => {
+  try {
+    const provider = await userProvider(req);
+    if (!provider) return res.status(400).json({ error: 'No LLM configured — add your API key in settings' });
+    const id = String(req.params.id).slice(0, 40);
+    const existing = await digest.store.getResearch(req.user.uid, id);
+    if (existing?.state === 'running' && Date.now() - new Date(existing.updatedAt || 0).getTime() < 5 * 60000) return res.status(202).json({ state: 'running' });
+    digest.startResearch(req.user.uid, id, provider).catch(() => {});
+    res.status(202).json({ state: 'running' });
+  } catch (err) { sendErr(res, err); }
+});
+app.get('/api/digest/:id/research', async (req, res) => {
+  try { const r = await digest.store.getResearch(req.user.uid, String(req.params.id).slice(0, 40)); res.json(r || { state: 'none' }); }
+  catch (err) { sendErr(res, err); }
+});
+
 function broadcast(data) {
   const msg = `data: ${JSON.stringify(data)}\n\n`;
   for (const client of sseClients) {
@@ -593,6 +660,11 @@ async function runSweepCycle() {
 
     // 7. Per-user BYOK ideas for opted-in users (non-blocking)
     runAutoIdeas().catch(err => console.error('[BYOK] auto-ideas error:', err.message));
+
+    // 8. Readers Digest ingest — awaited so it gets CPU inside the scheduler request on Cloud Run
+    if (DIGEST_AFTER_SWEEP) {
+      try { await digest.ingest(); } catch (err) { console.error('[Digest] ingest error:', err.message); }
+    }
 
     console.log(`[Crucix] Sweep complete — ${currentData.meta.sourcesOk}/${currentData.meta.sourcesQueried} sources OK`);
     console.log(`[Crucix] ${currentData.ideas.length} ideas (${synthesized.ideasSource}) | ${currentData.news.length} news | ${currentData.newsFeed.length} feed items`);
