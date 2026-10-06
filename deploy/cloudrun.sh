@@ -46,7 +46,7 @@ gcloud run deploy "$SERVICE" \
   --source . \
   --service-account "$SERVICE_ACCOUNT" \
   --allow-unauthenticated \
-  --min-instances 1 --max-instances 1 --concurrency 80 \
+  --min-instances 1 --max-instances 1 --concurrency 250 \
   --cpu 1 --memory 1Gi --timeout 3600 \
   --session-affinity \
   --env-vars-file deploy/env.yaml \

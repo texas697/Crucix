@@ -1954,6 +1954,9 @@ function reinit(){
 // === SSE: Live Updates from Server ===
 function connectSSE(){
   if (typeof EventSource === 'undefined') return;
+  // Firebase Hosting does not stream responses: an EventSource there just hangs for 60s and reconnects
+  // forever, tying up the backend. The 60s poll (pollForNewSweep) covers updates on those domains.
+  if (/\.firebaseapp\.com$|\.web\.app$/i.test(location.hostname)) return;
   // Only connect if served from localhost (not file://)
   if (location.protocol === 'file:') return;
 
