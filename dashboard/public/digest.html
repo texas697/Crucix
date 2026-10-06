@@ -6,59 +6,74 @@
 <title>Readers Digest — MFB Services Intelligence</title>
 <link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/reader.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#020408;--panel:rgba(6,14,22,0.82);--glass:rgba(10,20,32,0.55);--border:rgba(100,240,200,0.12);--border-bright:rgba(100,240,200,0.3);--text:#e8f4f0;--dim:#6a8a82;--accent:#64f0c8;--accent2:#44ccff;--warn:#ffb84c;--danger:#ff5f63;--mono:'IBM Plex Mono',monospace;--sans:'Space Grotesk',sans-serif}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:10px 16px 40px;background-image:radial-gradient(ellipse at 20% 0%,rgba(100,240,200,0.05),transparent 50%),radial-gradient(ellipse at 90% 100%,rgba(68,204,255,0.05),transparent 50%)}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 18px;border:1px solid var(--border);background:var(--panel)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;line-height:1.1;text-decoration:none;color:var(--text)}
-.brand svg{width:34px;height:34px}
-.brand .sub{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.22em;color:var(--accent);display:block;margin-top:2px}
+:root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.76 0.13 262);--accent-2:oklch(0.55 0.15 280);--accent2:oklch(0.75 0.11 235);--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--warn:#e9c9a0;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(120,150,255,0.06),transparent 70%);-webkit-font-smoothing:antialiased}
+.topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
+.brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
+.brand .mark{width:34px;height:34px;border-radius:6px;flex:none}
+.brand .b1{font-size:15px;font-weight:600;letter-spacing:-0.01em;display:block}
+.brand .sub{font-size:12px;color:var(--dim);display:block}
+.mainnav{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
+.nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{background:var(--raised-2);color:var(--text)}
+.spacer{flex:1}
 .nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:5px 10px;border:1px solid var(--border);color:var(--dim);text-decoration:none;background:rgba(255,255,255,0.02);cursor:pointer}
+.pill{font-family:var(--sans);font-size:12.5px;letter-spacing:0;padding:6px 12px;border:1px solid var(--border);border-radius:5px;color:var(--dim);text-decoration:none;background:rgba(255,255,255,0.02);cursor:pointer}
 .pill:hover{border-color:var(--border-bright);color:var(--text)}
-.pill.active{color:var(--accent);border-color:var(--border-bright);background:rgba(100,240,200,0.08)}
-.pill .v{color:var(--text);font-weight:600}
-.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:14px 0 10px}
-.hero h1{font-size:22px;font-weight:600}
-.hero p{font-size:12px;color:var(--dim);max-width:720px;line-height:1.5}
-.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
-.filters input{flex:1;min-width:200px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 10px;outline:none}
-.filters input:focus{border-color:var(--border-bright)}
+.pill.active{color:var(--text);border-color:var(--border-bright);background:var(--raised-2)}
+.pill .v{color:var(--accent);font-weight:600}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:22px 0 16px}
+.hero h1{font-size:30px;font-weight:600;letter-spacing:-0.02em}
+.hero p{font-size:14.5px;color:var(--sub);max-width:680px;line-height:1.55;margin-top:8px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.filters .seg{display:flex;gap:2px;padding:3px;background:var(--panel);border:1px solid var(--border);border-radius:6px}
+.filters .seg .pill{border:0;background:transparent;padding:7px 14px;border-radius:5px}
+.filters .seg .pill.active{background:var(--raised-2);color:var(--text)}
+.filters input{flex:1;min-width:260px;height:40px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:13.5px;padding:0 14px;outline:none}
+.filters input:focus{border-color:rgba(120,150,255,0.4)}
 .topics{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
-.topic{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border:1px solid rgba(255,255,255,0.08);color:var(--dim);cursor:pointer}
-.topic:hover,.topic.active{border-color:var(--border-bright);color:var(--accent)}
-.status{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.08em;margin:6px 0 10px}
-.empty{padding:40px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:11px;border:1px dashed var(--border)}
-.taste{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.08em;margin-bottom:10px}
+.topic{font-family:var(--sans);font-size:12.5px;padding:5px 11px;border:1px solid var(--border);border-radius:5px;color:var(--sub);cursor:pointer;background:transparent;display:inline-flex;gap:6px}
+.topic:hover,.topic.active{border-color:var(--border-bright);color:var(--text)}
+.topic span{color:var(--dim-3)}
+.status{font-family:var(--sans);font-size:12.5px;color:var(--dim-2);letter-spacing:0;margin:0}
+.taste{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--sans);font-size:12px;color:var(--dim);margin-bottom:12px}
 .taste b{color:var(--accent)}
-.byok-cta{cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;color:#041410;background:var(--accent);border:1px solid var(--accent)}
-@media (max-width:640px){body{padding:8px 10px 30px}.topbar{padding:10px}}
+.empty{padding:48px;text-align:center;color:var(--dim);font-family:var(--sans);font-size:12.5px;border:1px dashed var(--border);border-radius:8px}
+.byok-cta{cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;color:#0a0f1f;background:var(--accent)}
+@media (max-width:640px){body{padding:12px}.topbar{padding:10px}.hero h1{font-size:24px}}
 </style>
 </head>
 <body>
 <div class="topbar">
   <a class="brand" href="/" title="Back to the dashboard">
-    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#64f0c8"/><stop offset="1" stop-color="#44ccff"/></linearGradient></defs><path d="M32 3 L57 17.5 L57 46.5 L32 61 L7 46.5 L7 17.5 Z" fill="#050d14" stroke="url(#g)" stroke-width="3" stroke-linejoin="round"/><line x1="32" y1="32" x2="54" y2="19" stroke="url(#g)" stroke-width="2" stroke-linecap="round" opacity="0.9"/><text x="32" y="40" text-anchor="middle" font-family="'Space Grotesk',Arial,sans-serif" font-weight="800" font-size="21" fill="#e8f4f0">MFB</text><line x1="16" y1="45" x2="48" y2="45" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/></svg>
-    <span><span>MFB Services</span><span class="sub">INTELLIGENCE</span></span>
+    <svg viewBox="0 0 34 34" class="mark" aria-hidden="true"><defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fa7ff"/><stop offset="1" stop-color="#7c63e8"/></linearGradient></defs><rect width="34" height="34" rx="6" fill="url(#bm)"/><text x="17" y="23" text-anchor="middle" font-family="Geist,sans-serif" font-weight="600" font-size="15" fill="#0a0f1f">M</text></svg>
+    <span><span class="b1">MFB Services</span><span class="sub">Intelligence</span></span>
   </a>
-  <div class="nav" id="nav">
-    <a class="pill" href="/">DASHBOARD</a>
-    <a class="pill active" href="/digest">READERS DIGEST</a>
-  </div>
+  <nav class="mainnav">
+    <a class="nav-tab" href="/">Dashboard</a>
+    <a class="nav-tab active" href="/digest">Readers Digest</a>
+    <a class="nav-tab" href="/?guide=1">Signal guide</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="nav" id="nav"></div>
 </div>
 <div class="hero">
-  <div><h1>Readers Digest</h1><p>Long-form analysis and reporting from think tanks and the policy press, written up for fast reading. Rate pieces with &#128077;/&#128078; and the feed learns what you care about. Open any piece for the AI write-up and a cited deep dive on your own key.</p></div>
+  <div><h1>Readers Digest</h1><p>Long-form analysis and reporting from think tanks and the policy press, written up for fast reading. Rate pieces and the feed learns what you care about. Open any piece for the AI write-up and a cited deep dive on your own key.</p></div>
   <div class="status" id="status"></div>
 </div>
 <div class="filters">
-  <span class="pill active" data-filter="all">ALL</span>
-  <span class="pill" data-filter="foryou">FOR YOU</span>
-  <span class="pill" data-filter="thinktank">THINK TANKS</span>
-  <span class="pill" data-filter="news">NEWS</span>
-  <input id="q" type="search" placeholder="search titles, topics, write-ups…" autocomplete="off">
+  <div class="seg">
+    <span class="pill active" data-filter="all">All</span>
+    <span class="pill" data-filter="foryou">For you</span>
+    <span class="pill" data-filter="thinktank">Think tanks</span>
+    <span class="pill" data-filter="news">News</span>
+  </div>
+  <input id="q" type="search" placeholder="Search titles, topics, write-ups" autocomplete="off">
 </div>
 <div class="topics" id="topics"></div>
 <div class="taste" id="taste"></div>

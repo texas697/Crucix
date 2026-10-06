@@ -1,23 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" width="760" height="160" role="img" aria-label="MFB Services Intelligence">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#64f0c8"/>
-      <stop offset="1" stop-color="#44ccff"/>
+      <stop offset="0" stop-color="#8fa7ff"/>
+      <stop offset="1" stop-color="#7c63e8"/>
     </linearGradient>
-    <clipPath id="hex"><path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z"/></clipPath>
   </defs>
-  <g>
-    <path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z" fill="#050d14" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>
-    <g clip-path="url(#hex)">
-      <circle cx="80" cy="80" r="56" fill="none" stroke="#64f0c8" stroke-opacity="0.16"/>
-      <circle cx="80" cy="80" r="36" fill="none" stroke="#64f0c8" stroke-opacity="0.2"/>
-      <path d="M80 80 L80 14 A66 66 0 0 1 137 47 Z" fill="url(#g)" opacity="0.16"/>
-      <line x1="80" y1="80" x2="137" y2="47" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="110" cy="58" r="2.6" fill="#64f0c8"/>
-    </g>
-    <text x="80" y="94" text-anchor="middle" font-family="'Space Grotesk','IBM Plex Mono',Arial,sans-serif" font-weight="700" font-size="40" letter-spacing="1" fill="#e8f4f0">MFB</text>
-    <line x1="42" y1="103" x2="118" y2="103" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
-  </g>
-  <text x="172" y="78" font-family="'Space Grotesk',Arial,sans-serif" font-weight="700" font-size="52" letter-spacing="2" fill="#e8f4f0">MFB SERVICES</text>
-  <text x="174" y="122" font-family="'IBM Plex Mono',monospace" font-weight="600" font-size="24" letter-spacing="11" fill="url(#g)">INTELLIGENCE</text>
+  <rect x="14" y="24" width="112" height="112" rx="24" fill="url(#g)"/>
+  <text x="70" y="98" text-anchor="middle" font-family="Geist,Arial,sans-serif" font-weight="600" font-size="60" fill="#0a0f1f">M</text>
+  <text x="172" y="78" font-family="Geist,Arial,sans-serif" font-weight="600" font-size="52" letter-spacing="1" fill="#e9ecf2">MFB SERVICES</text>
+  <text x="174" y="122" font-family="Geist Mono,monospace" font-weight="500" font-size="22" letter-spacing="8" fill="url(#g)">INTELLIGENCE</text>
 </svg>

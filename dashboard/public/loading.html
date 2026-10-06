@@ -10,18 +10,18 @@
 <meta property="og:description" content="Live OSINT, markets and AI trade ideas from 29 sources.">
 <meta property="og:image" content="/brand/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#020408;--text:#e8f4f0;--dim:#6a8a82;--accent:#64f0c8;
-  --border:rgba(100,240,200,0.12);--mono:'IBM Plex Mono',monospace;
+  --bg:#05070b;--text:#e9ecf2;--dim:#8a94a8;--accent:oklch(0.76 0.13 262);
+  --border:rgba(120,150,255,0.18);--mono:'Geist Mono',monospace;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;align-items:center;justify-content:center}
 
 .logo-ring{width:120px;height:120px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
 .logo-ring::before{content:'';position:absolute;inset:-8px;border:1px solid var(--border);border-radius:50%;border-top-color:var(--accent);animation:spin 2s linear infinite}
-.logo-ring::after{content:'';position:absolute;inset:-16px;border:1px solid rgba(100,240,200,0.06);border-radius:50%;border-bottom-color:rgba(100,240,200,0.15);animation:spin 3s linear infinite reverse}
+.logo-ring::after{content:'';position:absolute;inset:-16px;border:1px solid rgba(120,150,255,0.08);border-radius:50%;border-bottom-color:rgba(120,150,255,0.2);animation:spin 3s linear infinite reverse}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse-blink{0%,100%{opacity:1}50%{opacity:0.3}}
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -38,14 +38,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--m
 
 #countdown{margin-top:8px;font-size:11px;color:var(--dim);letter-spacing:0.1em;text-align:center;min-height:16px}
 #countdown .eta{color:var(--text)}
-#countdown .bar-wrap{width:340px;height:2px;background:rgba(100,240,200,0.08);margin-top:8px;overflow:hidden}
+#countdown .bar-wrap{width:340px;height:2px;background:rgba(120,150,255,0.1);margin-top:8px;overflow:hidden}
 #countdown .bar-fill{height:100%;background:var(--accent);width:0%;transition:width 1s linear;box-shadow:0 0 6px var(--accent)}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="logo-ring">
-    <span class="logo-text">CX</span>
+    <span class="logo-text">M</span>
   </div>
 
   <div id="bootLines"></div>
