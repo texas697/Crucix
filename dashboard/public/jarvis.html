@@ -156,7 +156,11 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .conflict-ring{animation:pulse-conflict 2.5s ease-in-out infinite}
 @keyframes dash-flow{to{stroke-dashoffset:-20}}
 .corridor-flow{animation:dash-flow 2s linear infinite}
-.map-legend{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;background:rgba(7,9,14,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:12px;color:#a2abbd;letter-spacing:0;text-transform:none;z-index:5}
+.map-legend{position:absolute;left:14px;right:14px;bottom:14px;display:none;flex-wrap:wrap;gap:6px 16px;padding:10px 14px 10px 104px;background:rgba(7,9,14,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:12px;color:#a2abbd;letter-spacing:0;text-transform:none;z-index:5}
+.map-legend.show{display:flex}
+.map-legend-toggle{position:absolute;left:14px;bottom:14px;z-index:6;padding:9px 12px;border:1px solid rgba(255,255,255,0.07);border-radius:6px;background:rgba(10,13,20,0.9);color:var(--text-2);font:500 12.5px var(--sans);cursor:pointer;backdrop-filter:blur(8px);transition:all .15s}
+.map-legend-toggle:hover{border-color:var(--border-bright);color:#fff}
+.map-legend-toggle.on{color:#fff;border-color:rgba(120,150,255,0.4)}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:6px;height:6px;border-radius:50%}
 .map-regions{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
@@ -431,6 +435,7 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
       <div id="globeViz"></div>
       <svg id="flatMapSvg" style="display:none;width:100%;height:100%;position:absolute;top:0;left:0;cursor:grab"></svg>
       <div class="map-loading" id="mapLoading"><div class="map-loading-card"><div class="map-loading-ring"></div><div class="map-loading-text" id="mapLoadingText">Initializing 3D Globe</div></div></div>
+      <button class="map-legend-toggle" id="legendToggle" onclick="toggleLegend()">Legend</button>
       <div class="map-legend" id="mapLegend"></div>
       <div class="map-controls">
         <button class="map-ctrl-btn" onclick="mapZoom(1.5)" title="Zoom in">+</button>
@@ -861,6 +866,14 @@ function setMapHint(text){
   if(el) el.textContent = text;
 }
 
+function toggleLegend(){
+  const legend = document.getElementById('mapLegend');
+  const btn = document.getElementById('legendToggle');
+  if(!legend) return;
+  const show = legend.classList.toggle('show');
+  if(btn) btn.classList.toggle('on', show);
+}
+
 function renderTopbar(){
   const mobile = isMobileLayout();
   const ts = new Date(D.meta.timestamp);
@@ -932,46 +945,11 @@ function renderLeftRail(){
     {name:t('layers.osintFeed','OSINT Feed'),count:D.tg.posts,dot:'incident',sub:`${D.tg.urgent.length} ${t('badges.urgent','urgent').toLowerCase()}`},
     {name:t('layers.spaceActivity','Satellites'),count:D.space?.militarySats||0,dot:'space',sub:`${D.space?.totalNewObjects||0} ${t('space.newLast30d','new (30d)')}`}
   ];
-  const allNormal=D.nuke.every(s=>!s.anom);
-  const nukeHtml=D.nuke.map(s=>`<div class="site-row"><span>${s.site}</span><span class="site-val">${s.n>0?(s.cpm?.toFixed(1)||'--')+' CPM':'No data'}</span></div>`).join('');
-  const vix=D.fred.find(f=>f.id==='VIXCLS');
-  const hy=D.fred.find(f=>f.id==='BAMLH0A0HYM2');
-  const usd=D.fred.find(f=>f.id==='DTWEXBGS');
-  const m2=D.fred.find(f=>f.id==='M2SL');
-  const mort=D.fred.find(f=>f.id==='MORTGAGE30US');
-  const claims=D.fred.find(f=>f.id==='ICSA');
 
   document.getElementById('leftRail').innerHTML=`
     <div class="g-panel">
       <div class="sec-head"><h3>${t('panels.sensorGrid','Sensor grid')}</h3><span class="badge">${layers.length} feeds</span></div>
       ${layers.map(l=>`<div class="layer-item"><div class="layer-left"><div class="ldot ${l.dot}"></div><div><div class="layer-name">${l.name}</div><div class="layer-sub">${l.sub}</div></div></div><div class="layer-count">${l.count}</div></div>`).join('')}
-    </div>
-    <div class="g-panel">
-      <div class="sec-head"><h3>${t('panels.nuclearWatch','Nuclear watch')}</h3><span class="badge">Radiation &#183; CPM</span></div>
-      <div class="nuke-ok ${allNormal?'ok':'anom'}">${allNormal?'&#9679; '+t('nuclear.allSitesNormal','All sites normal'):'&#9888; '+t('nuclear.anomalyDetected','Anomaly detected')}</div>
-      ${nukeHtml}
-    </div>
-    <div class="g-panel">
-      <div class="sec-head"><h3>${t('panels.riskGauges','Risk gauges')}</h3><span class="badge">Stress</span></div>
-      <div class="econ-row"><span class="elabel">${t('metrics.vix','VIX')} (Fear)</span><span class="eval" style="color:${vix?.value>20?'var(--warn)':'var(--accent)'}">${vix?.value||'--'}</span></div>
-      <div class="econ-row"><span class="elabel">${t('metrics.hySpread','HY Spread')}</span><span class="eval">${hy?.value||'--'}</span></div>
-      <div class="econ-row"><span class="elabel">${t('metrics.usdIndex','USD Index')}</span><span class="eval">${usd?.value?.toFixed(1)||'--'}</span></div>
-      <div class="econ-row"><span class="elabel">${t('metrics.joblessClaims','Jobless Claims')}</span><span class="eval">${claims?.value?.toLocaleString()||'--'}</span></div>
-      <div class="econ-row"><span class="elabel">${t('metrics.mortgage30y','30Y Mortgage')}</span><span class="eval">${mort?.value||'--'}%</span></div>
-      <div class="econ-row"><span class="elabel">${t('metrics.m2Supply','M2 Supply')}</span><span class="eval">$${(m2?.value/1000)?.toFixed(1)||'--'}T</span></div>
-      <div class="econ-row"><span class="elabel">${t('metrics.natDebt','Nat. Debt')}</span><span class="eval">$${(parseFloat(D.treasury.totalDebt)/1e12).toFixed(2)}T</span></div>
-    </div>
-    <div class="g-panel">
-      <div class="sec-head"><h3>${t('panels.spaceWatch','Space watch')}</h3><span class="badge">Orbital</span></div>
-      ${D.space ? `
-        <div class="econ-row"><span class="elabel">New Objects (30d)</span><span class="eval" style="color:var(--accent2)">${D.space.totalNewObjects||0}</span></div>
-        <div class="econ-row"><span class="elabel">Military Sats</span><span class="eval">${D.space.militarySats||0}</span></div>
-        <div class="econ-row"><span class="elabel">Starlink</span><span class="eval">${D.space.constellations?.starlink||0}</span></div>
-        <div class="econ-row"><span class="elabel">OneWeb</span><span class="eval">${D.space.constellations?.oneweb||0}</span></div>
-        ${D.space.iss ? `<div class="econ-row"><span class="elabel">ISS</span><span class="eval" style="color:var(--accent)">ALT ${((D.space.iss.apogee+D.space.iss.perigee)/2).toFixed(0)} km</span></div>` : ''}
-        ${Object.entries(D.space.militaryByCountry||{}).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([c,n])=>`<div class="econ-row"><span class="elabel" style="padding-left:8px">${esc(c)}</span><span class="eval" style="font-size:10px">${n} mil sats</span></div>`).join('')}
-        ${(D.space.signals||[]).length ? `<p class="panel-note">${D.space.signals.slice(0,2).map(esc).join(' ')}</p>` : ''}
-      ` : '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">NO SPACE DATA</div>'}
     </div>`;
 }
 
@@ -1805,8 +1783,6 @@ function renderLower(){
 // === RIGHT RAIL ===
 function renderRight(){
   const mobile = isMobileLayout();
-  // CROSS-SOURCE SIGNALS — moved from lower grid to right rail
-  const signals=D.tSignals.slice(0,6).map((s,i)=>`<div class="signal-row"><strong>Signal ${i+1}</strong><p>${esc(s)}</p></div>`).join('');
 
   // DELTA PANEL — what changed since last sweep
   const delta = D.delta || {};
@@ -1843,10 +1819,6 @@ function renderRight(){
         <div class="delta-stat"><span class="k">${t('delta.new','New')}</span><span class="v">${ds.signalBreakdown?.new ?? 0}</span></div>
       </div>`:''}
       <div class="delta-list">${deltaHtml}</div>
-    </div>
-    <div class="g-panel right-signals">
-      <div class="sec-head"><h3>${t('panels.crossSourceSignals','Cross-source signals')}</h3><span class="badge">Worldview</span></div>
-      ${signals}
     </div>
     <div class="g-panel right-markets collapsible ${marketsOpen?'':'collapsed'}" id="marketsPanel">
       <div class="sec-head" onclick="toggleMarkets()"><h3>${t('panels.macroMarkets','Macro + markets')}</h3><span class="badge toggle">${MACRO_LIVE?t('badges.live','Live'):t('badges.delayed','Delayed')}</span></div>
