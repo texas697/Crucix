@@ -15,6 +15,7 @@
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -485,6 +486,54 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
 
 /* GLOBE.GL overrides */
 #globeViz .scene-tooltip{font-family:var(--sans)!important;font-size:11px!important;background:rgba(6,10,14,0.9)!important;border:1px solid rgba(120,150,255,0.3)!important;color:var(--text)!important;padding:4px 8px!important;letter-spacing:0}
+
+/* THEME TOGGLE */
+.theme-toggle{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font:500 12.5px var(--sans);color:var(--text-2);border:1px solid var(--border);border-radius:5px;background:rgba(255,255,255,0.02);cursor:pointer;transition:all .15s}
+.theme-toggle:hover{border-color:var(--border-bright);color:var(--text)}
+.theme-toggle .tt-ico{font-size:13px;line-height:1}
+
+/* LIGHT THEME */
+html.light{
+  --bg:#eef1f6;--panel:#ffffff;--panel-2:#f6f8fc;--raised:#eef1f7;--raised-2:#e3e8f1;
+  --glass:rgba(255,255,255,0.85);
+  --border:rgba(16,24,40,0.10);--border-bright:rgba(16,24,40,0.22);
+  --text:#0f172a;--text-2:#334155;--sub:#475569;--dim:#5b6b82;--dim-2:#6b7a90;--dim-3:#8593a8;
+  --accent:oklch(0.55 0.16 262);--accent2:oklch(0.55 0.14 235);--accent-soft:rgba(70,100,220,0.12);
+  --warn:#8a5a12;--danger:#b3261e;--mint:#0f7a5a;--sky:#2b5f86;
+}
+html.light body{background:var(--bg)}
+html.light a:hover{color:#000}
+html.light ::-webkit-scrollbar-thumb{background:#c3ccd9}
+html.light .bg-radial{opacity:0}
+html.light .corridor-flow{opacity:1}
+html.light #boot{background:var(--bg)}
+html.light .topbar{border-color:var(--border)}
+html.light .col-card,html.light .g-panel{box-shadow:0 1px 2px rgba(16,24,40,0.04)}
+html.light .card-head,html.light .site-row,html.light .econ-row,html.light .map-popup .pp-foot{border-color:rgba(16,24,40,0.08)}
+html.light .top-div,html.light .leg-divider{background:rgba(16,24,40,0.12)}
+html.light .signal-row{background:rgba(16,24,40,0.03)}
+html.light .mc .mbar{background:rgba(16,24,40,0.08)}
+html.light .meta-pill,html.light .meta-pill.btn,html.light .perf-pill,html.light .theme-toggle,html.light .leg-chip{background:rgba(16,24,40,0.03)}
+html.light .leg-search,html.light .map-search,html.light .set-field input,html.light .set-field select{background:#fff;color:var(--text)}
+html.light .set-field select option{background:#fff}
+html.light .map-container{background:radial-gradient(ellipse at center,#e9edf3,#dfe4ec)}
+html.light #map{background:#e9edf3}
+html.light .map-region-bar,html.light .map-regions{background:var(--panel-2)}
+html.light .map-regions{background:var(--raised)}
+html.light .map-controls,html.light .measure-readout{background:rgba(255,255,255,0.92);border-color:var(--border)}
+html.light .map-ctrl-btn:hover{background:var(--raised);color:var(--text)}
+html.light .map-legend{background:rgba(255,255,255,0.92);color:var(--sub)}
+html.light .map-label{color:#41506a;text-shadow:0 1px 2px rgba(255,255,255,0.9)}
+html.light .map-label.agg{color:#0f172a;background:rgba(255,255,255,0.9)}
+html.light .map-popup{background:rgba(255,255,255,0.98);border-color:rgba(70,100,220,0.3);box-shadow:0 10px 34px rgba(16,24,40,0.18)}
+html.light .map-loading{background:linear-gradient(180deg,rgba(238,241,246,0.85),rgba(238,241,246,0.95))}
+html.light .map-loading-card{box-shadow:0 12px 32px rgba(16,24,40,0.15)}
+html.light .glossary-overlay{background:rgba(16,24,40,0.35)}
+html.light .glossary-panel{background:rgba(255,255,255,0.98);box-shadow:0 18px 48px rgba(16,24,40,0.2)}
+html.light .byok-empty{background:rgba(70,100,220,0.06);border-color:rgba(70,100,220,0.3)}
+html.light .nuke-ok{background:rgba(138,90,18,0.08)}
+html.light .news-icon,html.light .osint-src,html.light .news-meta .news-src,html.light .tk-src{color:#5b6b82}
+html.light .poly-item:hover .poly-q,html.light .quake-row:hover .quake-place{color:#0f172a}
 </style>
 </head>
 <body>
@@ -509,7 +558,6 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
         <button class="map-ctrl-btn" onclick="mapZoom(1.5)" title="Zoom in">+</button>
         <button class="map-ctrl-btn" onclick="mapZoom(0.67)" title="Zoom out">&minus;</button>
         <button class="map-ctrl-btn map-toggle" id="flightToggle" onclick="toggleFlights()" title="Toggle flight routes">&#9992;</button>
-        <button class="map-ctrl-btn map-toggle" id="basemapToggle" onclick="cycleBasemap()" title="Switch basemap">Dark</button>
         <button class="map-ctrl-btn map-toggle" id="measureToggle" onclick="toggleMeasure()" title="Measure distance &amp; range rings">&#128207;</button>
       </div>
       <div class="measure-readout" id="measureReadout"></div>
@@ -833,7 +881,27 @@ let timeWindow = 'all';
 let layerCounts = {};       // total markers available per type (last plot)
 let seenMarkers = null;     // Set of marker ids seen, null until first plot
 let showAggregates = true;
-let currentBase = 0;
+let currentTheme = (()=>{ try{ return localStorage.getItem('crucix_theme')==='light'?'light':'dark'; }catch(e){ return 'dark'; } })();
+let currentBase = currentTheme==='light' ? 2 : 0;
+function applyTheme(){
+  document.documentElement.classList.toggle('light', currentTheme==='light');
+  const btn=document.querySelector('.theme-toggle');
+  if(btn){ const i=btn.querySelector('.tt-ico'), l=btn.querySelector('.tt-lbl'); if(i) i.innerHTML=currentTheme==='light'?'&#9789;':'&#9788;'; if(l) l.textContent=currentTheme==='light'?'Light':'Dark'; }
+}
+function applyThemeToMap(){
+  if(!map) return;
+  const idx = currentTheme==='light' ? 2 : 0;
+  if(idx===currentBase) return;
+  currentBase=idx;
+  map.setStyle(BASEMAPS[currentBase].style);
+  map.once('idle',()=>{ setupMapLayers(); plotMarkers(); });
+}
+function toggleTheme(){
+  currentTheme = currentTheme==='light' ? 'dark' : 'light';
+  try{ localStorage.setItem('crucix_theme', currentTheme); }catch(e){}
+  applyTheme();
+  applyThemeToMap();
+}
 let measureMode = false, measureA = null, measureB = null;
 const BASEMAPS = [
   {name:'Dark', style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'},
@@ -1082,6 +1150,7 @@ function renderTopbar(){
     </nav>
     <div class="top-spacer"></div>
     <div class="top-right">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark mode" aria-label="Toggle light or dark mode"><span class="tt-ico">${currentTheme==='light'?'&#9789;':'&#9788;'}</span><span class="tt-lbl">${currentTheme==='light'?'Light':'Dark'}</span></button>
       ${ME ? (ME.llm
         ? `<button class="meta-pill btn" onclick="openSettings()" title="Your LLM key settings">AI key <span class="v on">${esc(ME.llm.provider.toUpperCase())}</span></button>`
         : `<button class="byok-cta" onclick="openSettings()" title="Enter an API key to unlock AI trade ideas"><span class="k">&#9889;</span>Add your AI key</button>`) : ''}
@@ -2229,6 +2298,7 @@ async function refreshMyIdeasFromServer() {
 // === INIT ===
 let booted = false;
 function init(){
+  applyTheme();
   renderTopbar();renderLeftRail();renderLower();renderRight();
   renderGlossary();
   initMap();
