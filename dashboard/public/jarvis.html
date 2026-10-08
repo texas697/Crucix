@@ -191,6 +191,12 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .map-ctrl-btn.on{background:rgba(120,150,255,0.18);color:var(--accent)}
 .measure-readout{position:absolute;top:60px;left:14px;z-index:6;display:none;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--text-2);background:rgba(10,13,20,0.9);border:1px solid rgba(120,150,255,0.3);border-radius:6px;padding:8px 10px;backdrop-filter:blur(8px);max-width:230px}
 .measure-readout b{color:var(--accent)}
+.measure-readout .mr-title{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.measure-readout .mr-row{display:flex;gap:8px;color:var(--text-2)}
+.measure-readout .mr-k{color:var(--dim);min-width:34px}
+.measure-readout .mr-dist{margin-top:5px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text)}
+.measure-readout .mr-alt{font-size:10.5px;font-weight:400;color:var(--dim);margin-left:4px}
+.measure-readout .mr-hint{margin-top:4px;color:var(--dim)}
 .map-popup .pp-foot{display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
 .pp-copy{font-family:var(--mono);font-size:10px;color:var(--dim);background:transparent;border:1px solid var(--border);border-radius:4px;padding:2px 6px;cursor:pointer}
 .pp-copy:hover{color:var(--text);border-color:var(--border-bright)}
@@ -206,8 +212,18 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .map-ctrl-btn{width:34px;height:34px;border:0;background:transparent;color:var(--text-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;font-family:var(--sans)}
 .map-ctrl-btn:hover{background:var(--raised);color:#fff}
 .map-ctrl-btn + .map-ctrl-btn{border-top:1px solid var(--border)}
-.map-ctrl-btn.map-toggle{font-size:14px}
+.map-ctrl-btn.map-toggle{font-size:14px;width:auto;min-width:34px;height:34px;padding:0 11px;gap:8px;justify-content:flex-start}
+.mc-label{font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:0;color:var(--text-2)}
+.map-ctrl-btn.map-toggle .mc-label{color:var(--text-2)}
+.map-ctrl-btn.map-toggle.on .mc-label,.map-ctrl-btn.map-toggle:hover .mc-label{color:var(--text)}
 .map-ctrl-btn.off{opacity:0.4}
+.measure-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:7;display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;background:rgba(120,150,255,0.14);border:1px solid rgba(120,150,255,0.45);border-radius:8px;backdrop-filter:blur(10px);color:var(--text);font-family:var(--sans);font-size:12.5px;max-width:min(560px,calc(100% - 120px));box-shadow:0 8px 26px rgba(0,0,0,0.28)}
+.measure-banner.show{display:flex}
+.measure-banner svg{flex:none;color:var(--accent)}
+.measure-banner .mb-text{line-height:1.3}
+.measure-banner .mb-text b{color:var(--accent);font-weight:600}
+.mb-done{flex:none;font-family:var(--sans);font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid rgba(120,150,255,0.5);background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.mb-done:hover{background:var(--accent);color:#0a0f1f}
 .proj-toggle{position:absolute;top:14px;left:58px;height:34px;z-index:6;padding:0 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.07);background:rgba(10,13,20,0.9);font-family:var(--sans);font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text-2);letter-spacing:0;text-transform:none;transition:all .15s;backdrop-filter:blur(8px)}
 .proj-toggle:hover{border-color:var(--border-bright);color:#fff}
 .proj-toggle.active{color:#0a0f1f;background:var(--accent);border-color:var(--accent)}
@@ -555,10 +571,15 @@ html.light .poly-item:hover .poly-q,html.light .quake-row:hover .quake-place{col
       <div class="map-loading" id="mapLoading"><div class="map-loading-card"><div class="map-loading-ring"></div><div class="map-loading-text" id="mapLoadingText">Initializing map</div></div></div>
       <div class="map-legend" id="mapLegend"></div>
       <div class="map-controls">
-        <button class="map-ctrl-btn" onclick="mapZoom(1.5)" title="Zoom in">+</button>
-        <button class="map-ctrl-btn" onclick="mapZoom(0.67)" title="Zoom out">&minus;</button>
-        <button class="map-ctrl-btn map-toggle" id="flightToggle" onclick="toggleFlights()" title="Toggle flight routes">&#9992;</button>
-        <button class="map-ctrl-btn map-toggle" id="measureToggle" onclick="toggleMeasure()" title="Measure distance &amp; range rings">&#128207;</button>
+        <button class="map-ctrl-btn" onclick="mapZoom(1.5)" title="Zoom in" aria-label="Zoom in">+</button>
+        <button class="map-ctrl-btn" onclick="mapZoom(0.67)" title="Zoom out" aria-label="Zoom out">&minus;</button>
+        <button class="map-ctrl-btn map-toggle" id="flightToggle" onclick="toggleFlights()" title="Show or hide flight corridors" aria-label="Toggle flight corridors"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 12l20-9-9 20-2-8-9-3z"/></svg><span class="mc-label">Routes</span></button>
+        <button class="map-ctrl-btn map-toggle" id="measureToggle" onclick="toggleMeasure()" title="Measure the distance between two points on the map" aria-label="Measure distance"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21l-4-4z"/><path d="M7.5 13.5l2 2M10.5 10.5l2 2M13.5 7.5l2 2"/></svg><span class="mc-label">Measure</span></button>
+      </div>
+      <div class="measure-banner" id="measureBanner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21l-4-4z"/><path d="M7.5 13.5l2 2M10.5 10.5l2 2M13.5 7.5l2 2"/></svg>
+        <span class="mb-text" id="measureBannerText">Measure distance — click a start point, then an end point.</span>
+        <button class="mb-done" onclick="toggleMeasure()">Done</button>
       </div>
       <div class="measure-readout" id="measureReadout"></div>
       <div class="map-popup" id="mapPopup"><button class="pp-close" onclick="closePopup()">&times;</button><div class="pp-head"></div><div class="pp-text"></div><div class="pp-meta"></div></div>
@@ -1231,6 +1252,12 @@ function bindMapLifecycleEvents(){
     if(!document.hidden) setTimeout(() => syncResponsiveLayout(true), 150);
   });
   window.addEventListener('pageshow', () => setTimeout(() => syncResponsiveLayout(true), 150));
+  document.addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    if(document.querySelector('.glossary-overlay.show') || document.getElementById('settingsOverlay')?.classList.contains('show')) return;
+    if(measureMode) toggleMeasure();
+    else closePopup();
+  });
 }
 
 function renderMapLegend(){
@@ -1317,9 +1344,13 @@ function searchMap(q){
 // === MEASURE TOOL + RANGE RINGS ===
 function toggleMeasure(){
   measureMode=!measureMode;
-  const b=document.getElementById('measureToggle'); if(b) b.classList.toggle('on',measureMode);
-  if(!measureMode){ measureA=null; measureB=null; }
-  else setMapHint('Measure: click two points');
+  const b=document.getElementById('measureToggle');
+  if(b){ b.classList.toggle('on',measureMode); b.setAttribute('aria-pressed', measureMode?'true':'false'); }
+  const banner=document.getElementById('measureBanner');
+  if(banner) banner.classList.toggle('show',measureMode);
+  if(map && map.getCanvas()) map.getCanvas().style.cursor = measureMode ? 'crosshair' : 'grab';
+  if(!measureMode){ measureA=null; measureB=null; setMapHint('Scroll to zoom · drag to pan'); }
+  else setMapHint('Measure: click two points · Esc to cancel');
   renderMeasure();
 }
 function addMeasurePoint(lat,lng){
@@ -1333,6 +1364,12 @@ function haversineKm(a,b){
   const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
   const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
   return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
+}
+function bearingDeg(a,b){
+  const toRad=d=>d*Math.PI/180, p1=toRad(a.lat), p2=toRad(b.lat), dl=toRad(b.lng-a.lng);
+  const y=Math.sin(dl)*Math.cos(p2);
+  const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  return Math.round((Math.atan2(y,x)*180/Math.PI+360)%360);
 }
 function geoCircle(centerLngLat, km, n){
   const [lng,lat]=centerLngLat;
@@ -1364,15 +1401,23 @@ function renderMeasure(){
   updateMeasureReadout();
 }
 function updateMeasureReadout(){
-  const el=document.getElementById('measureReadout'); if(!el) return;
-  if(!measureMode || !measureA){ el.style.display='none'; return; }
+  const el=document.getElementById('measureReadout');
+  const bannerText=document.getElementById('measureBannerText');
+  if(!el) return;
+  if(!measureMode || !measureA){
+    el.style.display='none';
+    if(bannerText) bannerText.innerHTML='Measure distance — click a <b>start</b> point, then an <b>end</b> point. Rings mark 500 / 1000 / 1500 km.';
+    return;
+  }
   el.style.display='block';
-  let html=`A &#183; ${measureA.lat.toFixed(2)}, ${measureA.lng.toFixed(2)}`;
+  let html=`<div class="mr-title">Distance measure</div><div class="mr-row"><span class="mr-k">Start</span>${measureA.lat.toFixed(2)}, ${measureA.lng.toFixed(2)}</div>`;
   if(measureB){
-    const km=haversineKm(measureA,measureB);
-    html+=`<br>B &#183; ${measureB.lat.toFixed(2)}, ${measureB.lng.toFixed(2)}<br><b>${Math.round(km).toLocaleString()} km</b> <span style="opacity:.6">(${(km*0.539957).toFixed(0)} nm)</span>`;
+    const km=haversineKm(measureA,measureB), brg=bearingDeg(measureA,measureB);
+    html+=`<div class="mr-row"><span class="mr-k">End</span>${measureB.lat.toFixed(2)}, ${measureB.lng.toFixed(2)}</div><div class="mr-dist">${Math.round(km).toLocaleString()} km <span class="mr-alt">${(km*0.539957).toFixed(0)} nm &#183; ${brg}&#176;</span></div>`;
+    if(bannerText) bannerText.innerHTML=`Distance <b>${Math.round(km).toLocaleString()} km</b> — click again to start a new measurement.`;
   } else {
-    html+='<br><span style="opacity:.7">click a second point</span>';
+    html+='<div class="mr-hint">Click a second point&#8230;</div>';
+    if(bannerText) bannerText.innerHTML='Measure distance — now click the <b>end</b> point.';
   }
   el.innerHTML=html;
 }
