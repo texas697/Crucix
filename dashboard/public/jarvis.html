@@ -12,9 +12,9 @@
 <link rel="stylesheet" href="/css/reader.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://d3js.org/topojson.v3.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -159,17 +159,11 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .map-wrap{display:flex;flex-direction:column;width:100%}
 .map-region-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border);border-bottom:0;border-radius:8px 8px 0 0;background:var(--panel);backdrop-filter:blur(20px)}
 .map-container{height:560px;border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;background:radial-gradient(ellipse at center,rgba(8,11,17,1),rgba(5,7,11,1));position:relative;overflow:hidden}
-#globeViz{width:100%;height:100%;cursor:grab}
-#globeViz:active{cursor:grabbing}
-#globeViz canvas{outline:none}
-#flatMapSvg .land{fill:rgba(180,200,210,0.08);stroke:rgba(200,220,230,0.15);stroke-width:0.5}
-#flatMapSvg .land:hover{fill:rgba(120,150,255,0.08)}
-#flatMapSvg .graticule{fill:none;stroke:rgba(120,150,255,0.04);stroke-width:0.4}
-#flatMapSvg .border{fill:none;stroke:rgba(200,220,230,0.08);stroke-width:0.3}
-@keyframes pulse-conflict{0%,100%{opacity:0.5;stroke-width:1.5}50%{opacity:0.9;stroke-width:2.5}}
-.conflict-ring{animation:pulse-conflict 2.5s ease-in-out infinite}
-@keyframes dash-flow{to{stroke-dashoffset:-20}}
-.corridor-flow{animation:dash-flow 2s linear infinite}
+#map{position:absolute;inset:0;width:100%;height:100%;background:#05070b}
+#map canvas{outline:none}
+.maplibregl-ctrl-attrib,.maplibregl-ctrl-bottom-left{display:none}
+.map-label{font-family:var(--mono);font-size:10px;color:#aab4c8;text-shadow:0 1px 3px rgba(0,0,0,0.9);white-space:nowrap;pointer-events:none;letter-spacing:0.02em}
+.map-label.agg{color:#e9ecf2;font-family:var(--sans);font-weight:500;font-size:11px;padding:2px 7px;background:rgba(7,9,14,0.82);border:1px solid var(--border);border-radius:20px;pointer-events:auto}
 .map-legend{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:nowrap;align-items:center;gap:8px 12px;padding:10px 14px;background:rgba(7,9,14,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:12px;color:#a2abbd;letter-spacing:0;text-transform:none;z-index:5;overflow-x:auto}
 .leg-controls{display:flex;align-items:center;gap:4px;flex:none}
 .leg-chips{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;flex:none}
@@ -508,15 +502,14 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
   <div class="map-wrap">
     <div class="map-region-bar" id="mapRegionBar"></div>
     <div class="map-container" id="mapContainer">
-      <div id="globeViz"></div>
-      <svg id="flatMapSvg" style="display:none;width:100%;height:100%;position:absolute;top:0;left:0;cursor:grab"></svg>
-      <div class="map-loading" id="mapLoading"><div class="map-loading-card"><div class="map-loading-ring"></div><div class="map-loading-text" id="mapLoadingText">Initializing 3D Globe</div></div></div>
+      <div id="map"></div>
+      <div class="map-loading" id="mapLoading"><div class="map-loading-card"><div class="map-loading-ring"></div><div class="map-loading-text" id="mapLoadingText">Initializing map</div></div></div>
       <div class="map-legend" id="mapLegend"></div>
       <div class="map-controls">
         <button class="map-ctrl-btn" onclick="mapZoom(1.5)" title="Zoom in">+</button>
         <button class="map-ctrl-btn" onclick="mapZoom(0.67)" title="Zoom out">&minus;</button>
         <button class="map-ctrl-btn map-toggle" id="flightToggle" onclick="toggleFlights()" title="Toggle flight routes">&#9992;</button>
-        <button class="map-ctrl-btn map-toggle" id="basemapToggle" onclick="cycleBasemap()" title="Switch basemap">Night</button>
+        <button class="map-ctrl-btn map-toggle" id="basemapToggle" onclick="cycleBasemap()" title="Switch basemap">Dark</button>
         <button class="map-ctrl-btn map-toggle" id="measureToggle" onclick="toggleMeasure()" title="Measure distance &amp; range rings">&#128207;</button>
       </div>
       <div class="measure-readout" id="measureReadout"></div>
@@ -843,9 +836,9 @@ let showAggregates = true;
 let currentBase = 0;
 let measureMode = false, measureA = null, measureB = null;
 const BASEMAPS = [
-  {name:'Night', url:'//unpkg.com/three-globe@2.33.0/example/img/earth-night.jpg'},
-  {name:'Day', url:'//unpkg.com/three-globe@2.33.0/example/img/earth-day.jpg'},
-  {name:'Blue Marble', url:'//unpkg.com/three-globe@2.33.0/example/img/earth-blue-marble.jpg'}
+  {name:'Dark', style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'},
+  {name:'Muted', style:'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json'},
+  {name:'Light', style:'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'}
 ];
 const REGION_BOX = {
   world:null,
@@ -1027,16 +1020,8 @@ function togglePerfMode(){
   document.body.classList.toggle('low-perf', lowPerfMode);
   const perfStatus = document.getElementById('perfStatus');
   if(perfStatus) perfStatus.textContent = lowPerfMode ? 'Lite' : 'Full';
-  if(globe){
-    globe.controls().autoRotate = !lowPerfMode;
-    globe.arcDashAnimateTime(lowPerfMode ? 0 : 2000);
-  }
-  if(lowPerfMode && isMobileLayout() && !isFlat){
-    toggleMapMode();
-  } else {
-    renderLower();
-    renderRight();
-  }
+  renderLower();
+  renderRight();
 }
 
 // === TOPBAR ===
@@ -1226,24 +1211,19 @@ function openLayerInfo(key){
 }
 function closeLayerInfo(){ const ov=document.getElementById('layerOverlay'); if(ov) ov.classList.remove('show'); document.body.style.overflow=''; }
 
-function refreshMap(){
-  if(isFlat){ if(flatG && flatProjection) plotFlatMarkers(); }
-  else { plotMarkers(); }
-}
+function refreshMap(){ plotMarkers(); }
 function toggleLayer(key){ layerVisible[key]=!layerVisible[key]; renderMapLegend(); refreshMap(); }
 function setAllLayers(v){ LAYER_DEFS.forEach(l=>layerVisible[l.key]=v); renderMapLegend(); refreshMap(); }
 function setTimeWindow(w){ timeWindow=w; renderMapLegend(); refreshMap(); }
 function cycleBasemap(){
-  if(isFlat || !globe) return;
+  if(!map) return;
   currentBase=(currentBase+1)%BASEMAPS.length;
-  globe.globeImageUrl(BASEMAPS[currentBase].url);
-  const btn=document.getElementById('basemapToggle'); if(btn) btn.textContent=BASEMAPS[currentBase].name;
+  const s=BASEMAPS[currentBase];
+  map.setStyle(s.style);
+  map.once('idle',()=>{ setupMapLayers(); plotMarkers(); });
+  const btn=document.getElementById('basemapToggle'); if(btn) btn.textContent=s.name;
 }
-function flyToRegion(r){
-  if(isFlat){ setRegion(r); return; }
-  if(!globe) return;
-  setRegion(r);
-}
+function flyToRegion(r){ setRegion(r); }
 function findMapMatch(q){
   const list=[];
   const nukeCoords=[{lat:47.5,lon:34.6},{lat:51.4,lon:30.1},{lat:28.8,lon:50.9},{lat:39.8,lon:125.8},{lat:37.4,lon:141},{lat:31.0,lon:35.1}];
@@ -1261,17 +1241,8 @@ function searchMap(q){
   if(regionByText){ setRegion(regionByText); return; }
   const m = findMapMatch(q);
   if(!m) return;
-  if(isFlat && flatSvg && flatZoom && flatProjection){
-    const [x,y]=flatProjection([m.lng,m.lat]);
-    if(x!=null&&y!=null){
-      const s=3;
-      flatSvg.transition().duration(750).call(flatZoom.transform, d3.zoomIdentity.translate(flatW/2-s*x, flatH/2-s*y).scale(s));
-    }
-    setTimeout(()=>showPopup(null, m.head, m.text, m.meta, m.lat, m.lng, 0.01, {url:m.url}), 800);
-  } else if(globe){
-     globe.pointOfView({lat:m.lat, lng:m.lng, altitude:1.4}, 900);
-     setTimeout(()=>showPopup(null, m.head, m.text, m.meta, m.lat, m.lng, 0.01, {url:m.url}), 950);
-   }
+  if(map){ map.flyTo({center:[m.lng,m.lat], zoom:5, duration:900}); }
+  setTimeout(()=>showPopup(null, m.head, m.text, m.meta, m.lat, m.lng, 0, {url:m.url}), 950);
 }
 
 // === MEASURE TOOL + RANGE RINGS ===
@@ -1280,7 +1251,7 @@ function toggleMeasure(){
   const b=document.getElementById('measureToggle'); if(b) b.classList.toggle('on',measureMode);
   if(!measureMode){ measureA=null; measureB=null; }
   else setMapHint('Measure: click two points');
-  refreshMap();
+  renderMeasure();
 }
 function addMeasurePoint(lat,lng){
   if(!measureMode) return;
@@ -1288,44 +1259,40 @@ function addMeasurePoint(lat,lng){
   else { measureB={lat,lng}; }
   renderMeasure();
 }
+function haversineKm(a,b){
+  const R=6371.0088, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
+  const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
+}
 function geoCircle(centerLngLat, km, n){
   const [lng,lat]=centerLngLat;
-  const R=6371.0088, d=km/R, φ1=lat*Math.PI/180, λ1=lng*Math.PI/180;
+  const R=6371.0088, d=km/R, p1=lat*Math.PI/180, l1=lng*Math.PI/180;
   const dest=(brg)=>{
-    const θ=brg*Math.PI/180;
-    const φ2=Math.asin(Math.sin(φ1)*Math.cos(d)+Math.cos(φ1)*Math.sin(d)*Math.cos(θ));
-    const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(d)*Math.cos(φ1), Math.cos(d)-Math.sin(φ1)*Math.sin(φ2));
-    return [λ2*180/Math.PI, φ2*180/Math.PI];
+    const t=brg*Math.PI/180;
+    const p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(t));
+    const l2=l1+Math.atan2(Math.sin(t)*Math.sin(d)*Math.cos(p1), Math.cos(d)-Math.sin(p1)*Math.sin(p2));
+    return [l2*180/Math.PI, p2*180/Math.PI];
   };
   const pts=[]; for(let i=0;i<=n;i++) pts.push(dest((i/n)*360));
   return pts;
 }
 function renderMeasure(){
-  if(isFlat){
-    if(flatG && flatProjection){
-      flatG.selectAll('.measure-layer').remove();
-      if(measureA){
-        const g=flatG.append('g').attr('class','measure-layer');
-        [500,1000,1500].forEach(km=>{
-          const ring=geoCircle([measureA.lng,measureA.lat],km,72).map(p=>flatProjection(p)).filter(Boolean);
-          if(ring.length>1) g.append('path').attr('d',d3.line()(ring)+'Z').attr('fill','none').attr('stroke','rgba(120,150,255,0.3)').attr('stroke-width',1).attr('stroke-dasharray','4 4').attr('pointer-events','none');
-        });
-        const a=flatProjection([measureA.lng,measureA.lat]);
-        if(a) g.append('circle').attr('cx',a[0]).attr('cy',a[1]).attr('r',4).attr('fill','#8fa7ff').attr('pointer-events','none');
-        if(measureB){
-          const interp=d3.geoInterpolate([measureA.lng,measureA.lat],[measureB.lng,measureB.lat]);
-          const line=[]; for(let i=0;i<=64;i++){ const p=flatProjection(interp(i/64)); if(p) line.push(p); }
-          if(line.length>1) g.append('path').attr('d',d3.line()(line)).attr('fill','none').attr('stroke','#8fa7ff').attr('stroke-width',1.5).attr('pointer-events','none');
-          const bpt=flatProjection([measureB.lng,measureB.lat]);
-          if(bpt) g.append('circle').attr('cx',bpt[0]).attr('cy',bpt[1]).attr('r',4).attr('fill','#8fa7ff').attr('pointer-events','none');
-        }
+  if(mapReady){
+    const features=[];
+    if(measureA){
+      [500,1000,1500].forEach(km=>{
+        features.push({type:'Feature',properties:{kind:'ring'},geometry:{type:'LineString',coordinates:geoCircle([measureA.lng,measureA.lat],km,96)}});
+      });
+      features.push({type:'Feature',properties:{kind:'dot'},geometry:{type:'Point',coordinates:[measureA.lng,measureA.lat]}});
+      if(measureB){
+        features.push({type:'Feature',properties:{kind:'line'},geometry:{type:'LineString',coordinates:[[measureA.lng,measureA.lat],[measureB.lng,measureB.lat]]}});
+        features.push({type:'Feature',properties:{kind:'dot'},geometry:{type:'Point',coordinates:[measureB.lng,measureB.lat]}});
       }
     }
-    updateMeasureReadout();
-  } else {
-    plotMarkers();
-    updateMeasureReadout();
+    const src=map.getSource('src-measure'); if(src) src.setData({type:'FeatureCollection',features});
   }
+  updateMeasureReadout();
 }
 function updateMeasureReadout(){
   const el=document.getElementById('measureReadout'); if(!el) return;
@@ -1333,7 +1300,7 @@ function updateMeasureReadout(){
   el.style.display='block';
   let html=`A &#183; ${measureA.lat.toFixed(2)}, ${measureA.lng.toFixed(2)}`;
   if(measureB){
-    const km=d3.geoDistance([measureA.lng,measureA.lat],[measureB.lng,measureB.lat])*6371.0088;
+    const km=haversineKm(measureA,measureB);
     html+=`<br>B &#183; ${measureB.lat.toFixed(2)}, ${measureB.lng.toFixed(2)}<br><b>${Math.round(km).toLocaleString()} km</b> <span style="opacity:.6">(${(km*0.539957).toFixed(0)} nm)</span>`;
   } else {
     html+='<br><span style="opacity:.7">click a second point</span>';
@@ -1341,342 +1308,240 @@ function updateMeasureReadout(){
   el.innerHTML=html;
 }
 
+let map = null, mapReady = false;
+let labelMarkers = [];
+let mapStyleReloading = false;
+
 function initMap(){
   bindMapLifecycleEvents();
   renderMapLegend();
-  if(isFlat){
-    if(globe && typeof globe.pauseAnimation === 'function') globe.pauseAnimation();
-    document.getElementById('globeViz').style.display = 'none';
-    document.getElementById('flatMapSvg').style.display = 'block';
-    setProjLabel('GLOBE MODE');
-    setMapHint('Scroll to zoom · drag to pan');
-    if(!flatSvg) initFlatMap();
-    else { flatG.selectAll('*').remove(); drawFlatMap(); }
-    setMapLoading(false);
-    return;
-  }
-  setMapLoading(true, 'Initializing 3D Globe');
-  requestAnimationFrame(() => {
-    try {
-      initGlobe();
-      setMapLoading(false);
-    } catch {
-      isFlat = true;
-      document.getElementById('globeViz').style.display = 'none';
-      document.getElementById('flatMapSvg').style.display = 'block';
-      setProjLabel('GLOBE MODE');
-      setMapHint('3D load failed · flat mode');
-      if(!flatSvg) initFlatMap();
-      else { flatG.selectAll('*').remove(); drawFlatMap(); }
-      setMapLoading(false);
+  if(map){ plotMarkers(); return; }
+  if(typeof maplibregl === 'undefined'){ setMapLoading(true, 'Map library unavailable'); return; }
+  setMapLoading(true, 'Initializing map');
+  map = new maplibregl.Map({
+    container: 'map',
+    style: BASEMAPS[currentBase].style,
+    center: [20, 25], zoom: 1.35, minZoom: 0.5, maxZoom: 12,
+    renderWorldCopies: true, attributionControl: false,
+    dragRotate: false, pitchWithRotate: false, touchPitch: false
+  });
+  const _bb=document.getElementById('basemapToggle'); if(_bb) _bb.textContent=BASEMAPS[currentBase].name;
+  map.on('load', () => { mapReady = true; setupMapLayers(); plotMarkers(); setMapLoading(false); });
+  map.on('error', () => {});
+  map.on('styledata', () => { if(mapReady && !mapStyleReloading) setupMapLayers(); });
+  map.on('click', e => {
+    if(measureMode){ addMeasurePoint(e.lngLat.lat, e.lngLat.lng); return; }
+    const layers = ['lyr-points','lyr-conflict','lyr-rings','lyr-corridors'].filter(l => map.getLayer(l));
+    if(!layers.length) return;
+    const feats = map.queryRenderedFeatures(e.point, { layers });
+    if(feats && feats.length){
+      const p = feats[0].properties || {};
+      if(p.head) showPopup(e.originalEvent, p.head, p.text, p.meta, e.lngLat.lat, e.lngLat.lng, 0, { url: p.url, _new: p.isNew === '1' });
     }
   });
+  for(const lyr of ['lyr-points','lyr-conflict','lyr-rings','lyr-corridors']){
+    map.on('mouseenter', lyr, () => { if(!measureMode) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', lyr, () => { map.getCanvas().style.cursor = measureMode ? 'crosshair' : 'grab'; });
+  }
 }
 
-function initGlobe(){
-  if(globeInitialized && globe){
-    if(typeof globe.resumeAnimation === 'function') globe.resumeAnimation();
-    document.getElementById('globeViz').style.display = 'block';
-    document.getElementById('flatMapSvg').style.display = 'none';
-    setProjLabel('FLAT MODE');
-    setMapHint('Drag to rotate · scroll to zoom');
-    return;
-  }
-  const container = document.getElementById('mapContainer');
-  const w = container.clientWidth;
-  const h = container.clientHeight || 560;
+function emptyFC(){ return { type: 'FeatureCollection', features: [] }; }
+function ensureSource(id){
+  if(!map.getSource(id)) map.addSource(id, { type: 'geojson', data: emptyFC() });
+}
+function setupMapLayers(){
+  if(!map) return;
+  mapStyleReloading = true;
+  ['src-corridors','src-trails','src-measure','src-rings','src-points','src-conflict'].forEach(ensureSource);
+  if(!map.getLayer('lyr-corridors')) map.addLayer({ id:'lyr-corridors', type:'line', source:'src-corridors',
+    paint:{ 'line-color':['get','color'], 'line-width':['get','w'], 'line-opacity':0.55 }, layout:{ 'line-cap':'round' } });
+  if(!map.getLayer('lyr-trails')) map.addLayer({ id:'lyr-trails', type:'line', source:'src-trails',
+    paint:{ 'line-color':['get','color'], 'line-width':1.6, 'line-opacity':0.8 }, layout:{ 'line-cap':'round' } });
+  if(!map.getLayer('lyr-measure')) map.addLayer({ id:'lyr-measure', type:'line', source:'src-measure',
+    paint:{ 'line-color':['case',['==',['get','kind'],'line'],'#8fa7ff','rgba(120,150,255,0.4)'], 'line-width':['case',['==',['get','kind'],'line'],1.8,1], 'line-dasharray':[2,2] } });
+  if(!map.getLayer('lyr-conflict')) map.addLayer({ id:'lyr-conflict', type:'circle', source:'src-conflict',
+    paint:{ 'circle-color':'rgba(245,154,94,0.12)', 'circle-radius':['get','r'], 'circle-stroke-color':'rgba(245,154,94,0.85)', 'circle-stroke-width':1.4 } });
+  if(!map.getLayer('lyr-rings')) map.addLayer({ id:'lyr-rings', type:'circle', source:'src-rings',
+    paint:{ 'circle-color':'rgba(120,150,255,0.08)', 'circle-radius':['get','r'], 'circle-stroke-color':'rgba(120,150,255,0.6)', 'circle-stroke-width':1 } });
+  if(!map.getLayer('lyr-points')) map.addLayer({ id:'lyr-points', type:'circle', source:'src-points',
+    paint:{
+      'circle-color':['get','color'],
+      'circle-radius':['interpolate',['linear'],['zoom'],0.5,['*',['get','r'],0.9],2,['get','r'],6,['*',['get','r'],1.4],10,['*',['get','r'],1.8]],
+      'circle-stroke-color':['get','stroke'], 'circle-stroke-width':0.8, 'circle-opacity':0.92
+    } });
+  mapStyleReloading = false;
+}
 
-  globe = Globe()
-    .width(w)
-    .height(h)
-    .globeImageUrl('//unpkg.com/three-globe@2.33.0/example/img/earth-night.jpg')
-    .bumpImageUrl('//unpkg.com/three-globe@2.33.0/example/img/earth-topology.png')
-    .backgroundImageUrl('')
-    .backgroundColor('rgba(0,0,0,0)')
-    .atmosphereColor('#7fe0c0')
-    .atmosphereAltitude(0.18)
-    .showGraticules(true)
-    // Points layer (main markers)
-    .pointAltitude(d => d.alt || 0.01)
-    .pointRadius(d => d.size || 0.3)
-    .pointColor(d => d.color)
-    .pointLabel(d => `<b>${d.popHead||''}</b><br><span style="opacity:0.7">${d.popMeta||''}</span>${d._new?'<br><span style="color:#8fa7ff">● new since last sweep</span>':''}`)
-    .onPointClick((pt, ev) => { showPopup(ev, pt.popHead, pt.popText, pt.popMeta, pt.lat, pt.lng, pt.alt, pt); })
-    .onPointHover(pt => { document.getElementById('globeViz').style.cursor = pt ? 'pointer' : 'grab'; })
-    // Labels click → fly to aggregated region
-    .onLabelClick(d => { if(d && d.region) setRegion(d.region); })
-    // Conflict / new-event rings
-    .onRingClick((r, ev) => { if(r && r.popHead) showPopup(ev, r.popHead, r.popText, r.popMeta, r.lat, r.lng, 0.01, r); })
-    // Arcs layer (flight corridors)
-    .arcColor(d => d.color)
-    .arcStroke(d => d.stroke || 0.4)
-    .arcDashLength(0.4)
-    .arcDashGap(0.2)
-    .arcDashAnimateTime(2000)
-    .arcAltitudeAutoScale(0.3)
-    .arcLabel(d => d.label || '')
-    // Rings layer (pulsing conflict events)
-    .ringColor(d => t => `${d.ringColor || 'rgba(245,154,94,'}${1-t})`)
-    .ringMaxRadius(d => d.maxR || 3)
-    .ringPropagationSpeed(d => d.speed || 2)
-    .ringRepeatPeriod(d => d.period || 800)
-    // Labels layer
-    .labelText(d => d.text)
-    .labelSize(d => d.size || 0.4)
-    .labelColor(d => d.color || 'rgba(138,148,168,0.9)')
-    .labelDotRadius(0)
-    .labelAltitude(0.012)
-    .labelResolution(2)
-    // Paths layer (range rings)
-    .pathPoints(d => d.coords)
-    .pathPointLat(p => p[0]).pathPointLng(p => p[1])
-    .pathColor(d => d.color)
-    .pathStroke(d => d.stroke || 0.5)
-    .pathTransitionDuration(0)
-    .onGlobeClick(({lat,lng}) => { if(measureMode) addMeasurePoint(lat,lng); })
-    (document.getElementById('globeViz'));
+function applyMapData(points, arcs, rings, trails){
+  if(!mapReady) return;
+  const ptFeat = p => ({ type:'Feature', properties:{
+    head: p.popHead||'', text: p.popText||'', meta: p.popMeta||'', url: p.url||'', isNew: p._new?'1':'0',
+    color: p.color||'#8fa7ff', stroke: p._stroke||'rgba(0,0,0,0.4)',
+    r: Math.max(2.5, Math.min(16, (p._r!=null? p._r : (p.size||0.3)*12)))
+  }, geometry:{ type:'Point', coordinates:[p.lng, p.lat] } });
+  map.getSource('src-points').setData({ type:'FeatureCollection', features: points.map(ptFeat) });
 
-  // Style the WebGL scene
-  const scene = globe.scene();
-  const renderer = globe.renderer();
-  renderer.setClearColor(0x000000, 0);
-
-  // Add subtle stars background
-  const starGeom = new THREE.BufferGeometry();
-  const starVerts = [];
-  for(let i=0; i<2000; i++){
-    const r = 800 + Math.random()*200;
-    const theta = Math.random()*Math.PI*2;
-    const phi = Math.acos(2*Math.random()-1);
-    starVerts.push(r*Math.sin(phi)*Math.cos(theta), r*Math.sin(phi)*Math.sin(theta), r*Math.cos(phi));
-  }
-  starGeom.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3));
-  const starMat = new THREE.PointsMaterial({color:0x88bbaa, size:0.8, transparent:true, opacity:0.6});
-  scene.add(new THREE.Points(starGeom, starMat));
-
-  // Customize graticule color
-  scene.traverse(obj => {
-    if(obj.material && obj.type === 'Line'){
-      obj.material.color.set(0x1a3a2a);
-      obj.material.opacity = 0.3;
-      obj.material.transparent = true;
+  // build arcs with a slight curve for legibility
+  const arcFeats = (arcs||[]).map(a => {
+    const coords = [];
+    const from = [a.startLng, a.startLat], to = [a.endLng, a.endLat];
+    const mx = (from[0]+to[0])/2, my = (from[1]+to[1])/2;
+    const lift = Math.hypot(to[0]-from[0], to[1]-from[1])*0.12;
+    for(let i=0;i<=24;i++){
+      const t=i/24, x=from[0]+(to[0]-from[0])*t, y=from[1]+(to[1]-from[1])*t;
+      const bulge = Math.sin(Math.PI*t)*lift;
+      const dx = to[1]-from[1], dy = -(to[0]-from[0]);
+      const len = Math.hypot(dx,dy)||1;
+      coords.push([x + dx/len*bulge, y + dy/len*bulge]);
     }
+    return { type:'Feature', properties:{ color:(a.color&&a.color[0])||'rgba(127,224,192,0.35)', w:Math.max(0.8, Math.min(3, (a.stroke||0.4)*4)), head:a.label||'' }, geometry:{ type:'LineString', coordinates: coords } };
   });
+  map.getSource('src-corridors').setData({ type:'FeatureCollection', features: arcFeats });
 
-  // Set initial POV
-  globe.pointOfView(regionPOV.world, 0);
+  const ringFeats = (rings||[]).map(r => ({ type:'Feature', properties:{ r: Math.max(3, Math.min(14, (r.maxR||3)*2)), head:r.popHead||'', text:r.popText||'', meta:r.popMeta||'' },
+    geometry:{ type:'Point', coordinates:[r.lng, r.lat] } }));
+  map.getSource('src-rings').setData({ type:'FeatureCollection', features: ringFeats });
 
-  // Auto-rotate slowly
-  globe.controls().autoRotate = !lowPerfMode;
-  globe.controls().autoRotateSpeed = 0.3;
-  globe.controls().enableDamping = true;
-  globe.controls().dampingFactor = 0.1;
+  const trailFeats = (trails||[]).map(t => ({ type:'Feature', properties:{ color: t.color||'rgba(255,158,107,0.7)' },
+    geometry:{ type:'LineString', coordinates: t.coords.map(c => Array.isArray(c)? c : [c[1], c[0]]) } })).filter(f=>f.geometry.coordinates.length>1);
+  map.getSource('src-trails').setData({ type:'FeatureCollection', features: trailFeats });
 
-  // Stop auto-rotate on interaction, resume after 10s
-  let rotateTimeout;
-  const el = document.getElementById('globeViz');
-  el.addEventListener('mousedown', () => {
-    globe.controls().autoRotate = false;
-    clearTimeout(rotateTimeout);
+  renderMeasure();
+}
+
+function renderLabels(labels){
+  labelMarkers.forEach(m => m.remove()); labelMarkers = [];
+  if(!mapReady) return;
+  labels.forEach(l => {
+    const el = document.createElement('div');
+    el.className = 'map-label' + (l.aggregate ? ' agg' : '');
+    el.textContent = l.text;
+    if(l.aggregate){ el.style.cursor='pointer'; el.onclick = () => setRegion(l.region); }
+    const m = new maplibregl.Marker({ element: el, anchor: 'left' }).setLngLat([l.lng, l.lat]).addTo(map);
+    labelMarkers.push(m);
   });
-  el.addEventListener('mouseup', () => {
-    rotateTimeout = setTimeout(() => { if(globe && !lowPerfMode) globe.controls().autoRotate = true; }, 10000);
-  });
-
-  // Plot globe markers (preloaded but hidden)
-  plotMarkers();
-
-  // Start in flat mode — hide globe, show flat map
-  if(isFlat){
-    document.getElementById('globeViz').style.display = 'none';
-    document.getElementById('flatMapSvg').style.display = 'block';
-    initFlatMap();
-  } else {
-    document.getElementById('globeViz').style.display = 'block';
-    document.getElementById('flatMapSvg').style.display = 'none';
-    setProjLabel('FLAT MODE');
-    setMapHint('Drag to rotate · scroll to zoom');
-  }
-
-  globeInitialized = true;
 }
 
 function plotMarkers(){
-  if(!globe) return;
-  const points = [];
-  const labels = [];
+  if(!mapReady) return;
+  const points = [], labels = [];
 
-  // === Air hotspots (green) ===
+  // === Air hotspots ===
   const airCoords=[{lat:30,lon:44},{lat:24,lon:120},{lat:49,lon:32},{lat:57,lon:24},{lat:14,lon:114},{lat:37,lon:127},{lat:25,lon:-80},{lat:4,lon:2},{lat:-34,lon:18},{lat:10,lon:51}];
   if(flightsVisible) D.air.forEach((a,i)=>{
     const c=airCoords[i]; if(!c) return;
-    points.push({
-      lat:c.lat, lng:c.lon, size:0.25+a.total/200, alt:0.015,
-      color:'rgba(127,224,192,0.8)', type:'air', priority:1,
-      label: a.region.replace(' Region','')+' '+a.total,
-      popHead: a.region, popMeta: 'Air Activity',
-      popText: `${a.total} aircraft tracked<br>No callsign: ${a.noCallsign}<br>High altitude: ${a.highAlt}<br>Top: ${esc(a.top.slice(0,3).map(t=>t[0]+' ('+t[1]+')').join(', '))}`
-    });
-    labels.push({lat:c.lat, lng:c.lon+2, text:a.region.replace(' Region','')+' '+a.total, size:0.35, color:'rgba(138,148,168,0.8)', type:'air'});
+    points.push({ lat:c.lat, lng:c.lon, size:0.3, _r:4+Math.min(a.total/40,10), color:'rgba(127,224,192,0.85)', _stroke:'rgba(127,224,192,0.35)', type:'air', priority:1,
+      popHead:a.region, popMeta:`Air Activity · ${a.total} aircraft`,
+      popText:`${a.total} aircraft tracked<br>No callsign: ${a.noCallsign}<br>High altitude: ${a.highAlt}<br>Top: ${esc(a.top.slice(0,3).map(t=>t[0]+' ('+t[1]+')').join(', '))}` });
+    labels.push({ lat:c.lat, lng:c.lon, text:a.region.replace(' Region','')+' '+a.total, color:'#8fa7ff', type:'air' });
   });
 
-  // === Thermal/fire (red) ===
-  D.thermal.forEach(t=>{
-    t.fires.forEach(f=>{
-      points.push({
-        lat:f.lat, lng:f.lon, size:0.12+Math.min(f.frp/200,0.3), alt:0.008,
-        color:'rgba(255,107,116,0.7)', type:'thermal', priority:3,
-        popHead:'Thermal Detection', popMeta:'FIRMS Satellite',
-        popText:`Region: ${t.region}<br>FRP: ${f.frp.toFixed(1)} MW<br>Total: ${t.det.toLocaleString()}<br>Night: ${t.night.toLocaleString()}`
-      });
-    });
-  });
+  // === Thermal / fire ===
+  D.thermal.forEach(t=>{ t.fires.forEach(f=>{
+    points.push({ lat:f.lat, lng:f.lon, size:0.12+Math.min(f.frp/200,0.3), _r:2.5+Math.min(f.frp/40,5), color:'rgba(255,107,116,0.75)', _stroke:'rgba(255,107,116,0.25)', type:'thermal', priority:3,
+      popHead:'Thermal Detection', popMeta:'FIRMS Satellite',
+      popText:`Region: ${t.region}<br>FRP: ${f.frp.toFixed(1)} MW<br>Total: ${t.det.toLocaleString()}<br>Night: ${t.night.toLocaleString()}` });
+  }); });
 
-  // === Maritime chokepoints (purple) ===
+  // === Maritime chokepoints ===
   D.chokepoints.forEach(cp=>{
-    points.push({
-      lat:cp.lat, lng:cp.lon, size:0.35, alt:0.02,
-      color:'rgba(180,140,255,0.8)', type:'maritime', priority:1,
-      popHead:cp.label, popMeta:'Maritime Intelligence', popText:esc(cp.note)
-    });
-    labels.push({lat:cp.lat, lng:cp.lon+1.5, text:cp.label, size:0.3, color:'rgba(180,140,255,0.6)', type:'maritime'});
+    points.push({ lat:cp.lat, lng:cp.lon, size:0.35, _r:5, color:'rgba(180,140,255,0.85)', _stroke:'rgba(180,140,255,0.3)', type:'maritime', priority:1,
+      popHead:cp.label, popMeta:'Maritime Intelligence', popText:esc(cp.note) });
+    labels.push({ lat:cp.lat, lng:cp.lon, text:cp.label, color:'rgba(180,140,255,0.85)', type:'maritime' });
   });
 
-  // === Nuclear sites (yellow) ===
+  // === Nuclear sites ===
   const nukeCoords=[{lat:47.5,lon:34.6},{lat:51.4,lon:30.1},{lat:28.8,lon:50.9},{lat:39.8,lon:125.8},{lat:37.4,lon:141},{lat:31.0,lon:35.1}];
   D.nuke.forEach((n,i)=>{
     const c=nukeCoords[i]; if(!c) return;
-    points.push({
-      lat:c.lat, lng:c.lon, size:0.3, alt:0.012,
-      color: n.anom ? 'rgba(255,107,116,0.9)' : 'rgba(242,200,121,0.8)', type:'nuke', priority:2,
+    points.push({ lat:c.lat, lng:c.lon, size:0.3, _r:4.5, color: n.anom ? 'rgba(255,107,116,0.95)' : 'rgba(242,200,121,0.85)', _stroke:'rgba(242,200,121,0.3)', type:'nuke', priority:2,
       popHead:n.site, popMeta:'Radiation Monitoring',
-      popText:`Status: ${n.anom?'ANOMALY':'Normal'}<br>Avg CPM: ${n.cpm?.toFixed(1)||'No data'}<br>Readings: ${n.n}`
-    });
+      popText:`Status: ${n.anom?'ANOMALY':'Normal'}<br>Avg CPM: ${n.cpm?.toFixed(1)||'No data'}<br>Readings: ${n.n}` });
   });
 
-  // === SDR receivers (cyan) ===
-  D.sdr.zones.forEach(z=>{
-    z.receivers.forEach(r=>{
-      points.push({
-        lat:r.lat, lng:r.lon, size:0.15, alt:0.005,
-        color:'rgba(106,168,255,0.6)', type:'sdr', priority:3,
-        popHead:'SDR Receiver', popMeta:'KiwiSDR Network',
-        popText:`${esc(r.name)}<br>Zone: ${z.region}<br>${z.count} in zone`
-      });
-    });
-  });
+  // === SDR receivers ===
+  D.sdr.zones.forEach(z=>{ z.receivers.forEach(r=>{
+    points.push({ lat:r.lat, lng:r.lon, size:0.15, _r:2.5, color:'rgba(106,168,255,0.6)', _stroke:'rgba(106,168,255,0.2)', type:'sdr', priority:3,
+      popHead:'SDR Receiver', popMeta:'KiwiSDR Network', popText:`${esc(r.name)}<br>Zone: ${z.region}<br>${z.count} in zone` });
+  }); });
 
-  // === OSINT events from Telegram (orange) ===
+  // === OSINT events ===
   const osintGeo=[{lat:45,lon:41,idx:0},{lat:48,lon:37,idx:1},{lat:48.5,lon:37.5,idx:2},{lat:45,lon:40.2,idx:3},{lat:50.6,lon:36.6,idx:5},{lat:48.5,lon:35,idx:6}];
   osintGeo.forEach(o=>{
     const post=D.tg.urgent[o.idx]; if(!post) return;
-    points.push({
-      lat:o.lat, lng:o.lon, size:0.3, alt:0.018,
-      color:'rgba(245,154,94,0.8)', type:'osint', priority:2,
-      popHead:(post.channel||'').toUpperCase(), popMeta:`${post.views?.toLocaleString()||'?'} views`, ts:post.date,
-      popText:cleanText(post.text?.substring(0,200)||'')
-    });
+    points.push({ lat:o.lat, lng:o.lon, size:0.3, _r:4.5, color:'rgba(245,154,94,0.85)', _stroke:'rgba(245,154,94,0.3)', type:'osint', priority:2, ts:post.date,
+      popHead:(post.channel||'').toUpperCase(), popMeta:`${post.views?.toLocaleString()||'?'} views`, popText:cleanText(post.text?.substring(0,200)||'') });
   });
 
-  // === WHO health alerts (green) ===
+  // === WHO alerts ===
   const whoGeo=[{lat:0.3,lon:32.6},{lat:-6.2,lon:106.8},{lat:-4.3,lon:15.3},{lat:35,lon:105},{lat:12.5,lon:105},{lat:35,lon:105},{lat:28,lon:84},{lat:24,lon:45},{lat:30,lon:70},{lat:-0.8,lon:11.6}];
   D.who.slice(0,10).forEach((w,i)=>{
     const c=whoGeo[i]; if(!c) return;
-    points.push({
-      lat:c.lat, lng:c.lon, size:0.25, alt:0.01,
-      color:'rgba(127,224,192,0.7)', type:'health', priority:2,
-      popHead:w.title, popMeta:'WHO Outbreak', popText:esc(w.summary||''), ts:w.date
-    });
+    points.push({ lat:c.lat, lng:c.lon, size:0.25, _r:3.8, color:'rgba(127,224,192,0.7)', _stroke:'rgba(127,224,192,0.25)', type:'health', priority:2, ts:w.date,
+      popHead:w.title, popMeta:'WHO Outbreak', popText:esc(w.summary||'') });
   });
 
-  // === News markers (light blue) ===
+  // === News ===
   (D.news||[]).forEach(n=>{
-    points.push({
-      lat:n.lat, lng:n.lon, size:0.2, alt:0.008,
-      color:'rgba(143,184,216,0.7)', type:'news', priority:3,
-      popHead:n.source+' NEWS', popMeta:n.region+' · '+getAge(n.date), ts:n.date, url:n.url,
-      popText:cleanText(n.title)
-    });
+    points.push({ lat:n.lat, lng:n.lon, size:0.2, _r:3, color:'rgba(143,184,216,0.75)', _stroke:'rgba(143,184,216,0.25)', type:'news', priority:3, ts:n.date, url:n.url,
+      popHead:n.source+' NEWS', popMeta:n.region+' · '+getAge(n.date), popText:cleanText(n.title) });
   });
 
-  // === NOAA severe weather alerts (orange) ===
+  // === NOAA weather ===
   (D.noaa?.alerts||[]).forEach(a=>{
-    points.push({
-      lat:a.lat, lng:a.lon, size:0.22, alt:0.01,
-      color:'rgba(245,154,94,0.8)', type:'weather', priority:2,
-      popHead:a.event, popMeta:'NOAA/NWS · '+a.severity,
-      popText:esc(a.headline||'')
-    });
+    points.push({ lat:a.lat, lng:a.lon, size:0.22, _r:4, color:'rgba(245,154,94,0.8)', _stroke:'rgba(245,154,94,0.3)', type:'weather', priority:2,
+      popHead:a.event, popMeta:'NOAA/NWS · '+a.severity, popText:esc(a.headline||'') });
   });
 
-  // === EPA RadNet stations (lime green) ===
+  // === EPA RadNet ===
   (D.epa?.stations||[]).forEach(s=>{
-    points.push({
-      lat:s.lat, lng:s.lon, size:0.18, alt:0.006,
-      color:'rgba(242,200,121,0.7)', type:'radiation', priority:3,
+    points.push({ lat:s.lat, lng:s.lon, size:0.18, _r:3, color:'rgba(242,200,121,0.7)', _stroke:'rgba(242,200,121,0.25)', type:'radiation', priority:3,
       popHead:'RadNet: '+s.location, popMeta:'EPA Radiation Monitor',
-      popText:`${esc(s.analyte||'--')}: ${esc(s.result||'--')} ${esc(s.unit||'')}<br>State: ${esc(s.state)}`
-    });
+      popText:`${esc(s.analyte||'--')}: ${esc(s.result||'--')} ${esc(s.unit||'')}<br>State: ${esc(s.state)}` });
   });
 
-  // === ISS + Space Stations (bright white, pulsing) ===
+  // === Space stations ===
   (D.space?.stationPositions||[]).forEach(s=>{
-    points.push({
-      lat:s.lat, lng:s.lon, size:0.4, alt:0.04,
-      color:'rgba(255,255,255,0.95)', type:'space', priority:1,
-      popHead:s.name, popMeta:'Space Station (approx.)',
-      popText:`Orbital position estimate<br>Lat: ${s.lat}° Lon: ${s.lon}°`
-    });
-    labels.push({lat:s.lat, lng:s.lon+3, text:s.name.split('(')[0].trim(), size:0.35, color:'rgba(255,255,255,0.7)', type:'space'});
+    points.push({ lat:s.lat, lng:s.lon, size:0.4, _r:5, color:'rgba(255,255,255,0.95)', _stroke:'rgba(255,255,255,0.4)', type:'space', priority:1,
+      popHead:s.name, popMeta:'Space Station (approx.)', popText:`Orbital position estimate<br>Lat: ${s.lat}° Lon: ${s.lon}°` });
+    labels.push({ lat:s.lat, lng:s.lon, text:s.name.split('(')[0].trim(), color:'rgba(255,255,255,0.8)', type:'space' });
   });
 
-  // === GDELT geo events (steel blue) ===
+  // === GDELT events ===
   (D.gdelt?.geoPoints||[]).forEach(g=>{
-    points.push({
-      lat:g.lat, lng:g.lon, size:0.15+Math.min(g.count/50,0.2), alt:0.007,
-      color:'rgba(106,168,255,0.6)', type:'gdelt', priority:3,
-      popHead:'GDELT Event', popMeta:g.count+' reports',
-      popText:esc(g.name)||'Global event detection'
-    });
+    points.push({ lat:g.lat, lng:g.lon, size:0.15+Math.min(g.count/50,0.2), _r:3, color:'rgba(106,168,255,0.6)', _stroke:'rgba(106,168,255,0.2)', type:'gdelt', priority:3,
+      popHead:'GDELT Event', popMeta:g.count+' reports', popText:esc(g.name)||'Global event detection' });
   });
 
-  // === Live drone / missile tracks (Neptun) ===
+  // === Live tracks (Neptun) ===
   if(TRACKS && Array.isArray(TRACKS.tracks)){
-    const tcol=t=>(t==='missile'||t==='shahed')?'rgba(255,107,116,0.95)':t==='fpv'?'rgba(242,200,121,0.95)':'rgba(245,154,94,0.95)';
     TRACKS.tracks.forEach(t=>{
-      points.push({
-        lat:t.lat, lng:t.lon, size:0.4, alt:0.03, color:tcol((t.type||'').toLowerCase()), type:'track', priority:1,
-        popHead:(t.title||'Track')+' \u00b7 '+((t.locality||t.region)||''),
-        popMeta:`${(t.type||'track').toUpperCase()} \u00b7 ${t.confidence||''} \u00b7 ${t.sourceCount||1} source(s)`,
-        popText:`${esc(t.explanation||'')}<br>Heading: ${t.heading!=null?t.heading+'\u00b0':'\u2014'}<br>Uncertainty: \u00b1${t.uncertaintyKm||'?'} km<br>${esc(t.updatedAt||'')}`,
-        ts:t.updatedAt
-      });
+      const col=(t.type==='missile'||t.type==='shahed')?'rgba(255,107,116,0.95)':t.type==='fpv'?'rgba(242,200,121,0.95)':'rgba(245,154,94,0.95)';
+      points.push({ lat:t.lat, lng:t.lon, size:0.4, _r:5, color:col, _stroke:'rgba(0,0,0,0.4)', type:'track', priority:1, ts:t.updatedAt,
+        popHead:(t.title||'Track')+' · '+((t.locality||t.region)||''),
+        popMeta:`${(t.type||'track').toUpperCase()} · ${t.confidence||''} · ${t.sourceCount||1} source(s)`,
+        popText:`${esc(t.explanation||'')}<br>Heading: ${t.heading!=null?t.heading+'°':'—'}<br>Uncertainty: ±${t.uncertaintyKm||'?'} km` });
     });
   }
 
-  // === Earthquakes (USGS) ===
+  // === Earthquakes ===
   if(QUAKES && Array.isArray(QUAKES.items)){
     QUAKES.items.forEach(q=>{
-      points.push({
-        lat:q.lat, lng:q.lon, size:0.18+Math.min(q.mag/10,0.5), alt:0.006, color:magColor(q.mag), type:'quake', priority:1,
-        popHead:`M${(+q.mag).toFixed(1)} earthquake`, popMeta:'USGS &#183; '+getAge(q.ts),
-        popText:`${esc(q.place||'')}<br>Depth: ${q.depth!=null?Math.round(q.depth)+' km':'?'}${q.tsunami?'<br><span style="color:#ff8a5c">Tsunami flag</span>':''}`,
-        ts:q.ts, url:q.url
-      });
+      points.push({ lat:q.lat, lng:q.lon, size:0.18+Math.min(q.mag/10,0.5), _r:2.5+Math.min(q.mag,7)*0.8, color:magColor(q.mag), _stroke:'rgba(0,0,0,0.35)', type:'quake', priority:1, ts:q.ts, url:q.url,
+        popHead:`M${(+q.mag).toFixed(1)} earthquake`, popMeta:'USGS · '+getAge(q.ts),
+        popText:`${esc(q.place||'')}<br>Depth: ${q.depth!=null?Math.round(q.depth)+' km':'?'}${q.tsunami?'<br><span style="color:#ff8a5c">Tsunami flag</span>':''}` });
     });
   }
 
-  // === FILTERS: layers / region / time ===
+  // === Filters: layers / region / time ===
   const now = Date.now();
   const inTime = ts => { const w = TIME_WINDOWS[timeWindow]; return !w || !ts || (now - new Date(ts).getTime()) <= w; };
   const pass = p => layerVisible[p.type] && inActiveRegion(p.lat,p.lng) && inTime(p.ts);
 
-  // counts per layer (all available) for the legend
   layerCounts = {};
   points.forEach(p=>{ layerCounts[p.type] = (layerCounts[p.type]||0)+1; });
   layerCounts.conflict = (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon).length;
 
-  // new-since-last-sweep detection
   const plottingPoints = points.filter(pass);
   const firstPlot = seenMarkers === null;
   const nextSeen = new Set();
@@ -1688,130 +1553,62 @@ function plotMarkers(){
   seenMarkers = nextSeen;
 
   const shownLabels = labels.filter(l => layerVisible[l.type] && inActiveRegion(l.lat,l.lng));
-
-  // aggregate region bubbles (world view only)
   if(currentRegion==='world' && showAggregates){
     Object.keys(REGION_CENTROID).forEach(r=>{
       const n = points.filter(p=>inRegionBox(p.lat,p.lng,r)).length;
-      if(n>0) shownLabels.push({lat:REGION_CENTROID[r][0], lng:REGION_CENTROID[r][1], text:`${REGION_LABEL[r]} · ${n}`, size:0.5, color:'#e9ecf2', aggregate:true, region:r});
+      if(n>0) shownLabels.push({ lat:REGION_CENTROID[r][0], lng:REGION_CENTROID[r][1], text:`${REGION_LABEL[r]} · ${n}`, aggregate:true, region:r });
     });
   }
 
-  globe.pointsData(plottingPoints);
-  globe.labelsData(shownLabels);
-  renderMapLegend();
-
-  // === ACLED CONFLICT EVENTS (pulsing rings) ===
-  let conflictRings = [];
+  // === Conflict rings ===
+  const conflictRings = [];
   if(layerVisible.conflict){
-    conflictRings = (D.acled?.deadliestEvents || []).filter(e => e.lat && e.lon && inActiveRegion(e.lat,e.lon)).map(e => {
-      const logFatal = Math.log2(Math.max(e.fatalities, 1));
-      return {
-        lat: e.lat, lng: e.lon,
-        maxR: Math.max(2, Math.min(6, 1 + logFatal)),
-        speed: 1.5 + Math.random(),
-        period: 600 + Math.random()*600,
-        ringColor: 'rgba(245,154,94,',
-        popHead: e.type || 'CONFLICT', popMeta: 'ACLED Conflict Data',
-        popText: `${e.fatalities} fatalities<br>${esc(e.location)}, ${esc(e.country)}<br>Date: ${esc(e.date)}`
-      };
+    (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon&&inActiveRegion(e.lat,e.lon)).forEach(e=>{
+      conflictRings.push({ lat:e.lat, lng:e.lon, maxR:Math.max(2,Math.min(6,1+Math.log2(Math.max(e.fatalities,1)))), popHead:e.type||'CONFLICT', popMeta:'ACLED Conflict Data',
+        popText:`${e.fatalities} fatalities<br>${esc(e.location)}, ${esc(e.country)}` });
     });
   }
-  // pulse rings for markers new since the last sweep
-  plottingPoints.filter(p=>p._new).forEach(p=>{
-    conflictRings.push({lat:p.lat, lng:p.lng, maxR:3.5, speed:2.2, period:700, ringColor:'rgba(120,150,255,', popHead:p.popHead, popMeta:p.popMeta, popText:p.popText});
-  });
-  globe.ringsData(conflictRings);
 
-  // === FLIGHT CORRIDORS (3D arcs) ===
+  // === Flight corridors ===
   const arcs = [];
   if(flightsVisible){
-  const airCoordsFlight = [
-    {region:'Middle East',lat:30,lon:44}, {region:'Taiwan Strait',lat:24,lon:120},
-    {region:'Ukraine Region',lat:49,lon:32}, {region:'Baltic Region',lat:57,lon:24},
-    {region:'South China Sea',lat:14,lon:114}, {region:'Korean Peninsula',lat:37,lon:127},
-    {region:'Caribbean',lat:25,lon:-80}, {region:'Gulf of Guinea',lat:4,lon:2},
-    {region:'Cape Route',lat:-34,lon:18}, {region:'Horn of Africa',lat:10,lon:51}
-  ];
-  const globalHubs = [
-    {lat:40.6,lon:-73.8},{lat:51.5,lon:-0.5},{lat:25.3,lon:55.4},
-    {lat:1.4,lon:103.8},{lat:-33.9,lon:151.2},{lat:-23.4,lon:-46.5}
-  ];
-  // Inter-hotspot corridors
-  for(let i=0; i<D.air.length; i++){
-    for(let j=i+1; j<D.air.length; j++){
-      const a=D.air[i], b=D.air[j];
-      const from=airCoordsFlight[i], to=airCoordsFlight[j];
-      if(!from||!to) continue;
-      const traffic=a.total+b.total;
-      if(traffic<30) continue;
-      const ncRatio=(a.noCallsign+b.noCallsign)/Math.max(traffic,1);
-      const color = ncRatio>0.15 ? ['rgba(255,107,116,0.6)','rgba(255,107,116,0.15)'] :
-                    ncRatio>0.05 ? ['rgba(245,154,94,0.5)','rgba(245,154,94,0.1)'] :
-                                   ['rgba(127,224,192,0.4)','rgba(127,224,192,0.08)'];
-      arcs.push({
-        startLat:from.lat, startLng:from.lon, endLat:to.lat, endLng:to.lon,
-        color, stroke:Math.max(0.3, Math.min(1.2, traffic/120)),
-        label:`${from.region} ↔ ${to.region}: ${traffic} aircraft`
-      });
+    const airCoordsFlight=[{region:'Middle East',lat:30,lon:44},{region:'Taiwan Strait',lat:24,lon:120},{region:'Ukraine',lat:49,lon:32},{region:'Baltic',lat:57,lon:24},{region:'South China Sea',lat:14,lon:114},{region:'Korean Peninsula',lat:37,lon:127},{region:'Caribbean',lat:25,lon:-80},{region:'Gulf of Guinea',lat:4,lon:2},{region:'Cape Route',lat:-34,lon:18},{region:'Horn of Africa',lat:10,lon:51}];
+    const globalHubs=[{lat:40.6,lon:-73.8},{lat:51.5,lon:-0.5},{lat:25.3,lon:55.4},{lat:1.4,lon:103.8},{lat:-33.9,lon:151.2},{lat:-23.4,lon:-46.5}];
+    for(let i=0;i<D.air.length;i++) for(let j=i+1;j<D.air.length;j++){
+      const a=D.air[i], b=D.air[j], from=airCoordsFlight[i], to=airCoordsFlight[j];
+      if(!from||!to) continue; const traffic=a.total+b.total; if(traffic<30) continue;
+      const ncR=(a.noCallsign+b.noCallsign)/Math.max(traffic,1);
+      const color = ncR>0.15 ? ['rgba(255,107,116,0.5)'] : ncR>0.05 ? ['rgba(245,154,94,0.45)'] : ['rgba(127,224,192,0.3)'];
+      arcs.push({ startLat:from.lat, startLng:from.lon, endLat:to.lat, endLng:to.lon, color, stroke:Math.max(0.3,Math.min(1.2,traffic/120)), label:`${from.region} ↔ ${to.region}: ${traffic} aircraft` });
     }
-  }
-  // Hub corridors
-  D.air.forEach((a,i)=>{
-    if(!airCoordsFlight[i]||a.total<25) return;
-    globalHubs.forEach(hub=>{
-      const dLat=Math.abs(airCoordsFlight[i].lat-hub.lat);
-      const dLon=Math.abs(airCoordsFlight[i].lon-hub.lon);
-      if(dLat+dLon<20) return;
-      arcs.push({
-        startLat:airCoordsFlight[i].lat, startLng:airCoordsFlight[i].lon,
-        endLat:hub.lat, endLng:hub.lon,
-        color:['rgba(127,224,192,0.2)','rgba(127,224,192,0.05)'],
-        stroke:0.3
+    D.air.forEach((a,i)=>{
+      if(!airCoordsFlight[i]||a.total<25) return;
+      globalHubs.forEach(hub=>{
+        if(Math.abs(airCoordsFlight[i].lat-hub.lat)+Math.abs(airCoordsFlight[i].lon-hub.lon)<20) return;
+        arcs.push({ startLat:airCoordsFlight[i].lat, startLng:airCoordsFlight[i].lon, endLat:hub.lat, endLng:hub.lon, color:['rgba(127,224,192,0.15)'], stroke:0.3 });
       });
     });
-  });
   }
-  globe.arcsData(arcs);
 
-  // === MEASURE LINE + RANGE RINGS + TRACK TRAILS ===
-  const paths=[];
-  if(measureA){
-    if(measureB){
-      globe.arcsData([...arcs, {startLat:measureA.lat,startLng:measureA.lng,endLat:measureB.lat,endLng:measureB.lng,color:['rgba(143,167,255,0.95)','rgba(143,167,255,0.3)'],stroke:1.4,label:'measured distance'}]);
-    }
-    [500,1000,1500].forEach(km=>paths.push({coords:geoCircle([measureA.lng,measureA.lat],km,72).map(p=>[p[1],p[0]]),color:'rgba(120,150,255,0.35)',stroke:0.4}));
-  } else {
-    globe.arcsData(arcs);
-  }
+  // === Trails ===
+  const trails=[];
   if(layerVisible.track && TRACKS && Array.isArray(TRACKS.tracks)){
     TRACKS.tracks.forEach(t=>{
       const trail=(t.trail||[]).map(p=>[p.lat,p.lng]);
-      if(trail.length>1) paths.push({coords:trail, color:'rgba(255,158,107,0.55)', stroke:0.3});
+      if(trail.length>1) trails.push({ coords:trail, color:'rgba(255,158,107,0.7)' });
     });
   }
-  globe.pathsData(paths);
 
-  // Zoom-aware marker sizing: scale markers and labels with camera altitude
-  const onGlobeZoom = () => {
-    const alt = globe.pointOfView().altitude;
-    const sf = Math.max(0.6, Math.min(2.5, 1.5 / alt));
-    globe.pointRadius(d => (d.size || 0.3) * sf);
-    // Labels: normal labels when zoomed in; aggregate region bubbles when zoomed out
-    globe.labelSize(d => d.aggregate ? (alt >= 1.8 ? (d.size||0.5) : 0) : (alt < 1.8 ? (d.size||0.4) : 0));
-    // Scale arc strokes with zoom
-    globe.arcStroke(d => (d.stroke || 0.4) * Math.max(0.5, Math.min(1.5, 1.2 / alt)));
-    globe.arcDashAnimateTime(lowPerfMode ? 0 : 2000);
-    // Priority-based point visibility: hide low-priority markers when zoomed out
-    if(alt > 2.0){
-      globe.pointsData(plottingPoints.filter(p => (p.priority||3) <= 1));
-    } else if(alt > 1.2){
-      globe.pointsData(plottingPoints.filter(p => (p.priority||3) <= 2));
-    } else {
-      globe.pointsData(plottingPoints);
-    }
-  };
-  if(typeof globe.onZoom==='function') globe.onZoom(onGlobeZoom);
+  applyMapData(plottingPoints, arcs, conflictRings, trails);
+  renderLabels(shownLabels);
+  renderMapLegend();
+}
+
+function toggleFlights(){
+  flightsVisible = !flightsVisible;
+  const btn = document.getElementById('flightToggle');
+  if(btn) btn.classList.toggle('off', !flightsVisible);
+  refreshMap();
 }
 
 function showPopup(event,head,text,meta,lat,lng,alt,pt){
@@ -1819,27 +1616,26 @@ function showPopup(event,head,text,meta,lat,lng,alt,pt){
   const container=document.getElementById('mapContainer');
   const rect=container.getBoundingClientRect();
   let left, top;
-  if(!isFlat && lat!=null && globe && typeof globe.getScreenCoords==='function'){
-    const sc=globe.getScreenCoords(lat,lng,alt||0.01);
-    if(!sc||isNaN(sc.x)||isNaN(sc.y)||sc.x<0||sc.y<0||sc.x>rect.width||sc.y>rect.height){
-      if(event&&event.clientX!=null){left=event.clientX-rect.left+10;top=event.clientY-rect.top-10;}
-      else return;
-    } else {left=sc.x+10;top=sc.y-10;}
+  if(lat!=null && map && mapReady && typeof map.project==='function'){
+    const sc=map.project({lng,lat});
+    left=sc.x+12; top=sc.y-12;
+    if(left<0||top<0||left>rect.width||top>rect.height){
+      if(event&&event.clientX!=null){ left=event.clientX-rect.left+12; top=event.clientY-rect.top-12; }
+    }
   } else if(event && event.clientX != null){
-    left=event.clientX - rect.left + 10;
-    top=event.clientY - rect.top - 10;
+    left=event.clientX - rect.left + 12;
+    top=event.clientY - rect.top - 12;
   } else {
     left=rect.width/2 - 140; top=rect.height/2 - 60;
   }
-  if(left+290>rect.width) left=left-300;
-  if(top+150>rect.height) top=top-160;
+  if(left+300>rect.width) left=left-320;
+  if(top+160>rect.height) top=top-170;
   if(left<0) left=10;
   if(top<0) top=10;
   popup.style.left=left+'px';popup.style.top=top+'px';
   popup.querySelector('.pp-head').textContent=head||'';
   popup.querySelector('.pp-text').innerHTML=text||'';
   popup.querySelector('.pp-meta').textContent=meta||'';
-  // footer: coordinates + source link + new badge
   let foot=popup.querySelector('.pp-foot');
   if(!foot){ foot=document.createElement('div'); foot.className='pp-foot'; popup.appendChild(foot); }
   const parts=[];
@@ -1849,274 +1645,24 @@ function showPopup(event,head,text,meta,lat,lng,alt,pt){
   foot.innerHTML=parts.join('');
   foot.style.display=parts.length?'flex':'none';
   popup.classList.add('show');
+  popupGuard = Date.now();
 }
 function closePopup(){document.getElementById('mapPopup').classList.remove('show')}
+let popupGuard = 0;
 
-// === MAP CONTROLS ===
-function toggleFlights() {
-  flightsVisible = !flightsVisible;
-  const btn = document.getElementById('flightToggle');
-  btn.classList.toggle('off', !flightsVisible);
-  if(isFlat){
-    if(flatG && flatProjection) plotFlatMarkers();
-    return;
-  }
-  if(!globe){
-    return;
-  }
-  if(flightsVisible) {
-    plotMarkers(); // re-render with arcs
-  } else {
-    globe.arcsData([]); // hide arcs
-    // Remove air-type points
-    const pts = globe.pointsData().filter(p => p.type !== 'air');
-    globe.pointsData(pts);
-    const lbls = globe.labelsData().filter(l => l.text && !l.text.match(/\d+$/));
-    globe.labelsData(lbls);
-  }
-}
-
-// === FLAT/GLOBE TOGGLE ===
 const flatRegionBounds = {
-  world:[[-180,-60],[180,80]], americas:[[-130,10],[-60,55]], europe:[[-12,34],[45,72]],
+  world:[[-180,-60],[180,80]], americas:[[-130,5],[-55,55]], europe:[[-12,34],[45,72]],
   middleEast:[[24,10],[65,45]], asiaPacific:[[60,-12],[180,55]], africa:[[-20,-36],[55,38]]
 };
-
-function toggleMapMode(){
-  if(typeof Globe === 'undefined') return; // 3D globe removed — flat map only
-  isFlat = !isFlat;
-  setProjLabel(isFlat ? 'GLOBE MODE' : 'FLAT MODE');
-  setMapHint(isFlat ? 'Scroll to zoom · drag to pan' : 'Drag to rotate · scroll to zoom');
-  const globeEl = document.getElementById('globeViz');
-  const flatEl = document.getElementById('flatMapSvg');
-  if(isFlat){
-    if(globe && typeof globe.pauseAnimation === 'function') globe.pauseAnimation();
-    globeEl.style.display = 'none';
-    flatEl.style.display = 'block';
-    setMapLoading(false);
-    if(!flatSvg) initFlatMap();
-    else { flatG.selectAll('*').remove(); drawFlatMap(); }
-  } else {
-    flatEl.style.display = 'none';
-    setMapLoading(true, 'Initializing 3D Globe');
-    requestAnimationFrame(() => {
-      try {
-        initGlobe();
-        if(globe && typeof globe.resumeAnimation === 'function') globe.resumeAnimation();
-        globeEl.style.display = 'block';
-        setMapLoading(false);
-      } catch {
-        isFlat = true;
-        globeEl.style.display = 'none';
-        flatEl.style.display = 'block';
-        btn.textContent = 'GLOBE MODE';
-        hint.textContent = '3D LOAD FAILED · FLAT MODE';
-        if(!flatSvg) initFlatMap();
-        else { flatG.selectAll('*').remove(); drawFlatMap(); }
-        setMapLoading(false);
-      }
-    });
-  }
-}
-
-function initFlatMap(){
-  const container = document.getElementById('mapContainer');
-  flatW = container.clientWidth; flatH = container.clientHeight || 560;
-  flatSvg = d3.select('#flatMapSvg').attr('viewBox',`0 0 ${flatW} ${flatH}`).attr('preserveAspectRatio','xMidYMid meet');
-  flatProjection = d3.geoNaturalEarth1().fitSize([flatW-20,flatH-20],{type:'Sphere'}).translate([flatW/2,flatH/2]);
-  flatPath = d3.geoPath(flatProjection);
-  flatG = flatSvg.append('g');
-  flatZoom = d3.zoom().scaleExtent([1,12]).on('zoom',(event)=>{
-    flatG.attr('transform',event.transform);
-    const k=event.transform.k;
-    flatG.selectAll('.marker-circle').attr('r',function(){return +this.dataset.baseR/Math.sqrt(k)});
-    flatG.selectAll('.marker-label').style('font-size',Math.max(7,9/Math.sqrt(k))+'px')
-      .style('display',k>=2.5?'block':'none');
-  });
-  flatSvg.call(flatZoom);
-  flatSvg.on('click', ev=>{
-    if(!measureMode || !flatProjection || !flatG) return;
-    const p=d3.pointer(ev, flatG.node());
-    const geo=flatProjection.invert(p);
-    if(geo) addMeasurePoint(geo[1], geo[0]);
-  });
-  drawFlatMap();
-}
-
-function drawFlatMap(){
-  flatG.append('path').datum(d3.geoGraticule()()).attr('class','graticule').attr('d',flatPath);
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-    .then(r=>r.json()).then(world=>{
-      const countries=topojson.feature(world,world.objects.countries);
-      flatG.selectAll('path.land').data(countries.features).enter().append('path').attr('class','land').attr('d',flatPath);
-      flatG.append('path').datum(topojson.mesh(world,world.objects.countries,(a,b)=>a!==b)).attr('class','border').attr('d',flatPath);
-      plotFlatMarkers();
-    });
-}
-
-function plotFlatMarkers(){
-  // self-clean so repeated calls (layer toggles, live updates) never stack
-  flatG.selectAll('.markers,.corridors-layer,.measure-layer').remove();
-  const mg=flatG.append('g').attr('class','markers');
-  const proj=flatProjection;
-  const addPt=(lat,lon,r,fill,stroke,onClick,priority,type)=>{
-    if(type && !layerVisible[type]) return null;
-    if(!inActiveRegion(lat,lon)) return null;
-    const[x,y]=proj([lon,lat]);if(!x||!y)return null;
-    const g=mg.append('g').attr('transform',`translate(${x},${y})`).style('cursor','pointer').attr('data-priority',priority||3);
-    if(onClick) g.on('click',ev=>{ev.stopPropagation();onClick(ev)});
-    g.append('circle').attr('class','marker-circle').attr('r',r).attr('data-base-r',r).attr('fill',fill).attr('stroke',stroke).attr('stroke-width',0.8);
-    return g;
-  };
-  // Air
-  const airCoords=[{lat:30,lon:44},{lat:24,lon:120},{lat:49,lon:32},{lat:57,lon:24},{lat:14,lon:114},{lat:37,lon:127},{lat:25,lon:-80},{lat:4,lon:2},{lat:-34,lon:18},{lat:10,lon:51}];
-  if(flightsVisible){
-    D.air.forEach((a,i)=>{
-      const c=airCoords[i];if(!c)return;
-      const g=addPt(c.lat,c.lon,4+a.total/40,'rgba(127,224,192,0.7)','rgba(127,224,192,0.3)',
-        ev=>showPopup(ev,a.region,`${a.total} aircraft<br>No callsign: ${a.noCallsign}<br>High alt: ${a.highAlt}`,'Air Activity'),1,'air');
-      if(g) g.append('text').attr('class','marker-label').attr('x',10).attr('y',3).attr('fill','var(--dim)').attr('font-size','9px').attr('font-family','var(--mono)').text(a.region.replace(' Region','')+' '+a.total);
-    });
-  }
-  // Thermal
-  D.thermal.forEach(t=>t.fires.forEach(f=>{
-    addPt(f.lat,f.lon,2+Math.min(f.frp/50,5),'rgba(255,107,116,0.6)','rgba(255,107,116,0.2)',
-      ev=>showPopup(ev,'Thermal',`${t.region}<br>FRP: ${f.frp.toFixed(1)} MW`,'FIRMS'),3,'thermal');
-  }));
-  // Chokepoints
-  D.chokepoints.forEach(cp=>{
-    if(!layerVisible.maritime || !inActiveRegion(cp.lat,cp.lon)) return;
-    const[x,y]=proj([cp.lon,cp.lat]);if(!x||!y)return;
-    const g=mg.append('g').attr('transform',`translate(${x},${y})`).style('cursor','pointer').attr('data-priority',1)
-      .on('click',ev=>{ev.stopPropagation();showPopup(ev,cp.label,esc(cp.note),'Maritime')});
-    g.append('rect').attr('x',-4).attr('y',-4).attr('width',8).attr('height',8).attr('fill','rgba(180,140,255,0.7)').attr('stroke','rgba(180,140,255,0.3)').attr('stroke-width',0.5).attr('transform','rotate(45)');
-    g.append('text').attr('class','marker-label').attr('x',8).attr('y',3).attr('fill','var(--dim)').attr('font-size','8px').attr('font-family','var(--mono)').text(cp.label);
-  });
-  // Nuclear
-  const nukeCoords=[{lat:47.5,lon:34.6},{lat:51.4,lon:30.1},{lat:28.8,lon:50.9},{lat:39.8,lon:125.8},{lat:37.4,lon:141},{lat:31.0,lon:35.1}];
-  D.nuke.forEach((n,i)=>{const c=nukeCoords[i];if(!c)return;addPt(c.lat,c.lon,4,'rgba(242,200,121,0.7)','rgba(242,200,121,0.3)',ev=>showPopup(ev,n.site,`CPM: ${n.cpm?.toFixed(1)||'--'}`,'Radiation'),2,'nuke')});
-  // SDR
-  D.sdr.zones.forEach(z=>z.receivers.forEach(r=>{addPt(r.lat,r.lon,2.5,'rgba(106,168,255,0.5)','rgba(106,168,255,0.2)',ev=>showPopup(ev,'SDR',`${esc(r.name)}<br>${z.region}`,'KiwiSDR'),3,'sdr')}));
-  // OSINT
-  const osintGeo=[{lat:45,lon:41,idx:0},{lat:48,lon:37,idx:1},{lat:48.5,lon:37.5,idx:2},{lat:45,lon:40.2,idx:3},{lat:50.6,lon:36.6,idx:5},{lat:48.5,lon:35,idx:6}];
-  osintGeo.forEach(o=>{const p=D.tg.urgent[o.idx];if(!p)return;addPt(o.lat,o.lon,4,'rgba(245,154,94,0.7)','rgba(245,154,94,0.3)',ev=>showPopup(ev,(p.channel||'').toUpperCase(),cleanText(p.text?.substring(0,200)||''),`${p.views||'?'} views`),2,'osint')});
-  // WHO
-  const whoGeo=[{lat:0.3,lon:32.6},{lat:-6.2,lon:106.8},{lat:-4.3,lon:15.3},{lat:35,lon:105},{lat:12.5,lon:105},{lat:35,lon:105},{lat:28,lon:84},{lat:24,lon:45},{lat:30,lon:70},{lat:-0.8,lon:11.6}];
-  D.who.slice(0,10).forEach((w,i)=>{const c=whoGeo[i];if(!c)return;addPt(c.lat,c.lon,3.5,'rgba(127,224,192,0.6)','rgba(127,224,192,0.2)',ev=>showPopup(ev,w.title,esc(w.summary||''),'WHO'),2,'health')});
-  // News
-  (D.news||[]).forEach(n=>{addPt(n.lat,n.lon,3,'rgba(143,184,216,0.6)','rgba(143,184,216,0.2)',ev=>showPopup(ev,n.source+' NEWS',cleanText(n.title),n.region),3,'news')});
-  // NOAA weather
-  (D.noaa?.alerts||[]).forEach(a=>{addPt(a.lat,a.lon,4,'rgba(245,154,94,0.7)','rgba(245,154,94,0.3)',ev=>showPopup(ev,a.event,esc(a.headline||''),'NOAA/NWS'),2,'weather')});
-  // EPA RadNet
-  (D.epa?.stations||[]).forEach(s=>{addPt(s.lat,s.lon,3,'rgba(242,200,121,0.6)','rgba(242,200,121,0.2)',ev=>showPopup(ev,'RadNet: '+s.location,`${esc(s.analyte||'--')}: ${esc(s.result||'--')} ${esc(s.unit||'')}`,'EPA'),3,'radiation')});
-  // Space stations
-  (D.space?.stationPositions||[]).forEach(s=>{
-    const g=addPt(s.lat,s.lon,5,'rgba(255,255,255,0.9)','rgba(255,255,255,0.4)',ev=>showPopup(ev,s.name,'Orbital position estimate','Space Station'),1,'space');
-    if(g) g.append('text').attr('class','marker-label').attr('x',8).attr('y',3).attr('fill','rgba(255,255,255,0.7)').attr('font-size','8px').attr('font-family','var(--mono)').text(s.name.split('(')[0].trim());
-  });
-  // GDELT geo events
-  (D.gdelt?.geoPoints||[]).forEach(g=>{addPt(g.lat,g.lon,2.5,'rgba(106,168,255,0.5)','rgba(106,168,255,0.2)',ev=>showPopup(ev,'GDELT Event',esc(g.name)||'','GDELT · '+g.count+' reports'),3,'gdelt')});
-  // Live drone / missile tracks (Neptun)
-  if(TRACKS && Array.isArray(TRACKS.tracks) && layerVisible.track){
-    TRACKS.tracks.forEach(t=>{
-      if(!inActiveRegion(t.lat,t.lon)) return;
-      const col=(t.type==='missile'||t.type==='shahed')?'#ff6b74':(t.type==='fpv'?'#f2c879':'#f59a5e');
-      const [x,y]=proj([t.lon,t.lat]); if(x==null||y==null) return;
-      const g=mg.append('g').attr('transform',`translate(${x},${y})`).style('cursor','pointer').attr('data-priority',1)
-        .on('click',ev=>{ev.stopPropagation();showPopup(ev,(t.title||'Track')+' · '+((t.locality||t.region)||''),`${esc(t.explanation||'')}<br>Heading: ${t.heading!=null?t.heading+'°':'—'}<br>Uncertainty: ±${t.uncertaintyKm||'?'} km`,`${(t.type||'').toUpperCase()} · ${t.confidence||''} · ${t.sourceCount||1} src`)});
-      const [tx,ty]=proj([t.lon,t.lat]); const d=0.02*(flatH||600);
-      const deg=(t.heading!=null?t.heading:90), rad=(deg-90)*Math.PI/180;
-      g.append('line').attr('x1',0).attr('y1',0).attr('x2',Math.cos(rad)*d*0.35).attr('y2',Math.sin(rad)*d*0.35).attr('stroke',col).attr('stroke-width',1.2);
-      g.append('circle').attr('class','marker-circle').attr('r',4).attr('data-base-r',4).attr('fill',col).attr('stroke','rgba(0,0,0,0.4)').attr('stroke-width',0.6);
-    });
-  }
-  // Earthquakes (USGS)
-  if(QUAKES && Array.isArray(QUAKES.items) && layerVisible.quake){
-    QUAKES.items.forEach(q=>{
-      if(!inActiveRegion(q.lat,q.lon)) return;
-      const g=addPt(q.lat,q.lon,2.5+Math.min(q.mag,7)*0.7,magColor(q.mag),'rgba(0,0,0,0.35)',
-        ev=>showPopup(ev,`M${(+q.mag).toFixed(1)} earthquake`,`${esc(q.place||'')}<br>Depth: ${q.depth!=null?Math.round(q.depth)+' km':'?'}${q.tsunami?'<br><span style="color:#ff8a5c">Tsunami flag</span>':''}`,'USGS · '+getAge(q.ts),q.lat,q.lon,0.01,{url:q.url}),1,'quake');
-    });
-  }
-  // ACLED
-  (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon).forEach(e=>{
-    if(!layerVisible.conflict || !inActiveRegion(e.lat,e.lon)) return;
-    const[x,y]=proj([e.lon,e.lat]);if(!x||!y)return;
-    const r=Math.max(4,Math.min(14,2+Math.log2(Math.max(e.fatalities,1))*1.5));
-    const g=mg.append('g').attr('transform',`translate(${x},${y})`).style('cursor','pointer').attr('data-priority',1)
-      .on('click',ev=>{ev.stopPropagation();showPopup(ev,e.type||'CONFLICT',`${e.fatalities} fatalities<br>${esc(e.location)}, ${esc(e.country)}`,'ACLED')});
-    g.append('circle').attr('class','conflict-ring marker-circle').attr('r',r).attr('data-base-r',r).attr('fill','none').attr('stroke','rgba(245,154,94,0.7)').attr('stroke-width',1.5);
-    g.append('circle').attr('r',r*0.4).attr('fill','rgba(245,154,94,0.3)');
-  });
-  // Flight corridors
-  if(flightsVisible){
-    const airCoordsFlight=[{lat:30,lon:44},{lat:24,lon:120},{lat:49,lon:32},{lat:57,lon:24},{lat:14,lon:114},{lat:37,lon:127},{lat:25,lon:-80},{lat:4,lon:2},{lat:-34,lon:18},{lat:10,lon:51}];
-    const hubs=[{lat:40.6,lon:-73.8},{lat:51.5,lon:-0.5},{lat:25.3,lon:55.4},{lat:1.4,lon:103.8},{lat:-33.9,lon:151.2},{lat:-23.4,lon:-46.5}];
-    const cG=flatG.append('g').attr('class','corridors-layer');
-    for(let i=0;i<D.air.length;i++){for(let j=i+1;j<D.air.length;j++){
-      const a=D.air[i],b=D.air[j],from=airCoordsFlight[i],to=airCoordsFlight[j];
-      if(!from||!to)continue;const traffic=a.total+b.total;if(traffic<30)continue;
-      const ncR=(a.noCallsign+b.noCallsign)/Math.max(traffic,1);
-      const clr=ncR>0.15?'rgba(255,107,116,0.4)':ncR>0.05?'rgba(245,154,94,0.35)':'rgba(127,224,192,0.25)';
-      const interp=d3.geoInterpolate([from.lon,from.lat],[to.lon,to.lat]);
-      const coords=[];for(let k=0;k<=40;k++)coords.push(interp(k/40));
-      const feat={type:'Feature',geometry:{type:'LineString',coordinates:coords}};
-      cG.append('path').datum(feat).attr('d',flatPath).attr('fill','none').attr('stroke',clr).attr('stroke-width',Math.max(0.8,Math.min(3,traffic/80)));
-    }}
-    D.air.forEach((a,i)=>{if(!airCoordsFlight[i]||a.total<25)return;hubs.forEach(hub=>{
-      if(Math.abs(airCoordsFlight[i].lat-hub.lat)+Math.abs(airCoordsFlight[i].lon-hub.lon)<20)return;
-      const interp=d3.geoInterpolate([airCoordsFlight[i].lon,airCoordsFlight[i].lat],[hub.lon,hub.lat]);
-      const coords=[];for(let k=0;k<=40;k++)coords.push(interp(k/40));
-      cG.append('path').datum({type:'Feature',geometry:{type:'LineString',coordinates:coords}}).attr('d',flatPath).attr('fill','none').attr('stroke','rgba(127,224,192,0.15)').attr('stroke-width',0.6);
-    })});
-  }
-  // layer counts for the legend control
-  layerCounts = {
-    air: (D.air||[]).length,
-    thermal: (D.thermal||[]).reduce((s,t)=>s+(t.fires?.length||0),0),
-    conflict: (D.acled?.deadliestEvents||[]).length,
-    maritime: (D.chokepoints||[]).length,
-    nuke: (D.nuke||[]).length,
-    sdr: (D.sdr?.zones||[]).reduce((s,z)=>s+(z.receivers?.length||0),0),
-    osint: (D.tg?.urgent||[]).length,
-    health: (D.who||[]).length,
-    news: (D.news||[]).length,
-    weather: (D.noaa?.alerts||[]).length,
-    radiation: (D.epa?.stations||[]).length,
-    space: (D.space?.stationPositions||[]).length,
-    gdelt: (D.gdelt?.geoPoints||[]).length,
-    track: (TRACKS?.tracks||[]).length,
-    quake: (QUAKES?.items||[]).length
-  };
-  renderMapLegend();
-  renderMeasure();
-}
-
-// Update setRegion for flat mode
-const _origSetRegion = setRegion;
-
-// Override mapZoom for flat mode
-const _origMapZoom = mapZoom;
 
 function setRegion(r){
   currentRegion = r;
   try{ localStorage.setItem('crucix_region', r); }catch{}
   document.querySelectorAll('.region-btn').forEach(b=>b.classList.toggle('active',b.dataset.region===r));
   closePopup();
-  if(isFlat && flatSvg && flatZoom){
-    if(r==='world'){ flatSvg.transition().duration(750).call(flatZoom.transform,d3.zoomIdentity); }
-    else {
-      const bounds=flatRegionBounds[r];
-      const p0=flatProjection(bounds[0]),p1=flatProjection(bounds[1]);
-      if(p0&&p1){
-        const dx=Math.abs(p1[0]-p0[0]),dy=Math.abs(p1[1]-p0[1]);
-        const cx=(p0[0]+p1[0])/2,cy=(p0[1]+p1[1])/2;
-        const scale=Math.min(flatW/dx,flatH/dy)*0.85;
-        flatSvg.transition().duration(750).call(flatZoom.transform,d3.zoomIdentity.translate(flatW/2-scale*cx,flatH/2-scale*cy).scale(scale));
-      }
-    }
-  } else if(globe){
-    globe.pointOfView(regionPOV[r]||regionPOV.world,1000);
+  if(map && mapReady){
+    if(r==='world'){ map.flyTo({center:[20,25], zoom:1.35, duration:800}); }
+    else { const b=flatRegionBounds[r]; if(b) map.fitBounds(b,{duration:800, padding:{top:40,bottom:40,left:40,right:40}}); }
   }
   refreshMap();
   renderLower();
@@ -2124,12 +1670,8 @@ function setRegion(r){
 }
 
 function mapZoom(factor){
-  if(isFlat && flatSvg && flatZoom){
-    flatSvg.transition().duration(300).call(flatZoom.scaleBy,factor);
-  } else if(globe){
-    const pov=globe.pointOfView();
-    globe.pointOfView({altitude:pov.altitude/factor},300);
-  }
+  if(!map) return;
+  if(factor>1) map.zoomIn({duration:250}); else map.zoomOut({duration:250});
 }
 
 // Sparkline SVG generator
@@ -2608,32 +2150,7 @@ function closeGlossary(){
 }
 
 function refreshMapViewport(forceGlobeReflow=false){
-  const container = document.getElementById('mapContainer');
-  if(!container) return;
-  const width = container.clientWidth;
-  const height = container.clientHeight || (isMobileLayout() ? 420 : 560);
-  if(globe){
-    globe.width(width).height(height);
-    if(forceGlobeReflow && !isFlat){
-      const globeEl = document.getElementById('globeViz');
-      globeEl.style.display = 'none';
-      requestAnimationFrame(() => {
-        globeEl.style.display = 'block';
-        globe.width(width).height(height);
-      });
-    }
-  }
-  if(flatSvg){
-    flatW = width;
-    flatH = height;
-    flatSvg.attr('viewBox',`0 0 ${flatW} ${flatH}`).attr('preserveAspectRatio','xMidYMid meet');
-    if(flatProjection && flatG){
-      flatProjection = d3.geoNaturalEarth1().fitSize([flatW-20,flatH-20],{type:'Sphere'}).translate([flatW/2,flatH/2]);
-      flatPath = d3.geoPath(flatProjection);
-      flatG.selectAll('*').remove();
-      drawFlatMap();
-    }
-  }
+  if(map && typeof map.resize==='function') map.resize();
 }
 
 let lastResponsiveMobile = null;
@@ -2718,6 +2235,7 @@ function init(){
   if (!booted) { runBoot(); booted = true; }
   // Close popup on click outside markers
   document.getElementById('mapContainer').addEventListener('click',e=>{
+    if(Date.now()-popupGuard<300) return;
     if(!e.target.closest('.map-popup')) closePopup();
   });
   // Open article links from ticker cards
