@@ -15,8 +15,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://d3js.org/topojson.v3.min.js"></script>
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="https://unpkg.com/globe.gl@2.33.0"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -173,8 +171,8 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 @keyframes dash-flow{to{stroke-dashoffset:-20}}
 .corridor-flow{animation:dash-flow 2s linear infinite}
 .map-legend{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:nowrap;align-items:center;gap:8px 12px;padding:10px 14px;background:rgba(7,9,14,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:12px;color:#a2abbd;letter-spacing:0;text-transform:none;z-index:5;overflow-x:auto}
-.leg-controls{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.leg-chips{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1}
+.leg-controls{display:flex;align-items:center;gap:4px;flex:none}
+.leg-chips{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;flex:none}
 .leg-action,.leg-time{font-family:var(--sans);font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);cursor:pointer;white-space:nowrap}
 .leg-action:hover,.leg-time:hover{border-color:var(--border-bright);color:var(--text)}
 .leg-time.on{background:var(--raised-2);color:var(--text);border-color:var(--border-bright)}
@@ -394,6 +392,11 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .track-type{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.05em;border:1px solid;border-radius:4px;padding:1px 5px;flex:none}
 .track-loc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)}
 .track-meta{font-family:var(--mono);font-size:10px;color:var(--dim-3);white-space:nowrap}
+.quake-row{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12.5px;text-decoration:none;color:var(--text-2)}
+.quake-row:hover .quake-place{color:#fff}
+.quake-mag{flex:none;font-family:var(--mono);font-size:11px;font-weight:600;border:1px solid;border-radius:4px;padding:1px 6px;min-width:36px;text-align:center}
+.quake-place{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quake-meta{font-family:var(--mono);font-size:10px;color:var(--dim-3);white-space:nowrap}
 
 /* COLLAPSIBLE */
 .collapsible .sec-head{cursor:pointer;margin-bottom:0;user-select:none}
@@ -443,29 +446,29 @@ body.low-perf .logo-ring::before,body.low-perf .logo-ring::after,body.low-perf .
 body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(120,150,255,0.2) transparent}
 
 /* RESPONSIVE */
-@media(max-width:1500px){.grid{grid-template-columns:260px minmax(0,1fr) 320px}}
 @media(max-width:1100px){
   #main{padding:12px}
-  .topbar{padding:10px 12px}
-  .top-left,.top-center,.top-right{width:100%}
-  .top-center{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .topbar{padding:10px 12px;gap:10px}
+  .top-left,.top-right{width:100%}
   .top-spacer{display:none}
-  .map-region-bar{display:none}
+  .mainnav{max-width:100%;overflow-x:auto}
   .top-right{gap:6px;flex-wrap:wrap}
-  .grid{display:flex;flex-direction:column}
-  #centerCol{order:1}
-  #rightRail{order:2}
-  #leftRail{order:3}
+  .map-region-bar{gap:8px;padding:10px 12px}
+  .map-bar-meta,.map-bar-hint{display:none}
   .map-container{height:420px}
   .row-a .col-card,.row-b .col-card,.row-c .col-card,.row-d .col-card,.row-e .col-card{height:auto;max-height:70vh}
   .col-card{flex:1 1 100%!important}
-  .map-bar-hint{display:none}
-  .map-legend{left:8px;right:8px;bottom:8px;gap:4px}
-  .leg-item{font-size:10px}
-  .lower .lp-news,.lower .lp-osint,.lower .lp-macro,.lower .lp-ideas{flex:1 1 100%;max-width:none}
+  .map-legend{left:8px;right:8px;bottom:8px;gap:6px}
+  .leg-chip,.leg-item{font-size:11px}
   .metrics-row{grid-template-columns:repeat(2,1fr)}
   .src-grid{grid-template-columns:repeat(2,1fr)}
   .glossary-panel{top:auto;right:0;left:0;bottom:0;width:100%;max-height:min(72vh,720px);border-radius:8px 8px 0 0;border-bottom:none}
+}
+@media(max-width:640px){
+  .map-search{display:none}
+  .leg-time,.leg-search{display:none}
+  .map-region-bar{padding:8px 10px}
+  .region-btn{font-size:11px;padding:5px 9px}
 }
 
 /* CONFLICT LAYER */
@@ -517,7 +520,6 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
         <button class="map-ctrl-btn map-toggle" id="measureToggle" onclick="toggleMeasure()" title="Measure distance &amp; range rings">&#128207;</button>
       </div>
       <div class="measure-readout" id="measureReadout"></div>
-      <button class="proj-toggle" id="projToggle" onclick="toggleMapMode()">GLOBE MODE</button>
       <div class="map-popup" id="mapPopup"><button class="pp-close" onclick="closePopup()">&times;</button><div class="pp-head"></div><div class="pp-text"></div><div class="pp-meta"></div></div>
     </div>
   </div>
@@ -531,6 +533,7 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
     <div class="col-card" id="pNuclear" style="flex:1 1 240px"></div>
     <div class="col-card" id="pRisk" style="flex:1 1 240px"></div>
     <div class="col-card" id="pDelta" style="flex:1 1 240px"></div>
+    <div class="col-card" id="pQuakes" style="flex:1 1 240px"></div>
   </div>
   <div class="row row-c">
     <div class="col-card" id="pIdeas" style="flex:2 1 440px"></div>
@@ -632,6 +635,7 @@ let MACRO_INNER = '', MACRO_LIVE = false;
 let POLY_ITEMS = null, POLY_TS = 0;
 let ALERTS = null, ALERTS_TS = 0, alertsAudio = false;
 let TRACKS = null, TRACKS_TS = 0, tracksTimer = null;
+let QUAKES = null, QUAKES_TS = 0;
 let marketsOpen = localStorage.getItem('crucix_markets_open') === 'true';
 function toggleMarkets(){
   marketsOpen = !marketsOpen; localStorage.setItem('crucix_markets_open', String(marketsOpen));
@@ -796,7 +800,8 @@ const LAYER_DEFS = [
   {key:'radiation', label:'RadNet', color:'#f2c879'},
   {key:'space', label:'Space', color:'#e9ecf2'},
   {key:'gdelt', label:'GDELT', color:'#6aa8ff'},
-  {key:'track', label:'Tracks', color:'#ff9e6b'}
+  {key:'track', label:'Tracks', color:'#ff9e6b'},
+  {key:'quake', label:'Quakes', color:'#ffa94d'}
 ];
 // Per-layer explainability cards ("what am I looking at")
 const LAYER_INFO = {
@@ -1005,8 +1010,7 @@ function isWeakMobileDevice(){
 }
 
 function shouldStartFlat(){
-  if(!isMobileLayout()) return true;
-  return lowPerfMode || isWeakMobileDevice();
+  return true;
 }
 
 function setMapLoading(show, text='Initializing 3D Globe'){
@@ -1045,11 +1049,6 @@ function getRegionControlsMarkup(){
 function renderRegionControls(){
   const mapRegionBar = document.getElementById('mapRegionBar');
   if(!mapRegionBar) return;
-  if(isMobileLayout()){
-    mapRegionBar.innerHTML = '';
-    mapRegionBar.style.display = 'none';
-    return;
-  }
   const urgent = D.tg?.urgent?.length || 0;
   const news = (D.newsFeed || D.news || []).length;
   const markers = (D.air?.length||0) + (D.thermal?.reduce((s,t)=>s+(t.fires?.length||0),0)||0) + urgent;
@@ -1068,6 +1067,7 @@ function setMapHint(text){
   const el = document.getElementById('mapHint');
   if(el) el.textContent = text;
 }
+function setProjLabel(t){ const b=document.getElementById('projToggle'); if(b) b.textContent = t; }
 
 function cardHtml(title, badge, body, headExtra, bodyClass){
   return `<div class="card-head"><h3>${title}</h3><div class="card-head-right">${badge?`<span class="badge">${badge}</span>`:''}${headExtra||''}</div></div><div class="card-body ${bodyClass||''}">${body}</div>`;
@@ -1094,14 +1094,9 @@ function renderTopbar(){
       <a class="nav-tab active" href="/">Dashboard</a>
       <a class="nav-tab" href="/digest">Readers Digest</a>
       <a class="nav-tab" href="/media">Live media</a>
-      <button class="nav-tab" onclick="openGlossary()">Signal guide</button>
     </nav>
     <div class="top-spacer"></div>
-    ${mobile ? `<div class="top-center">${getRegionControlsMarkup()}</div>` : ''}
     <div class="top-right">
-      <span class="chip regime"><span class="dot"></span>Wartime stagflation risk</span>
-      <span class="chip alert"><span class="dot"></span>High alert</span>
-      <div class="top-div"></div>
       ${ME ? (ME.llm
         ? `<button class="meta-pill btn" onclick="openSettings()" title="Your LLM key settings">AI key <span class="v on">${esc(ME.llm.provider.toUpperCase())}</span></button>`
         : `<button class="byok-cta" onclick="openSettings()" title="Enter an API key to unlock AI trade ideas"><span class="k">&#9889;</span>Add your AI key</button>`) : ''}
@@ -1353,7 +1348,7 @@ function initMap(){
     if(globe && typeof globe.pauseAnimation === 'function') globe.pauseAnimation();
     document.getElementById('globeViz').style.display = 'none';
     document.getElementById('flatMapSvg').style.display = 'block';
-    document.getElementById('projToggle').textContent = 'GLOBE MODE';
+    setProjLabel('GLOBE MODE');
     setMapHint('Scroll to zoom · drag to pan');
     if(!flatSvg) initFlatMap();
     else { flatG.selectAll('*').remove(); drawFlatMap(); }
@@ -1369,7 +1364,7 @@ function initMap(){
       isFlat = true;
       document.getElementById('globeViz').style.display = 'none';
       document.getElementById('flatMapSvg').style.display = 'block';
-      document.getElementById('projToggle').textContent = 'GLOBE MODE';
+      setProjLabel('GLOBE MODE');
       setMapHint('3D load failed · flat mode');
       if(!flatSvg) initFlatMap();
       else { flatG.selectAll('*').remove(); drawFlatMap(); }
@@ -1383,7 +1378,7 @@ function initGlobe(){
     if(typeof globe.resumeAnimation === 'function') globe.resumeAnimation();
     document.getElementById('globeViz').style.display = 'block';
     document.getElementById('flatMapSvg').style.display = 'none';
-    document.getElementById('projToggle').textContent = 'FLAT MODE';
+    setProjLabel('FLAT MODE');
     setMapHint('Drag to rotate · scroll to zoom');
     return;
   }
@@ -1499,7 +1494,7 @@ function initGlobe(){
   } else {
     document.getElementById('globeViz').style.display = 'block';
     document.getElementById('flatMapSvg').style.display = 'none';
-    document.getElementById('projToggle').textContent = 'FLAT MODE';
+    setProjLabel('FLAT MODE');
     setMapHint('Drag to rotate · scroll to zoom');
   }
 
@@ -1655,6 +1650,18 @@ function plotMarkers(){
         popMeta:`${(t.type||'track').toUpperCase()} \u00b7 ${t.confidence||''} \u00b7 ${t.sourceCount||1} source(s)`,
         popText:`${esc(t.explanation||'')}<br>Heading: ${t.heading!=null?t.heading+'\u00b0':'\u2014'}<br>Uncertainty: \u00b1${t.uncertaintyKm||'?'} km<br>${esc(t.updatedAt||'')}`,
         ts:t.updatedAt
+      });
+    });
+  }
+
+  // === Earthquakes (USGS) ===
+  if(QUAKES && Array.isArray(QUAKES.items)){
+    QUAKES.items.forEach(q=>{
+      points.push({
+        lat:q.lat, lng:q.lon, size:0.18+Math.min(q.mag/10,0.5), alt:0.006, color:magColor(q.mag), type:'quake', priority:1,
+        popHead:`M${(+q.mag).toFixed(1)} earthquake`, popMeta:'USGS &#183; '+getAge(q.ts),
+        popText:`${esc(q.place||'')}<br>Depth: ${q.depth!=null?Math.round(q.depth)+' km':'?'}${q.tsunami?'<br><span style="color:#ff8a5c">Tsunami flag</span>':''}`,
+        ts:q.ts, url:q.url
       });
     });
   }
@@ -1879,9 +1886,9 @@ const flatRegionBounds = {
 };
 
 function toggleMapMode(){
+  if(typeof Globe === 'undefined') return; // 3D globe removed — flat map only
   isFlat = !isFlat;
-  const btn = document.getElementById('projToggle');
-  btn.textContent = isFlat ? 'GLOBE MODE' : 'FLAT MODE';
+  setProjLabel(isFlat ? 'GLOBE MODE' : 'FLAT MODE');
   setMapHint(isFlat ? 'Scroll to zoom · drag to pan' : 'Drag to rotate · scroll to zoom');
   const globeEl = document.getElementById('globeViz');
   const flatEl = document.getElementById('flatMapSvg');
@@ -2024,6 +2031,14 @@ function plotFlatMarkers(){
       g.append('circle').attr('class','marker-circle').attr('r',4).attr('data-base-r',4).attr('fill',col).attr('stroke','rgba(0,0,0,0.4)').attr('stroke-width',0.6);
     });
   }
+  // Earthquakes (USGS)
+  if(QUAKES && Array.isArray(QUAKES.items) && layerVisible.quake){
+    QUAKES.items.forEach(q=>{
+      if(!inActiveRegion(q.lat,q.lon)) return;
+      const g=addPt(q.lat,q.lon,2.5+Math.min(q.mag,7)*0.7,magColor(q.mag),'rgba(0,0,0,0.35)',
+        ev=>showPopup(ev,`M${(+q.mag).toFixed(1)} earthquake`,`${esc(q.place||'')}<br>Depth: ${q.depth!=null?Math.round(q.depth)+' km':'?'}${q.tsunami?'<br><span style="color:#ff8a5c">Tsunami flag</span>':''}`,'USGS · '+getAge(q.ts),q.lat,q.lon,0.01,{url:q.url}),1,'quake');
+    });
+  }
   // ACLED
   (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon).forEach(e=>{
     if(!layerVisible.conflict || !inActiveRegion(e.lat,e.lon)) return;
@@ -2071,7 +2086,8 @@ function plotFlatMarkers(){
     radiation: (D.epa?.stations||[]).length,
     space: (D.space?.stationPositions||[]).length,
     gdelt: (D.gdelt?.geoPoints||[]).length,
-    track: (TRACKS?.tracks||[]).length
+    track: (TRACKS?.tracks||[]).length,
+    quake: (QUAKES?.items||[]).length
   };
   renderMapLegend();
   renderMeasure();
@@ -2403,6 +2419,36 @@ async function ensureTracks(){
   refreshMap();
 }
 
+// === EARTHQUAKES (USGS) ===
+function magColor(m){ return m>=6?'#ff5f63':m>=5?'#ff8a5c':m>=4?'#ffa94d':'#f2c879'; }
+function quakeHtml(){
+  if(QUAKES===null) return cardHtml('Earthquakes','USGS','<div class="panel-src">Loading…</div>');
+  const list=(QUAKES.items||[]);
+  if(!list.length) return cardHtml('Earthquakes','USGS','<div class="panel-src">No M2.5+ quakes in the last 24h.</div>');
+  return cardHtml('Earthquakes', `${list.length} · 24h`, list.slice(0,10).map(q=>
+    `<a class="quake-row" href="${esc(q.url||'#')}" target="_blank" rel="noopener">
+      <span class="quake-mag" style="background:${magColor(q.mag)}22;color:${magColor(q.mag)};border-color:${magColor(q.mag)}66">${(+q.mag).toFixed(1)}</span>
+      <span class="quake-place">${esc(q.place||'')}</span>
+      <span class="quake-meta">${q.depth!=null?Math.round(q.depth)+' km':''}${q.tsunami?' <span style="color:#ff8a5c">tsunami</span>':''}</span>
+    </a>`).join('')+`<div class="panel-src">USGS &#183; M2.5+, past 24h</div>`);
+}
+async function ensureQuakes(){
+  if(QUAKES && Date.now()-QUAKES_TS<60000) return;
+  QUAKES_TS=Date.now();
+  try{
+    const r=await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson');
+    const d=await r.json();
+    const items=(d.features||[]).map(f=>({
+      id:f.id, mag:f.properties.mag||0, place:f.properties.place||'',
+      lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0], depth:f.geometry.coordinates[2],
+      ts:new Date(f.properties.time).toISOString(), url:f.properties.url, tsunami:f.properties.tsunami
+    })).filter(q=>q.lat!=null&&q.lon!=null).sort((a,b)=>b.mag-a.mag);
+    QUAKES={updated:new Date().toISOString(), items};
+  }catch{ if(!QUAKES) QUAKES={items:[],updated:null}; }
+  const el=document.getElementById('pQuakes'); if(el) el.innerHTML=quakeHtml();
+  refreshMap();
+}
+
 function renderRight(){
   const mobile = isMobileLayout();
 
@@ -2450,11 +2496,13 @@ function renderRight(){
   setCard('pAlerts', alertsHtml());
   setCard('pThreat', threatHtml());
   setCard('pTracks', trackerHtml());
+  setCard('pQuakes', quakeHtml());
   setCard('pPoly', polyHtml());
   setCard('pMarkets', cardHtml('Macro + markets', MACRO_LIVE?'Live':'Delayed', MACRO_INNER));
   ensureAlerts();
   ensurePolymarket();
   ensureTracks();
+  ensureQuakes();
 }
 
 
@@ -2694,7 +2742,8 @@ function init(){
   // periodic live feeds
   setInterval(()=>{ TRACKS_TS=0; ensureTracks(); }, 15000);
   setInterval(()=>{ ALERTS_TS=0; ensureAlerts(); }, 45000);
-  ensureTracks(); ensureAlerts();
+  setInterval(()=>{ QUAKES_TS=0; ensureQuakes(); }, 60000);
+  ensureTracks(); ensureAlerts(); ensureQuakes();
   syncResponsiveLayout(true);
 }
 
