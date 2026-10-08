@@ -524,6 +524,43 @@ const mediaHtml = readFileSync(join(ROOT, 'dashboard/public/media.html'), 'utf-8
 app.get('/media', (req, res) => {
   res.type('html').send(mediaHtml);
 });
+
+// ─── Air-raid alerts proxy (Tzeva Adom / Pikud HaOref; optional Ukraine) ────
+let alertsCache = { at: 0, data: null };
+app.get('/api/alerts', async (req, res) => {
+  try {
+    if (alertsCache.data && Date.now() - alertsCache.at < 20000) return res.json(alertsCache.data);
+    const items = [];
+    let source = 'Tzeva Adom (Pikud HaOref)';
+    try {
+      const r = await fetch('https://api.tzevaadom.co.il/alerts-history', { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      const hist = await r.json();
+      const cut = Date.now() / 1000 - 6 * 3600;
+      for (const h of (hist || [])) {
+        for (const a of (h.alerts || [])) {
+          if (a.time < cut) continue;
+          items.push({ time: a.time, cities: a.cities || [], threat: a.threat, drill: !!a.isDrill, src: 'IL' });
+        }
+      }
+    } catch { /* upstream unavailable */ }
+    const uaToken = process.env.ALERTS_IN_UA_TOKEN;
+    if (uaToken) {
+      try {
+        const r = await fetch('https://api.alerts.in.ua/v1/iot/active_air_raid_alerts_by_oblast.json?token=' + encodeURIComponent(uaToken));
+        const d = await r.json();
+        for (const a of (d.alerts || [])) {
+          if (!a.location_title) continue;
+          items.push({ time: Math.floor(Date.now() / 1000), cities: [a.location_title], threat: 0, drill: false, src: 'UA' });
+        }
+        source += ' + alerts.com.ua';
+      } catch { /* token invalid or upstream down */ }
+    }
+    items.sort((a, b) => b.time - a.time);
+    const data = { source, updated: Date.now(), items: items.slice(0, 60) };
+    alertsCache = { at: Date.now(), data };
+    res.json(data);
+  } catch (e) { res.status(502).json({ error: 'alerts unavailable' }); }
+});
 const userProvider = async (req) => (AUTH_ENABLED ? users.providerForUser(req.user.uid) : (llmProvider?.isConfigured ? llmProvider : null));
 const sendErr = (res, err) => res.status(err.status || 500).json({ error: err.message });
 

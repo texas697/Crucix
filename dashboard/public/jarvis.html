@@ -348,6 +348,33 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .smb{height:4px;background:var(--raised);border-radius:4px;overflow:hidden;margin:0}
 .smb span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
 
+/* RIGHT RAIL: threat / alerts / strikes / prediction markets */
+.panel-src{font-size:11px;color:var(--dim-3);line-height:1.5;margin-top:6px}
+.panel-src a{color:var(--accent)}
+.threat-row{display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+.threat-row:hover{background:var(--raised);border-radius:5px}
+.threat-row .tdot{width:8px;height:8px;border-radius:50%;flex:none}
+.threat-row .tname{flex:1;color:var(--text-2)}
+.threat-row .tmeta{font-family:var(--mono);font-size:10.5px;color:var(--dim-3)}
+.threat-row .tlevel{font-size:11.5px;font-weight:600;min-width:62px;text-align:right}
+.alerts-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.alerts-snd{width:28px;height:26px;border:1px solid var(--border);border-radius:5px;background:var(--raised);color:var(--text-2);cursor:pointer}
+.alerts-snd.on{background:var(--accent);border-color:var(--accent);color:#0a0f1f}
+.alert-row{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12.5px}
+.alert-row .alert-time{font-family:var(--mono);font-size:10.5px;color:var(--danger);min-width:64px}
+.alert-row .alert-cities{flex:1;color:var(--text-2)}
+.alert-row .alert-drill{font-size:9.5px;color:var(--dim);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+.strike-row{display:flex;flex-direction:column;gap:4px;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.strike-tag{align-self:flex-start;font-family:var(--mono);font-size:9px;letter-spacing:0.05em;color:var(--danger);background:rgba(240,90,80,0.1);border-radius:4px;padding:2px 6px}
+.strike-text{font-size:12.5px;line-height:1.45;color:var(--text-2)}
+.poly-item{display:flex;flex-direction:column;gap:6px;padding:9px 2px;border-bottom:1px solid rgba(255,255,255,0.04);text-decoration:none;color:var(--text)}
+.poly-item:hover .poly-q{color:#fff}
+.poly-q{font-size:12.5px;line-height:1.4;color:var(--text-2)}
+.poly-bar{height:5px;border-radius:4px;background:var(--raised);overflow:hidden}
+.poly-bar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
+.poly-meta{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.poly-meta b{color:var(--accent)}
+
 /* COLLAPSIBLE */
 .collapsible .sec-head{cursor:pointer;margin-bottom:0;user-select:none}
 .collapsible .sec-head:hover h3{color:var(--text)}
@@ -563,6 +590,8 @@ let lowPerfMode = localStorage.getItem('crucix_low_perf') === 'true';
 
 // === MARKETS PANEL (right rail, collapsed by default) ===
 let MACRO_INNER = '', MACRO_LIVE = false;
+let POLY_ITEMS = null, POLY_TS = 0;
+let ALERTS = null, ALERTS_TS = 0, alertsAudio = false;
 let marketsOpen = localStorage.getItem('crucix_markets_open') === 'true';
 function toggleMarkets(){
   marketsOpen = !marketsOpen; localStorage.setItem('crucix_markets_open', String(marketsOpen));
@@ -796,10 +825,10 @@ function inRegionBox(lat,lng,region){
   return lat>=b[0][1] && lat<=b[1][1] && lng>=b[0][0] && lng<=b[1][0];
 }
 function inActiveRegion(lat,lng){ return inRegionBox(lat,lng,currentRegion); }
-function textInRegion(text){
-  if(currentRegion==='world') return true;
+function textInRegion(text){ return currentRegion==='world' ? true : textMatchesRegion(currentRegion, text); }
+function textMatchesRegion(region, text){
   const t = String(text||'').toLowerCase();
-  return (REGION_KEYWORDS[currentRegion]||[]).some(k=>t.includes(k));
+  return (REGION_KEYWORDS[region]||[]).some(k=>t.includes(k));
 }
 
 const signalGuideItems = [
@@ -2166,6 +2195,96 @@ function renderLower(){
 }
 
 // === RIGHT RAIL ===
+// === REGIONAL THREAT (derived) ===
+function threatByRegion(){
+  const regions=['middleEast','europe','asiaPacific','americas','africa'];
+  return regions.map(r=>{
+    const box=REGION_BOX[r];
+    const inBox=(lat,lng)=> lat>=box[0][1]&&lat<=box[1][1]&&lng>=box[0][0]&&lng<=box[1][0];
+    const acled=(D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon&&inBox(e.lat,e.lon));
+    const fat=acled.reduce((s,e)=>s+(e.fatalities||0),0);
+    const osint=(D.tg?.urgent||[]).filter(p=>textMatchesRegion(r,p.text||'')).length;
+    const score=Math.min(100, Math.round(acled.length*7 + Math.min(fat,600)/12 + osint*5));
+    const lvl = score>=70?['Critical','#ff6b74']:score>=45?['High','#f59a5e']:score>=20?['Elevated','#f2c879']:['Guarded','#7fe0c0'];
+    return {r, label:REGION_LABEL[r], score, level:lvl[0], color:lvl[1], events:acled.length, fat};
+  }).sort((a,b)=>b.score-a.score);
+}
+function threatHtml(){
+  const rows=threatByRegion();
+  return `<div class="sec-head"><h3>Regional threat</h3><span class="badge">${currentRegion==='world'?'All theaters':REGION_LABEL[currentRegion]}</span></div>
+    ${rows.map(x=>`<div class="threat-row" onclick="setRegion('${x.r}')" title="Focus ${x.label}"><span class="tdot" style="background:${x.color}"></span><span class="tname">${x.label}</span><span class="tmeta">${x.events} ev &#183; ${x.fat} fat.</span><span class="tlevel" style="color:${x.color}">${x.level}</span></div>`).join('')}
+    <div class="panel-src">Derived from ACLED events + urgent OSINT in each theater · click to focus</div>`;
+}
+
+// === PREDICTION MARKETS (Polymarket) ===
+function polyHtml(){
+  const head=`<div class="sec-head"><h3>Prediction markets</h3><span class="badge">Polymarket</span></div>`;
+  if(POLY_ITEMS===null) return head+'<div class="panel-src">Loading…</div>';
+  if(!POLY_ITEMS.length) return head+'<div class="panel-src">No conflict markets right now.</div>';
+  return head+POLY_ITEMS.map(p=>`
+    <a class="poly-item" href="https://polymarket.com/event/${esc(p.slug)}" target="_blank" rel="noopener">
+      <span class="poly-q">${esc(p.title)}</span>
+      <span class="poly-bar"><span style="width:${Math.max(2,Math.round(p.yes*100))}%"></span></span>
+      <span class="poly-meta"><b>${Math.round(p.yes*100)}%</b> yes &#183; $${p.vol>=1000?Math.round(p.vol/1000)+'k':Math.round(p.vol)} 24h</span>
+    </a>`).join('');
+}
+async function ensurePolymarket(){
+  if(POLY_ITEMS || Date.now()-POLY_TS<60000) return;
+  POLY_TS=Date.now();
+  try{
+    const r=await fetch('https://gamma-api.polymarket.com/events?limit=50&active=true&closed=false&order=volume24hr&ascending=false');
+    const events=await r.json();
+    const KW=/(iran|israel|russia|ukrain|war|ceasefire|strike|nuclear|nato|china|taiwan|gaza|hezbollah|houthi|\boil\b|gold|recession|invasion|missile)/i;
+    const items=[];
+    for(const ev of events){
+      if(!KW.test(ev.title||'')) continue;
+      const m=(ev.markets||[])[0]; if(!m) continue;
+      let prices; try{ prices=JSON.parse(m.outcomePrices||'[]'); }catch{ prices=[]; }
+      const yes=prices[0]!=null?+prices[0]:null;
+      if(yes==null||isNaN(yes)) continue;
+      items.push({title:ev.title, yes, vol:+(m.volume24hr||ev.volume24hr||0), slug:ev.slug});
+      if(items.length>=6) break;
+    }
+    POLY_ITEMS=items;
+  }catch{ POLY_ITEMS=POLY_ITEMS||[]; }
+  const el=document.querySelector('.right-poly'); if(el) el.innerHTML=polyHtml();
+}
+
+// === AIR-RAID ALERTS ===
+function alertsHtml(){
+  const head=`<div class="sec-head"><h3>Air-raid alerts</h3><span class="badge" id="alertsBadge">${ALERTS?'live':'loading'}</span></div>`;
+  if(!ALERTS) return head+'<div class="panel-src">Loading…</div>';
+  const items=(ALERTS.items||[]);
+  const now=Date.now()/1000;
+  const recent=items.filter(a=>now-a.time<3600);
+  const rows=recent.slice(0,6).map(a=>`<div class="alert-row"><span class="alert-time">${new Date(a.time*1000).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</span><span class="alert-cities">${esc((a.cities||[]).slice(0,3).join(', '))}${(a.cities||[]).length>3?' +'+((a.cities.length)-3):''}</span>${a.drill?'<span class="alert-drill">drill</span>':''}</div>`).join('');
+  return head
+    +`<div class="alerts-head"><span class="panel-src">${esc(ALERTS.source||'')}</span><button class="alerts-snd ${alertsAudio?'on':''}" onclick="toggleAlertsAudio()" title="Sound on new alerts">${alertsAudio?'&#128266;':'&#128263;'}</button></div>`
+    +(rows||'<div class="panel-src" style="opacity:.7">No active alerts in the last hour.</div>');
+}
+let lastAlertMax=0, alertsLoaded=false;
+async function ensureAlerts(){
+  if(alertsLoaded && Date.now()-ALERTS_TS<30000) return;
+  alertsLoaded=true; ALERTS_TS=Date.now();
+  try{ const r=await fetch('/api/alerts',{credentials:'same-origin'}); const d=await r.json(); if(d&&!d.error){ ALERTS=d; } }
+  catch{ ALERTS=ALERTS||{items:[],source:'unavailable'}; }
+  const max=(ALERTS.items||[]).reduce((m,a)=>Math.max(m,a.time||0),0);
+  if(lastAlertMax && max>lastAlertMax && alertsAudio) beep();
+  lastAlertMax=Math.max(lastAlertMax,max);
+  const el=document.querySelector('.right-alerts'); if(el) el.innerHTML=alertsHtml();
+}
+function toggleAlertsAudio(){ alertsAudio=!alertsAudio; const el=document.querySelector('.right-alerts'); if(el) el.innerHTML=alertsHtml(); }
+function beep(){ try{ const ac=new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(), g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value=880; g.gain.value=0.05; o.start(); setTimeout(()=>{o.stop();ac.close();},220); }catch{} }
+
+// === STRIKE / MISSILE WATCH (derived) ===
+function strikesHtml(){
+  const flags=/missile|drone|strike|airstrike|shelling|bomb|attack|shahed|ballistic/i;
+  const posts=(D.tg?.urgent||[]).filter(p=>(p.urgentFlags&&p.urgentFlags.length)||flags.test(p.text||''));
+  return `<div class="sec-head"><h3>Strike &amp; missile watch</h3><span class="badge">${posts.length}</span></div>`
+    +(posts.length? posts.slice(0,6).map(p=>`<div class="strike-row"><span class="strike-tag">${esc(((p.urgentFlags&&p.urgentFlags[0])||'strike').toUpperCase())}</span><span class="strike-text">${cleanText((p.text||'').slice(0,150))}</span></div>`).join('') : '<div class="panel-src" style="opacity:.7">No recent strike reports.</div>')
+    +`<div class="panel-src">Derived from urgent OSINT. Live tracks: <a href="https://neptun.in.ua/karta-shahediv" target="_blank" rel="noopener">Neptun &#8599;</a></div>`;
+}
+
 function renderRight(){
   const mobile = isMobileLayout();
 
@@ -2196,6 +2315,10 @@ function renderRight(){
 
   document.getElementById('rightRail').innerHTML=`
     ${mobile ? '' : buildOsintPanel('right-osint', 420)}
+    <div class="g-panel right-alerts">${alertsHtml()}</div>
+    <div class="g-panel right-threat">${threatHtml()}</div>
+    <div class="g-panel right-strikes">${strikesHtml()}</div>
+    <div class="g-panel right-poly">${polyHtml()}</div>
     <div class="g-panel right-delta">
       <div class="sec-head"><h3>${t('panels.sweepDelta','Sweep delta')}</h3><span class="badge ${dirClass}">${ds.direction?t('delta.'+ds.direction,ds.direction.toUpperCase()):t('delta.baseline','Baseline')}</span></div>
       ${hasDelta?`<div class="delta-stats">
@@ -2209,7 +2332,10 @@ function renderRight(){
       <div class="sec-head" onclick="toggleMarkets()"><h3>${t('panels.macroMarkets','Macro + markets')}</h3><span class="badge toggle">${MACRO_LIVE?t('badges.live','Live'):t('badges.delayed','Delayed')}</span></div>
       <div class="collapse-body">${MACRO_INNER}</div>
     </div>`;
+  ensureAlerts();
+  ensurePolymarket();
 }
+
 
 // === HELPERS ===
 function getAge(d){const ms=Date.now()-new Date(d).getTime();const h=Math.floor(ms/3600000);if(h<1)return 'just now';if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago'}
