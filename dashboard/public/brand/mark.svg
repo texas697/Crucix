@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="MFB Services Intelligence mark">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8fa7ff"/>
-      <stop offset="1" stop-color="#7c63e8"/>
-    </linearGradient>
-  </defs>
-  <rect x="8" y="8" width="240" height="240" rx="52" fill="url(#g)"/>
-  <text x="128" y="172" text-anchor="middle" font-family="Geist,Arial,sans-serif" font-weight="600" font-size="120" fill="#0a0f1f">M</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="MFB Services Intelligence mark"><rect width="256" height="256" rx="54" fill="#0a0d14"/><circle cx="128" cy="128" r="74" stroke="#98a8ff" stroke-width="21" fill="none"/><path d="M128 22v42M128 192v42M22 128h42M192 128h42" stroke="#98a8ff" stroke-width="21" stroke-linecap="round"/><circle cx="128" cy="128" r="21" fill="#e9ecf2"/></svg>

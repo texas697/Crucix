@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fa7ff"/><stop offset="1" stop-color="#7c63e8"/></linearGradient></defs>
-  <rect width="64" height="64" rx="13" fill="url(#g)"/>
-  <text x="32" y="43" text-anchor="middle" font-family="Geist,Arial,sans-serif" font-weight="600" font-size="30" fill="#0a0f1f">M</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" xmlns:c2pa="http://c2pa.org/manifest"><rect width="48" height="48" rx="10" fill="#0a0d14"></rect><circle cx="24" cy="24" r="14" stroke="#98a8ff" stroke-width="4"></circle><path d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke="#98a8ff" stroke-width="4" stroke-linecap="round"></path><circle cx="24" cy="24" r="4" fill="#e9ecf2"></circle></svg>

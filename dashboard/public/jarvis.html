@@ -102,9 +102,25 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .status-strip .st-spacer{flex:1}
 .status-strip .st-time{font-family:var(--mono);font-size:12px;white-space:nowrap}
 
-/* GRID */
+/* GRID (v4: full-width rows of fixed-height cards) */
 .grid{display:grid;grid-template-columns:280px minmax(0,1fr) 340px;gap:16px;margin-top:0;align-items:start}
 .col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:stretch}
+.col-card{display:flex;flex-direction:column;min-width:0;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.row-a .col-card{height:520px}
+.row-b .col-card{height:400px}
+.row-c .col-card{height:480px}
+.row-d .col-card{height:460px}
+.row-e .col-card{height:420px}
+.card-head{flex:none;display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.card-head h3{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap}
+.card-head-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.card-head .badge{margin-left:0}
+.card-sub{font-size:11.5px;color:var(--dim);white-space:nowrap}
+.card-body{flex:1;min-height:0;overflow-y:auto;padding:12px 18px 16px}
+.card-body.pad-sm{padding:6px 8px 8px}
+.card-body::-webkit-scrollbar{width:6px}
+.card-body::-webkit-scrollbar-thumb{background:#1a2030;border-radius:5px}
 .g-panel{border:1px solid var(--border);background:var(--panel);border-radius:8px;padding:16px;position:relative}
 .sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .sec-head h3{font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--text);white-space:nowrap}
@@ -144,7 +160,7 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 /* CENTER: MAP */
 .map-wrap{display:flex;flex-direction:column;width:100%}
 .map-region-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border);border-bottom:0;border-radius:8px 8px 0 0;background:var(--panel);backdrop-filter:blur(20px)}
-.map-container{min-height:clamp(480px,64vh,780px);border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;background:radial-gradient(ellipse at center,rgba(8,11,17,1),rgba(5,7,11,1));position:relative;overflow:hidden}
+.map-container{height:560px;border:1px solid var(--border);border-top:0;border-radius:0 0 8px 8px;background:radial-gradient(ellipse at center,rgba(8,11,17,1),rgba(5,7,11,1));position:relative;overflow:hidden}
 #globeViz{width:100%;height:100%;cursor:grab}
 #globeViz:active{cursor:grabbing}
 #globeViz canvas{outline:none}
@@ -156,7 +172,7 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .conflict-ring{animation:pulse-conflict 2.5s ease-in-out infinite}
 @keyframes dash-flow{to{stroke-dashoffset:-20}}
 .corridor-flow{animation:dash-flow 2s linear infinite}
-.map-legend{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 14px;background:rgba(7,9,14,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:12px;color:#a2abbd;letter-spacing:0;text-transform:none;z-index:5;max-height:40%;overflow-y:auto}
+.map-legend{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:nowrap;align-items:center;gap:8px 12px;padding:10px 14px;background:rgba(7,9,14,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:12px;color:#a2abbd;letter-spacing:0;text-transform:none;z-index:5;overflow-x:auto}
 .leg-controls{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .leg-chips{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1}
 .leg-action,.leg-time{font-family:var(--sans);font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);cursor:pointer;white-space:nowrap}
@@ -440,7 +456,9 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
   #centerCol{order:1}
   #rightRail{order:2}
   #leftRail{order:3}
-  .map-container{min-height:420px}
+  .map-container{height:420px}
+  .row-a .col-card,.row-b .col-card,.row-c .col-card,.row-d .col-card,.row-e .col-card{height:auto;max-height:70vh}
+  .col-card{flex:1 1 100%!important}
   .map-bar-hint{display:none}
   .map-legend{left:8px;right:8px;bottom:8px;gap:4px}
   .leg-item{font-size:10px}
@@ -474,7 +492,7 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
 </head>
 <body>
 <div id="boot">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" class="boot-logo" aria-label="MFB Services Intelligence"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fa7ff"/><stop offset="1" stop-color="#7c63e8"/></linearGradient></defs><rect x="14" y="24" width="112" height="112" rx="20" fill="url(#g)"/><text x="70" y="98" text-anchor="middle" font-family="'Geist',Arial,sans-serif" font-weight="600" font-size="60" fill="#0a0f1f">M</text><text x="172" y="78" font-family="'Geist',Arial,sans-serif" font-weight="600" font-size="52" letter-spacing="1" fill="#e9ecf2">MFB SERVICES</text><text x="174" y="122" font-family="'Geist Mono',monospace" font-weight="500" font-size="22" letter-spacing="8" fill="url(#g)">INTELLIGENCE</text></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" class="boot-logo" aria-label="MFB Services Intelligence"><rect x="14" y="24" width="112" height="112" rx="24" fill="#0a0d14" stroke="#1a2030"/><circle cx="70" cy="80" r="34" stroke="#98a8ff" stroke-width="9" fill="none"/><path d="M70 24v18M70 118v18M14 80h18M108 80h18" stroke="#98a8ff" stroke-width="9" stroke-linecap="round"/><circle cx="70" cy="80" r="9" fill="#e9ecf2"/><text x="172" y="78" font-family="Geist,Arial,sans-serif" font-weight="600" font-size="52" letter-spacing="1" fill="#e9ecf2">MFB SERVICES</text><text x="174" y="122" font-family="Geist Mono,monospace" font-weight="500" font-size="22" letter-spacing="8" fill="#98a8ff">INTELLIGENCE</text></svg>
   <div id="bootLines"></div>
   <div id="bootFinal">TERMINAL ACTIVE</div>
 </div>
@@ -503,12 +521,29 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
       <div class="map-popup" id="mapPopup"><button class="pp-close" onclick="closePopup()">&times;</button><div class="pp-head"></div><div class="pp-text"></div><div class="pp-meta"></div></div>
     </div>
   </div>
-  <div class="grid">
-    <div class="col" id="leftRail"></div>
-    <div class="col" id="centerCol">
-      <div class="lower" id="lowerGrid"></div>
-    </div>
-    <div class="col" id="rightRail"></div>
+  <div class="row row-a">
+    <div class="col-card" id="pSensor" style="flex:1 1 260px"></div>
+    <div class="col-card" id="pNews" style="flex:2 1 420px"></div>
+    <div class="col-card" id="pOsint" style="flex:1 1 300px"></div>
+  </div>
+  <div class="row row-b">
+    <div class="col-card" id="pCore" style="flex:1 1 240px"></div>
+    <div class="col-card" id="pNuclear" style="flex:1 1 240px"></div>
+    <div class="col-card" id="pRisk" style="flex:1 1 240px"></div>
+    <div class="col-card" id="pDelta" style="flex:1 1 240px"></div>
+  </div>
+  <div class="row row-c">
+    <div class="col-card" id="pIdeas" style="flex:2 1 440px"></div>
+    <div class="col-card" id="pSpace" style="flex:1 1 280px"></div>
+  </div>
+  <div class="row row-d">
+    <div class="col-card" id="pAlerts" style="flex:1 1 260px"></div>
+    <div class="col-card" id="pThreat" style="flex:1 1 260px"></div>
+    <div class="col-card" id="pTracks" style="flex:2 1 340px"></div>
+    <div class="col-card" id="pPoly" style="flex:1 1 280px"></div>
+  </div>
+  <div class="row row-e">
+    <div class="col-card" id="pMarkets" style="flex:1 1 100%"></div>
   </div>
 </div>
 <div class="glossary-overlay" id="glossaryOverlay" onclick="if(event.target===this) closeGlossary()">
@@ -1034,6 +1069,10 @@ function setMapHint(text){
   if(el) el.textContent = text;
 }
 
+function cardHtml(title, badge, body, headExtra, bodyClass){
+  return `<div class="card-head"><h3>${title}</h3><div class="card-head-right">${badge?`<span class="badge">${badge}</span>`:''}${headExtra||''}</div></div><div class="card-body ${bodyClass||''}">${body}</div>`;
+}
+
 function renderTopbar(){
   const mobile = isMobileLayout();
   const ts = new Date(D.meta.timestamp);
@@ -1047,7 +1086,7 @@ function renderTopbar(){
   document.getElementById('topbar').innerHTML=`
     <div class="top-left">
       <span class="brand">
-        <svg viewBox="0 0 34 34" class="brand-mark" aria-hidden="true"><defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fa7ff"/><stop offset="1" stop-color="#7c63e8"/></linearGradient></defs><rect width="34" height="34" rx="6" fill="url(#bm)"/><text x="17" y="23" text-anchor="middle" font-family="Geist,sans-serif" font-weight="600" font-size="15" fill="#0a0f1f">M</text></svg>
+        <svg viewBox="0 0 48 48" class="brand-mark" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a0d14"/><circle cx="24" cy="24" r="14" stroke="#98a8ff" stroke-width="4"/><path d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke="#98a8ff" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="4" fill="#e9ecf2"/></svg>
         <span class="brand-text"><span class="b1">MFB Services</span><span class="sub">Intelligence</span></span>
       </span>
     </div>
@@ -1107,11 +1146,28 @@ function renderLeftRail(){
     {name:t('layers.spaceActivity','Satellites'),count:D.space?.militarySats||0,dot:'space',sub:`${D.space?.totalNewObjects||0} ${t('space.newLast30d','new (30d)')}`}
   ];
 
-  document.getElementById('leftRail').innerHTML=`
-    <div class="g-panel">
-      <div class="sec-head"><h3>${t('panels.sensorGrid','Sensor grid')}</h3><span class="badge">${layers.length} feeds</span></div>
-      ${layers.map(l=>`<div class="layer-item"><div class="layer-left"><div class="ldot ${l.dot}"></div><div><div class="layer-name">${l.name}</div><div class="layer-sub">${l.sub}</div></div></div><div class="layer-count">${l.count}</div></div>`).join('')}
-    </div>`;
+  const sensorEl=document.getElementById('pSensor');
+  if(sensorEl) sensorEl.innerHTML = cardHtml(t('panels.sensorGrid','Sensor grid'), `${layers.length} feeds`,
+    layers.map(l=>`<div class="layer-item"><div class="layer-left"><div class="ldot ${l.dot}"></div><div><div class="layer-name">${l.name}</div><div class="layer-sub">${l.sub}</div></div></div><div class="layer-count">${l.count}</div></div>`).join(''),
+    '', 'pad-sm');
+
+  const allNormal=D.nuke.every(s=>!s.anom);
+  const nukeHtml=D.nuke.map(s=>`<div class="site-row"><span>${s.site}</span><span class="site-val">${s.n>0?(s.cpm?.toFixed(1)||'--')+' CPM':'No data'}</span></div>`).join('');
+  const nuclearEl=document.getElementById('pNuclear');
+  if(nuclearEl) nuclearEl.innerHTML = cardHtml(t('panels.nuclearWatch','Nuclear watch'), 'Radiation &#183; CPM',
+    `<div class="nuke-ok ${allNormal?'ok':'anom'}">${allNormal?'&#9679; '+t('nuclear.allSitesNormal','All sites normal'):'&#9888; '+t('nuclear.anomalyDetected','Anomaly detected')}</div>${nukeHtml}`);
+
+  const vix=D.fred.find(f=>f.id==='VIXCLS'), hy=D.fred.find(f=>f.id==='BAMLH0A0HYM2'), usd=D.fred.find(f=>f.id==='DTWEXBGS');
+  const m2=D.fred.find(f=>f.id==='M2SL'), mort=D.fred.find(f=>f.id==='MORTGAGE30US'), claims=D.fred.find(f=>f.id==='ICSA');
+  const riskEl=document.getElementById('pRisk');
+  if(riskEl) riskEl.innerHTML = cardHtml(t('panels.riskGauges','Risk gauges'), 'Stress', `
+    <div class="econ-row"><span class="elabel">${t('metrics.vix','VIX')}</span><span class="eval" style="color:${vix?.value>20?'var(--warn)':'var(--accent)'}">${vix?.value||'--'}</span></div>
+    <div class="econ-row"><span class="elabel">${t('metrics.hySpread','HY spread')}</span><span class="eval">${hy?.value||'--'}</span></div>
+    <div class="econ-row"><span class="elabel">${t('metrics.usdIndex','USD index')}</span><span class="eval">${usd?.value?.toFixed(1)||'--'}</span></div>
+    <div class="econ-row"><span class="elabel">${t('metrics.joblessClaims','Jobless claims')}</span><span class="eval">${claims?.value?.toLocaleString()||'--'}</span></div>
+    <div class="econ-row"><span class="elabel">${t('metrics.mortgage30y','30Y mortgage')}</span><span class="eval">${mort?.value||'--'}%</span></div>
+    <div class="econ-row"><span class="elabel">${t('metrics.m2Supply','M2 supply')}</span><span class="eval">$${(m2?.value/1000)?.toFixed(1)||'--'}T</span></div>
+    <div class="econ-row"><span class="elabel">${t('metrics.natDebt','Nat. debt')}</span><span class="eval">$${(parseFloat(D.treasury.totalDebt)/1e12).toFixed(2)}T</span></div>`);
 }
 
 // === MAP ===
@@ -2203,11 +2259,9 @@ function renderLower(){
   const ideasActions = (ME && !ME.llm) ? `<button class="ideas-gen" onclick="openSettings()" title="Enter your LLM API key for AI-generated ideas">&#9889; Add AI key</button>` : ME?.llm ? `<span class="ideas-actions">${D.ideasSource==='mine'&&D.ideasMeta?.generatedAt?`<span class="ideas-meta">${getAge(D.ideasMeta.generatedAt)}</span>`:''}<button class="ideas-gen" id="ideasGenBtn" onclick="generateMyIdeas()">${hasIdeas?'Regenerate':'Generate'}</button></span>` : '';
 
 
-  const newsPanel = `<div class="g-panel lp-news" style="display:flex;flex-direction:column">
-      <div class="sec-head"><h3>${t('panels.newsTicker','Live news')}</h3><span class="badge">${feed.length} items</span></div>
-      <div class="news-list" style="max-height:520px;overflow-y:auto">${newsItems}</div>
-    </div>`;
-  const osintPanel = mobile ? buildOsintPanel('lp-osint', 240) : '';
+  const newsEl=document.getElementById('pNews');
+  if(newsEl) newsEl.innerHTML = cardHtml(t('panels.newsTicker','Live news'), `${feed.length} items`, `<div class="news-list">${newsItems}</div>`, '', 'pad-sm');
+
   MACRO_INNER = `${hasMarkets?`<div style="margin-bottom:8px">
         <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:4px;letter-spacing:1px">INDEXES</div>
         <div class="metrics-row">${indexCards}</div>
@@ -2228,12 +2282,20 @@ function renderLower(){
         <div class="spark">${sparkHtml}</div>
       </div>`;
   MACRO_LIVE = !!mkt.timestamp;
-  const ideasPanel = `<div class="g-panel lp-ideas">
-      <div class="sec-head"><h3>${t('panels.tradeIdeas','Leverageable Ideas')}${ideasBadge}</h3>${ideasActions}</div>
-      ${ideasHtml}
-      <div class="disclosure">FOR INFORMATIONAL PURPOSES ONLY. This is not financial advice, a recommendation to buy or sell any security, or a solicitation of any kind. All signal-based observations are derived from publicly available OSINT data and should not be relied upon for investment decisions. Consult a licensed financial advisor before making any investment. Past performance does not guarantee future results.</div>
-    </div>`;
-  document.getElementById('lowerGrid').innerHTML=`${newsPanel}${osintPanel}${ideasPanel}`;
+
+  const ideasEl=document.getElementById('pIdeas');
+  if(ideasEl) ideasEl.innerHTML = cardHtml(`${t('panels.tradeIdeas','Leverageable ideas')}${ideasBadge}`, '', `${ideasHtml}<div class="disclosure">For informational purposes only. Not financial advice or a solicitation to buy or sell any security. Observations derive from publicly available OSINT data. Consult a licensed financial advisor before investing.</div>`, ideasActions?`<span class="ideas-actions" style="margin-left:auto">${ideasActions}</span>`:'');
+
+  const sp=D.space;
+  const spaceEl=document.getElementById('pSpace');
+  if(spaceEl) spaceEl.innerHTML = cardHtml(t('panels.spaceWatch','Space watch'), 'Orbital', sp ? `
+    <div class="econ-row"><span class="elabel">New objects (30d)</span><span class="eval" style="color:var(--accent2)">${sp.totalNewObjects||0}</span></div>
+    <div class="econ-row"><span class="elabel">Military sats</span><span class="eval">${sp.militarySats||0}</span></div>
+    <div class="econ-row"><span class="elabel">Starlink</span><span class="eval">${sp.constellations?.starlink||0}</span></div>
+    <div class="econ-row"><span class="elabel">OneWeb</span><span class="eval">${sp.constellations?.oneweb||0}</span></div>
+    ${sp.iss?`<div class="econ-row"><span class="elabel">ISS</span><span class="eval" style="color:var(--accent)">ALT ${((sp.iss.apogee+sp.iss.perigee)/2).toFixed(0)} km</span></div>`:''}
+    ${(sp.signals||[]).length?`<p class="panel-note">${sp.signals.slice(0,2).map(esc).join(' ')}</p>`:''}
+  ` : '<div class="panel-src">No space data.</div>');
 }
 
 // === RIGHT RAIL ===
@@ -2253,22 +2315,21 @@ function threatByRegion(){
 }
 function threatHtml(){
   const rows=threatByRegion();
-  return `<div class="sec-head"><h3>Regional threat</h3><span class="badge">${currentRegion==='world'?'All theaters':REGION_LABEL[currentRegion]}</span></div>
-    ${rows.map(x=>`<div class="threat-row" onclick="setRegion('${x.r}')" title="Focus ${x.label}"><span class="tdot" style="background:${x.color}"></span><span class="tname">${x.label}</span><span class="tmeta">${x.events} ev &#183; ${x.fat} fat.</span><span class="tlevel" style="color:${x.color}">${x.level}</span></div>`).join('')}
-    <div class="panel-src">Derived from ACLED events + urgent OSINT in each theater · click to focus</div>`;
+  return cardHtml('Regional threat', currentRegion==='world'?'All theaters':REGION_LABEL[currentRegion],
+    rows.map(x=>`<div class="threat-row" onclick="setRegion('${x.r}')" title="Focus ${x.label}"><span class="tdot" style="background:${x.color}"></span><span class="tname">${x.label}</span><span class="tmeta">${x.events} ev &#183; ${x.fat} fat.</span><span class="tlevel" style="color:${x.color}">${x.level}</span></div>`).join('')
+    +`<div class="panel-src">Derived from ACLED events + urgent OSINT in each theater &#183; click to focus</div>`);
 }
 
 // === PREDICTION MARKETS (Polymarket) ===
 function polyHtml(){
-  const head=`<div class="sec-head"><h3>Prediction markets</h3><span class="badge">Polymarket</span></div>`;
-  if(POLY_ITEMS===null) return head+'<div class="panel-src">Loading…</div>';
-  if(!POLY_ITEMS.length) return head+'<div class="panel-src">No conflict markets right now.</div>';
-  return head+POLY_ITEMS.map(p=>`
+  if(POLY_ITEMS===null) return cardHtml('Prediction markets','Polymarket','<div class="panel-src">Loading…</div>');
+  if(!POLY_ITEMS.length) return cardHtml('Prediction markets','Polymarket','<div class="panel-src">No conflict markets right now.</div>');
+  return cardHtml('Prediction markets','Polymarket', POLY_ITEMS.map(p=>`
     <a class="poly-item" href="https://polymarket.com/event/${esc(p.slug)}" target="_blank" rel="noopener">
       <span class="poly-q">${esc(p.title)}</span>
       <span class="poly-bar"><span style="width:${Math.max(2,Math.round(p.yes*100))}%"></span></span>
       <span class="poly-meta"><b>${Math.round(p.yes*100)}%</b> yes &#183; $${p.vol>=1000?Math.round(p.vol/1000)+'k':Math.round(p.vol)} 24h</span>
-    </a>`).join('');
+    </a>`).join(''));
 }
 async function ensurePolymarket(){
   if(POLY_ITEMS || Date.now()-POLY_TS<60000) return;
@@ -2289,20 +2350,19 @@ async function ensurePolymarket(){
     }
     POLY_ITEMS=items;
   }catch{ POLY_ITEMS=POLY_ITEMS||[]; }
-  const el=document.querySelector('.right-poly'); if(el) el.innerHTML=polyHtml();
+  const el=document.getElementById('pPoly'); if(el) el.innerHTML=polyHtml();
 }
 
 // === AIR-RAID ALERTS ===
 function alertsHtml(){
-  const head=`<div class="sec-head"><h3>Air-raid alerts</h3><span class="badge" id="alertsBadge">${ALERTS?'live':'loading'}</span></div>`;
-  if(!ALERTS) return head+'<div class="panel-src">Loading…</div>';
+  if(!ALERTS) return cardHtml('Air-raid alerts','loading','<div class="panel-src">Loading…</div>');
   const items=(ALERTS.items||[]);
   const now=Date.now()/1000;
   const recent=items.filter(a=>now-a.time<3600);
-  const rows=recent.slice(0,6).map(a=>`<div class="alert-row"><span class="alert-time">${new Date(a.time*1000).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</span><span class="alert-cities">${esc((a.cities||[]).slice(0,3).join(', '))}${(a.cities||[]).length>3?' +'+((a.cities.length)-3):''}</span>${a.drill?'<span class="alert-drill">drill</span>':''}</div>`).join('');
-  return head
-    +`<div class="alerts-head"><span class="panel-src">${esc(ALERTS.source||'')}</span><button class="alerts-snd ${alertsAudio?'on':''}" onclick="toggleAlertsAudio()" title="Sound on new alerts">${alertsAudio?'&#128266;':'&#128263;'}</button></div>`
-    +(rows||'<div class="panel-src" style="opacity:.7">No active alerts in the last hour.</div>');
+  const rows=recent.slice(0,10).map(a=>`<div class="alert-row"><span class="alert-time">${new Date(a.time*1000).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</span><span class="alert-cities">${esc((a.cities||[]).slice(0,3).join(', '))}${(a.cities||[]).length>3?' +'+((a.cities.length)-3):''}</span>${a.drill?'<span class="alert-drill">drill</span>':''}</div>`).join('');
+  const sound=`<button class="alerts-snd ${alertsAudio?'on':''}" onclick="toggleAlertsAudio()" title="Sound on new alerts">${alertsAudio?'&#128266;':'&#128263;'}</button>`;
+  return cardHtml('Air-raid alerts', recent.length?recent.length+' in 1h':'Quiet',
+    (rows||'<div class="panel-src" style="opacity:.7">No active alerts in the last hour.</div>')+`<div class="panel-src">${esc(ALERTS.source||'')}</div>`, sound);
 }
 let lastAlertMax=0, alertsLoaded=false;
 async function ensureAlerts(){
@@ -2313,19 +2373,18 @@ async function ensureAlerts(){
   const max=(ALERTS.items||[]).reduce((m,a)=>Math.max(m,a.time||0),0);
   if(lastAlertMax && max>lastAlertMax && alertsAudio) beep();
   lastAlertMax=Math.max(lastAlertMax,max);
-  const el=document.querySelector('.right-alerts'); if(el) el.innerHTML=alertsHtml();
+  const el=document.getElementById('pAlerts'); if(el) el.innerHTML=alertsHtml();
 }
-function toggleAlertsAudio(){ alertsAudio=!alertsAudio; const el=document.querySelector('.right-alerts'); if(el) el.innerHTML=alertsHtml(); }
+function toggleAlertsAudio(){ alertsAudio=!alertsAudio; const el=document.getElementById('pAlerts'); if(el) el.innerHTML=alertsHtml(); }
 function beep(){ try{ const ac=new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(), g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value=880; g.gain.value=0.05; o.start(); setTimeout(()=>{o.stop();ac.close();},220); }catch{} }
 
 // === DRONE / MISSILE TRACKER (Neptun live) ===
 function trackerHtml(){
-  const head=`<div class="sec-head"><h3>Drone &amp; missile tracker</h3><span class="badge">${TRACKS?TRACKS.count+' live':'connecting'}</span></div>`;
-  if(TRACKS===null) return head+'<div class="panel-src">Connecting to Neptun…</div>';
+  if(TRACKS===null) return cardHtml('Drone &amp; missile tracker','connecting','<div class="panel-src">Connecting to Neptun…</div>');
   const list=(TRACKS.tracks||[]);
-  if(!list.length) return head+'<div class="panel-src" style="opacity:.7">No active tracks.</div>';
+  if(!list.length) return cardHtml('Drone &amp; missile tracker', TRACKS.count+' live', '<div class="panel-src" style="opacity:.7">No active tracks.</div>');
   const typeColor={fpv:'#f2c879',uav:'#f59a5e',missile:'#ff6b74',kab:'#b48cff',shahed:'#ff6b74'};
-  return head+list.slice(0,8).map(x=>{
+  return cardHtml('Drone &amp; missile tracker', TRACKS.count+' live', list.slice(0,10).map(x=>{
     const col=typeColor[(x.type||'').toLowerCase()]||'#ff9e6b';
     const age=x.updatedAt?getAge(x.updatedAt):'';
     return `<div class="track-row">
@@ -2333,14 +2392,14 @@ function trackerHtml(){
       <span class="track-loc">${esc(x.locality||'')}${x.locality&&x.region?', ':''}${esc(x.region||'')}</span>
       <span class="track-meta">${esc(x.confidence||'')} &#183; ${x.sourceCount||1} src &#183; ${age}</span>
     </div>`;
-  }).join('')+`<div class="panel-src">Live from <a href="https://neptun.in.ua/karta-shahediv" target="_blank" rel="noopener">Neptun &#8599;</a>${TRACKS.updated?' &#183; updated '+getAge(TRACKS.updated):''}</div>`;
+  }).join('')+`<div class="panel-src">Live from <a href="https://neptun.in.ua/karta-shahediv" target="_blank" rel="noopener">Neptun &#8599;</a>${TRACKS.updated?' &#183; updated '+getAge(TRACKS.updated):''}</div>`);
 }
 async function ensureTracks(){
   if(TRACKS && Date.now()-TRACKS_TS<12000) return;
   TRACKS_TS=Date.now();
   try{ const r=await fetch('/api/tracks',{credentials:'same-origin'}); const d=await r.json(); if(d&&!d.error) TRACKS=d; }
   catch{ if(!TRACKS) TRACKS={count:0,tracks:[]}; }
-  const el=document.querySelector('.right-tracks'); if(el) el.innerHTML=trackerHtml();
+  const el=document.getElementById('pTracks'); if(el) el.innerHTML=trackerHtml();
   refreshMap();
 }
 
@@ -2372,25 +2431,27 @@ function renderRight(){
   }
   const deltaHtml = hasDelta ? deltaRows.join('') : `<div style="padding:12px;text-align:center;color:var(--dim);font-family:var(--sans);font-size:12px">${t('delta.noChanges','No changes since last sweep')}</div>`;
 
-  document.getElementById('rightRail').innerHTML=`
-    ${mobile ? '' : buildOsintPanel('right-osint', 420)}
-    <div class="g-panel right-alerts">${alertsHtml()}</div>
-    <div class="g-panel right-threat">${threatHtml()}</div>
-    <div class="g-panel right-tracks">${trackerHtml()}</div>
-    <div class="g-panel right-poly">${polyHtml()}</div>
-    <div class="g-panel right-delta">
-      <div class="sec-head"><h3>${t('panels.sweepDelta','Sweep delta')}</h3><span class="badge ${dirClass}">${ds.direction?t('delta.'+ds.direction,ds.direction.toUpperCase()):t('delta.baseline','Baseline')}</span></div>
-      ${hasDelta?`<div class="delta-stats">
-        <div class="delta-stat"><span class="k">${t('delta.changes','Changes')}</span><span class="v">${ds.totalChanges}</span></div>
-        <div class="delta-stat"><span class="k">${t('delta.critical','Critical')}</span><span class="v">${ds.criticalChanges||0}</span></div>
-        <div class="delta-stat"><span class="k">${t('delta.new','New')}</span><span class="v">${ds.signalBreakdown?.new ?? 0}</span></div>
-      </div>`:''}
-      <div class="delta-list">${deltaHtml}</div>
-    </div>
-    <div class="g-panel right-markets collapsible ${marketsOpen?'':'collapsed'}" id="marketsPanel">
-      <div class="sec-head" onclick="toggleMarkets()"><h3>${t('panels.macroMarkets','Macro + markets')}</h3><span class="badge toggle">${MACRO_LIVE?t('badges.live','Live'):t('badges.delayed','Delayed')}</span></div>
-      <div class="collapse-body">${MACRO_INNER}</div>
-    </div>`;
+  const core=[
+    {l:'Incident tempo',v:D.tg.urgent.length,p:70},
+    {l:'Air theaters',v:D.air.length,p:60},
+    {l:'Thermal spikes',v:D.thermal.reduce((s,t)=>s+t.hc,0),p:80},
+    {l:'SDR nodes',v:D.sdr.total,p:92},
+    {l:'Chokepoints',v:D.chokepoints.length,p:50},
+    {l:'WHO alerts',v:D.who.length,p:40}
+  ];
+  const setCard=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
+  setCard('pOsint', buildOsintPanel());
+  setCard('pCore', cardHtml('Signal core','Hot metrics', core.map(c=>`<div class="sm"><div class="sm-top"><span class="sml">${c.l}</span><span class="smv">${c.v}</span></div><div class="smb"><span style="width:${c.p}%"></span></div></div>`).join('')));
+  setCard('pDelta', cardHtml('Sweep delta','', `${hasDelta?`<div class="delta-stats">
+      <div class="delta-stat"><span class="k">${t('delta.changes','Changes')}</span><span class="v">${ds.totalChanges}</span></div>
+      <div class="delta-stat"><span class="k">${t('delta.critical','Critical')}</span><span class="v">${ds.criticalChanges||0}</span></div>
+      <div class="delta-stat"><span class="k">${t('delta.new','New')}</span><span class="v">${ds.signalBreakdown?.new ?? 0}</span></div>
+    </div>`:''}<div class="delta-list">${deltaHtml}</div>`, `<span class="badge ${dirClass}">${ds.direction?t('delta.'+ds.direction,ds.direction.toUpperCase()):t('delta.baseline','Baseline')}</span>`));
+  setCard('pAlerts', alertsHtml());
+  setCard('pThreat', threatHtml());
+  setCard('pTracks', trackerHtml());
+  setCard('pPoly', polyHtml());
+  setCard('pMarkets', cardHtml('Macro + markets', MACRO_LIVE?'Live':'Delayed', MACRO_INNER));
   ensureAlerts();
   ensurePolymarket();
   ensureTracks();
@@ -2465,10 +2526,7 @@ function buildOsintPanel(panelClass='', maxHeight=420){
       <span class="osint-text">${cleanText((p.text||'').substring(0,220))}</span>
     </div>`;
   }).join('');
-  return `<div class="g-panel ${panelClass}" style="display:flex;flex-direction:column">
-      <div class="sec-head"><h3>${t('panels.osintStream','OSINT stream')}</h3><span class="badge">${D.tg.urgent.length} urgent</span></div>
-      <div class="osint-list" style="max-height:${maxHeight}px;overflow-y:auto">${osintCards}</div>
-    </div>`;
+  return cardHtml(t('panels.osintStream','OSINT stream'), `${D.tg.urgent.length} urgent`, `<div class="osint-list">${osintCards}</div>`, '', 'pad-sm');
 }
 
 function renderGlossary(){
