@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live media — MFB Services Intelligence</title>
+<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.76 0.13 262);--accent-soft:rgba(120,150,255,0.15);--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(120,150,255,0.06),transparent 70%);-webkit-font-smoothing:antialiased}
+.topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
+.brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
+.brand .mark{width:34px;height:34px;border-radius:6px;flex:none}
+.brand .b1{font-size:15px;font-weight:600;letter-spacing:-0.01em;display:block}
+.brand .sub{font-size:12px;color:var(--dim);display:block}
+.mainnav{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
+.nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{background:var(--raised-2);color:var(--text)}
+.spacer{flex:1}
+.pill{font-family:var(--sans);font-size:12.5px;padding:6px 12px;border:1px solid var(--border);border-radius:5px;color:var(--dim);text-decoration:none;background:rgba(255,255,255,0.02)}
+.pill:hover{border-color:var(--border-bright);color:var(--text)}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:22px 0 16px}
+.hero h1{font-size:30px;font-weight:600;letter-spacing:-0.02em}
+.hero p{font-size:14.5px;color:var(--sub);max-width:680px;line-height:1.55;margin-top:8px}
+.status{font-family:var(--mono);font-size:12px;color:var(--dim-2)}
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.channels{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:4px;max-height:calc(100vh - 160px);overflow-y:auto}
+.chan{display:flex;align-items:center;gap:10px;padding:10px;border-radius:6px;cursor:pointer;background:transparent;border:1px solid transparent;text-align:left;width:100%;color:var(--text);font-family:var(--sans)}
+.chan:hover{background:var(--raised)}
+.chan.active{background:var(--raised-2);border-color:var(--border-bright)}
+.chan .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.chan .cname{font-size:13.5px;font-weight:500}
+.chan .cregion{font-size:11.5px;color:var(--dim-2)}
+.stage{background:#000;border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;aspect-ratio:16/9;width:100%}
+.stage video{width:100%;height:100%;background:#000;display:block;object-fit:contain}
+.stage .vframe{width:100%;height:100%;border:0;background:#000}
+.overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(5,7,11,0.86);text-align:center;padding:20px}
+.overlay.show{display:flex}
+.overlay .t{font-size:15px;font-weight:600}
+.overlay .s{font-size:13px;color:var(--sub);max-width:420px}
+.spin{width:30px;height:30px;border:2px solid rgba(120,150,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:500;padding:8px 13px;border:1px solid var(--border);border-radius:5px;background:var(--raised);color:var(--text);text-decoration:none}
+.btn:hover{border-color:var(--border-bright);background:var(--raised-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#0a0f1f}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.bar .now{font-size:13.5px;font-weight:500}
+.bar .live{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--danger);padding:4px 9px;border:1px solid rgba(240,90,80,0.3);border-radius:5px;background:rgba(240,90,80,0.08)}
+.bar .live .d{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+.bar .sp{flex:1}
+.ctrl{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;background:var(--raised);color:var(--text-2);cursor:pointer;font-size:15px}
+.ctrl:hover{border-color:var(--border-bright);color:#fff;background:var(--raised-2)}
+.ctrl.on{background:var(--accent);border-color:var(--accent);color:#0a0f1f}
+.vol{width:110px}
+.foot{margin-top:10px;font-size:12px;color:var(--dim-3);line-height:1.55}
+.gridmode{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.gridmode .cell{position:relative;background:#000;border:1px solid var(--border);border-radius:6px;overflow:hidden;aspect-ratio:16/9}
+.gridmode video,.gridmode iframe{width:100%;height:100%;border:0;display:block}
+.gridmode .cap{position:absolute;left:6px;bottom:6px;font-size:11px;color:#fff;text-shadow:0 1px 3px #000}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.channels{max-height:none;flex-direction:row;flex-wrap:wrap}.chan{width:auto}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="/" title="Back to the dashboard">
+    <svg viewBox="0 0 34 34" class="mark" aria-hidden="true"><defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fa7ff"/><stop offset="1" stop-color="#7c63e8"/></linearGradient></defs><rect width="34" height="34" rx="6" fill="url(#bm)"/><text x="17" y="23" text-anchor="middle" font-family="Geist,sans-serif" font-weight="600" font-size="15" fill="#0a0f1f">M</text></svg>
+    <span><span class="b1">MFB Services</span><span class="sub">Intelligence</span></span>
+  </a>
+  <nav class="mainnav">
+    <a class="nav-tab" href="/">Dashboard</a>
+    <a class="nav-tab" href="/digest">Readers Digest</a>
+    <a class="nav-tab active" href="/media">Live media</a>
+    <a class="nav-tab" href="/?guide=1">Signal guide</a>
+  </nav>
+  <div class="spacer"></div>
+  <span class="pill" id="clock"></span>
+</div>
+
+<div class="hero">
+  <div><h1>Live media</h1><p>Broadcaster feeds from across the world, on the map's sources. Switch channels, mute, go fullscreen or picture-in-picture, or open the grid to watch several at once. Streams are the broadcasters' own public HLS feeds.</p></div>
+  <span class="status" id="status">6 channels</span>
+</div>
+
+<div class="layout">
+  <div class="channels" id="channels"></div>
+  <div>
+    <div class="stage" id="stage">
+      <video id="player" playsinline></video>
+      <div class="overlay" id="overlay"><div class="spin" id="spin"></div><div class="t" id="ovTitle">Loading stream</div><div class="s" id="ovText">Connecting to the broadcaster…</div><div id="ovActions"></div></div>
+    </div>
+    <div class="bar">
+      <span class="now" id="nowName">—</span>
+      <span class="live" id="liveBadge"><span class="d"></span>LIVE</span>
+      <span class="sp"></span>
+      <button class="ctrl" id="btnMute" title="Mute (m)">&#128266;</button>
+      <input class="vol" id="vol" type="range" min="0" max="1" step="0.05" value="0.6" title="Volume">
+      <button class="ctrl" id="btnPip" title="Picture in picture">&#9635;</button>
+      <button class="ctrl" id="btnFs" title="Fullscreen (f)">&#9974;</button>
+      <button class="ctrl" id="btnGrid" title="Multi-channel grid">&#9707;</button>
+      <a class="btn" id="btnOpen" href="#" target="_blank" rel="noopener">Open feed &#8599;</a>
+    </div>
+    <div class="foot">Live streams are provided by the broadcasters and may be geo-restricted or intermittent. If a feed does not play, use “Open feed” or pick another channel. Keyboard: <b>&larr;</b>/<b>&rarr;</b> change channel, <b>m</b> mute, <b>f</b> fullscreen.</div>
+    <div class="gridmode" id="gridmode" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const CHANNELS = [
+  {id:'aljazeera', name:'Al Jazeera English', region:'Qatar', color:'#f5c542',
+   hls:'https://live-hls-apps-aje-fa.getaj.net/AJE/index.m3u8',
+   yt:'https://www.youtube.com/watch?v=gCNeDWCI0vo', page:'https://www.aljazeera.com/live'},
+  {id:'rt', name:'RT', region:'Russia', color:'#7fe0c0',
+   hls:'https://rt-glb.rttv.com/dvr/rtnews/playlist.m3u8', page:'https://www.rt.com/on-air/'},
+  {id:'presstv', name:'Press TV', region:'Iran (English)', color:'#6aa8ff',
+   hls:'https://live.presstv.co.uk/hls/presstv.m3u8', page:'https://www.presstv.ir/'},
+  {id:'iranintl', name:'Iran International', region:'Iran (English)', color:'#b48cff',
+   hls:'https://live.livetvstream.co.uk/LS-63503-4/index.m3u8',
+   yt:'https://www.youtube.com/watch?v=5JDxjsAVaGk', page:'https://www.iranintl.com/live'},
+  {id:'dw', name:'DW English', region:'Germany', color:'#8fb8d8',
+   hls:'https://dwamdstream103.akamaized.net/hls/live/2015526/dwstream103/master.m3u8', page:'https://www.dw.com/en/live-tv/channel-english'},
+  {id:'france24', name:'France 24 English', region:'France', color:'#8fb8d8',
+   hls:'https://amg00106-france24-france24-samsunguk-qvpp8.amagi.tv/playlist/amg00106-france24-france24-samsunguk/playlist.m3u8',
+   page:'https://www.france24.com/en/live'}
+];
+
+const $ = s => document.querySelector(s);
+const player = $('#player');
+let hls = null, current = 0, muted = false, gridOn = false;
+
+function renderChannels(){
+  $('#channels').innerHTML = CHANNELS.map((c,i)=>`
+    <button class="chan ${i===current?'active':''}" data-i="${i}">
+      <span class="dot" style="background:${c.color}"></span>
+      <span><span class="cname">${c.name}</span><br><span class="cregion">${c.region}</span></span>
+    </button>`).join('');
+  document.querySelectorAll('.chan').forEach(b=>b.onclick=()=>{ current=+b.dataset.i; load(); });
+}
+
+function showOverlay(show, title, text, actions){
+  const ov=$('#overlay');
+  ov.classList.toggle('show', show);
+  if(show){ $('#ovTitle').textContent=title||''; $('#ovText').textContent=text||''; $('#ovActions').innerHTML=actions||''; }
+}
+function youTubeEmbed(url){
+  if(!url) return null;
+  const m = url.match(/[?&]v=([\w-]{6,})/) || url.match(/youtu\.be\/([\w-]{6,})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}?autoplay=1` : url.replace('/watch','/embed');
+}
+function load(){
+  const c = CHANNELS[current];
+  renderChannels();
+  $('#nowName').textContent = c.name;
+  $('#btnOpen').href = c.page || c.hls;
+  $('#btnOpen').target = '_blank';
+  $('#liveBadge').style.display='';
+  if(gridOn) buildGrid();
+  if(hls){ hls.destroy(); hls=null; }
+  player.removeAttribute('src'); player.load();
+  showOverlay(true,'Loading stream','Connecting to '+c.name+'…','');
+  const fail = (msg) => {
+    const yt = youTubeEmbed(c.yt);
+    const actions = `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      ${yt?`<button class="btn primary" id="ovYt">Play via YouTube</button>`:''}
+      <a class="btn" href="${c.page||c.hls}" target="_blank" rel="noopener">Open broadcaster page &#8599;</a>
+      <button class="btn" id="ovRetry">Retry</button></div>`;
+    showOverlay(true,'Feed unavailable',msg,actions);
+    const y=$('#ovYt'); if(y) y.onclick=()=>{ playYouTube(yt); };
+    const r=$('#ovRetry'); if(r) r.onclick=()=>load();
+  };
+  if(window.Hls && Hls.isSupported()){
+    hls = new Hls({ lowLatencyMode:true, backBufferLength:30, maxBufferLength:20 });
+    hls.loadSource(c.hls);
+    hls.attachMedia(player);
+    hls.on(Hls.Events.MANIFEST_PARSED, ()=>{ showOverlay(false); player.muted=muted; player.volume=$('#vol').value; player.play().catch(()=>{}); });
+    hls.on(Hls.Events.ERROR, (e,data)=>{ if(data && data.fatal){ if(data.type==='networkError') hls.startLoad(); else fail('The broadcaster feed did not load (it may be geo-restricted or offline).'); } });
+  } else if(player.canPlayType('application/vnd.apple.mpegurl')){
+    player.src=c.hls; player.addEventListener('loadedmetadata',()=>{ showOverlay(false); player.play().catch(()=>{}); },{once:true});
+    player.addEventListener('error',()=>fail('The broadcaster feed did not load.'),{once:true});
+  } else {
+    fail('This browser cannot play HLS streams.');
+  }
+}
+function playYouTube(embedUrl){
+  if(hls){ hls.destroy(); hls=null; }
+  showOverlay(false);
+  const wrap=$('#stage');
+  const old=wrap.querySelector('.vframe'); if(old) old.remove();
+  player.style.display='none';
+  const fr=document.createElement('iframe');
+  fr.className='vframe'; fr.src=embedUrl; fr.allow='autoplay; encrypted-media; picture-in-picture'; fr.allowFullscreen=true;
+  wrap.insertBefore(fr, player);
+}
+function buildGrid(){
+  const g=$('#gridmode');
+  if(!gridOn){ g.style.display='none'; g.innerHTML=''; return; }
+  g.style.display='grid';
+  g.innerHTML = CHANNELS.slice(0,4).map(c=>`<div class="cell"><video data-src="${c.hls}" muted playsinline></video><span class="cap">${c.name}</span></div>`).join('');
+  g.querySelectorAll('video').forEach(v=>{
+    if(window.Hls && Hls.isSupported()){ const h=new Hls(); h.loadSource(v.dataset.src); h.attachMedia(v); v.play().catch(()=>{}); v._hls=h; }
+    else { v.src=v.dataset.src; v.play().catch(()=>{}); }
+  });
+}
+function clearGrid(){ $('#gridmode').querySelectorAll('video').forEach(v=>{ if(v._hls) v._hls.destroy(); }); }
+
+$('#btnMute').onclick=()=>{ muted=!muted; player.muted=muted; $('#btnMute').classList.toggle('on',muted); $('#btnMute').innerHTML=muted?'&#128263;':'&#128266;'; };
+$('#vol').oninput=e=>{ player.volume=+e.target.value; player.muted=(+e.target.value===0); };
+$('#btnFs').onclick=()=>{ const el=$('#stage'); if(document.fullscreenElement) document.exitFullscreen(); else (el.requestFullscreen||el.webkitRequestFullscreen).call(el); };
+$('#btnPip').onclick=async()=>{ try{ if(document.pictureInPictureElement) await document.exitPictureInPicture(); else if(player.requestPictureInPicture) await player.requestPictureInPicture(); }catch{} };
+$('#btnGrid').onclick=()=>{ gridOn=!gridOn; $('#btnGrid').classList.toggle('on',gridOn); if(gridOn) buildGrid(); else clearGrid(); };
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='ArrowRight'){ current=(current+1)%CHANNELS.length; load(); }
+  else if(e.key==='ArrowLeft'){ current=(current-1+CHANNELS.length)%CHANNELS.length; load(); }
+  else if(e.key==='m'){ $('#btnMute').click(); }
+  else if(e.key==='f'){ $('#btnFs').click(); }
+});
+function tick(){ $('#clock').textContent = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}); }
+setInterval(tick,1000); tick();
+renderChannels(); load();
+</script>
+</body>
+</html>

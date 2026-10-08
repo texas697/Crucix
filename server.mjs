@@ -518,6 +518,12 @@ const digestHtml = readFileSync(join(ROOT, 'dashboard/public/digest.html'), 'utf
 app.get('/digest', (req, res) => {
   res.type('html').send(digestHtml.replace('</head>', `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>\n</head>`));
 });
+
+// ─── Live media (broadcaster HLS channels) ─────────────────────────────────
+const mediaHtml = readFileSync(join(ROOT, 'dashboard/public/media.html'), 'utf-8');
+app.get('/media', (req, res) => {
+  res.type('html').send(mediaHtml);
+});
 const userProvider = async (req) => (AUTH_ENABLED ? users.providerForUser(req.user.uid) : (llmProvider?.isConfigured ? llmProvider : null));
 const sendErr = (res, err) => res.status(err.status || 500).json({ error: err.message });
 
