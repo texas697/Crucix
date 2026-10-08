@@ -525,7 +525,51 @@ app.get('/media', (req, res) => {
   res.type('html').send(mediaHtml);
 });
 
-// ─── Air-raid alerts proxy (Tzeva Adom / Pikud HaOref; optional Ukraine) ────
+// ─── Neptun live tracks (drone / missile) + Ukraine alerts via WebSocket ────
+const neptun = { tracks: new Map(), alerts: null, updated: null, backoff: 1000 };
+function startNeptunStream() {
+  if (typeof WebSocket === 'undefined') return;
+  try {
+    const ws = new WebSocket('wss://neptun.in.ua/api/v1/stream');
+    ws.onopen = () => { neptun.backoff = 1000; console.log('[Neptun] stream connected'); };
+    ws.onmessage = (ev) => {
+      let msg; try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === 'snapshot' && msg.data && Array.isArray(msg.data.threats)) {
+        neptun.tracks.clear();
+        for (const t of msg.data.threats) if (t && t.id) neptun.tracks.set(t.id, t);
+        neptun.updated = Date.now();
+      } else if (msg.type === 'upsert' && msg.data && msg.data.id) {
+        neptun.tracks.set(msg.data.id, msg.data); neptun.updated = Date.now();
+      } else if (msg.type === 'remove' && msg.data && msg.data.id) {
+        neptun.tracks.delete(msg.data.id); neptun.updated = Date.now();
+      } else if (msg.type === 'alerts' && msg.data) {
+        neptun.alerts = msg.data;
+      }
+    };
+    ws.onerror = () => {};
+    ws.onclose = () => {
+      const wait = Math.min(30000, neptun.backoff); neptun.backoff = Math.min(30000, neptun.backoff * 2);
+      setTimeout(startNeptunStream, wait);
+    };
+  } catch { setTimeout(startNeptunStream, 30000); }
+}
+startNeptunStream();
+
+app.get('/api/tracks', (req, res) => {
+  const tracks = [...neptun.tracks.values()]
+    .filter(t => t && t.lat != null && t.lon != null && t.status !== 'expired')
+    .map(t => ({
+      id: t.id, type: t.type, title: t.title, region: t.region, locality: t.locality,
+      lat: t.lat, lon: t.lon, heading: t.heading, confidence: t.displayConfidence || t.confidenceLevel,
+      sourceCount: t.sourceCount || 1, updatedAt: t.updatedAt, uncertaintyKm: t.uncertaintyKm,
+      positionQuality: t.positionQuality, lifecycle: t.lifecycle, trail: t.trail || [], explanation: t.explanationShort || ''
+    }))
+    .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+  res.set('Cache-Control', 'no-store');
+  res.json({ updated: neptun.updated ? new Date(neptun.updated).toISOString() : null, count: tracks.length, tracks });
+});
+
+// ─── Air-raid alerts (Tzeva Adom / Pikud HaOref + Neptun Ukraine) ───────────
 let alertsCache = { at: 0, data: null };
 app.get('/api/alerts', async (req, res) => {
   try {
@@ -543,20 +587,15 @@ app.get('/api/alerts', async (req, res) => {
         }
       }
     } catch { /* upstream unavailable */ }
-    const uaToken = process.env.ALERTS_IN_UA_TOKEN;
-    if (uaToken) {
-      try {
-        const r = await fetch('https://api.alerts.in.ua/v1/iot/active_air_raid_alerts_by_oblast.json?token=' + encodeURIComponent(uaToken));
-        const d = await r.json();
-        for (const a of (d.alerts || [])) {
-          if (!a.location_title) continue;
-          items.push({ time: Math.floor(Date.now() / 1000), cities: [a.location_title], threat: 0, drill: false, src: 'UA' });
-        }
-        source += ' + alerts.com.ua';
-      } catch { /* token invalid or upstream down */ }
+    if (neptun.alerts && Array.isArray(neptun.alerts.raions)) {
+      for (const r of neptun.alerts.raions) {
+        const time = r.since ? Math.floor(new Date(r.since).getTime() / 1000) : Math.floor(Date.now() / 1000);
+        items.push({ time, cities: [`${r.name || ''}, ${r.oblast || ''}`.replace(/^,\s*|,\s*$/g, '')], threat: r.level === 'red' ? 0 : 1, drill: false, src: 'UA', level: r.level });
+      }
+      source += ' + Neptun (UA)';
     }
     items.sort((a, b) => b.time - a.time);
-    const data = { source, updated: Date.now(), items: items.slice(0, 60) };
+    const data = { source, updated: Date.now(), items: items.slice(0, 80) };
     alertsCache = { at: Date.now(), data };
     res.json(data);
   } catch (e) { res.status(502).json({ error: 'alerts unavailable' }); }

@@ -374,6 +374,10 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .poly-bar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
 .poly-meta{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
 .poly-meta b{color:var(--accent)}
+.track-row{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12.5px}
+.track-type{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.05em;border:1px solid;border-radius:4px;padding:1px 5px;flex:none}
+.track-loc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)}
+.track-meta{font-family:var(--mono);font-size:10px;color:var(--dim-3);white-space:nowrap}
 
 /* COLLAPSIBLE */
 .collapsible .sec-head{cursor:pointer;margin-bottom:0;user-select:none}
@@ -592,6 +596,7 @@ let lowPerfMode = localStorage.getItem('crucix_low_perf') === 'true';
 let MACRO_INNER = '', MACRO_LIVE = false;
 let POLY_ITEMS = null, POLY_TS = 0;
 let ALERTS = null, ALERTS_TS = 0, alertsAudio = false;
+let TRACKS = null, TRACKS_TS = 0, tracksTimer = null;
 let marketsOpen = localStorage.getItem('crucix_markets_open') === 'true';
 function toggleMarkets(){
   marketsOpen = !marketsOpen; localStorage.setItem('crucix_markets_open', String(marketsOpen));
@@ -755,7 +760,8 @@ const LAYER_DEFS = [
   {key:'weather', label:'Weather', color:'#f59a5e'},
   {key:'radiation', label:'RadNet', color:'#f2c879'},
   {key:'space', label:'Space', color:'#e9ecf2'},
-  {key:'gdelt', label:'GDELT', color:'#6aa8ff'}
+  {key:'gdelt', label:'GDELT', color:'#6aa8ff'},
+  {key:'track', label:'Tracks', color:'#ff9e6b'}
 ];
 // Per-layer explainability cards ("what am I looking at")
 const LAYER_INFO = {
@@ -1583,6 +1589,20 @@ function plotMarkers(){
     });
   });
 
+  // === Live drone / missile tracks (Neptun) ===
+  if(TRACKS && Array.isArray(TRACKS.tracks)){
+    const tcol=t=>(t==='missile'||t==='shahed')?'rgba(255,107,116,0.95)':t==='fpv'?'rgba(242,200,121,0.95)':'rgba(245,154,94,0.95)';
+    TRACKS.tracks.forEach(t=>{
+      points.push({
+        lat:t.lat, lng:t.lon, size:0.4, alt:0.03, color:tcol((t.type||'').toLowerCase()), type:'track', priority:1,
+        popHead:(t.title||'Track')+' \u00b7 '+((t.locality||t.region)||''),
+        popMeta:`${(t.type||'track').toUpperCase()} \u00b7 ${t.confidence||''} \u00b7 ${t.sourceCount||1} source(s)`,
+        popText:`${esc(t.explanation||'')}<br>Heading: ${t.heading!=null?t.heading+'\u00b0':'\u2014'}<br>Uncertainty: \u00b1${t.uncertaintyKm||'?'} km<br>${esc(t.updatedAt||'')}`,
+        ts:t.updatedAt
+      });
+    });
+  }
+
   // === FILTERS: layers / region / time ===
   const now = Date.now();
   const inTime = ts => { const w = TIME_WINDOWS[timeWindow]; return !w || !ts || (now - new Date(ts).getTime()) <= w; };
@@ -1691,16 +1711,23 @@ function plotMarkers(){
   }
   globe.arcsData(arcs);
 
-  // === MEASURE LINE + RANGE RINGS ===
+  // === MEASURE LINE + RANGE RINGS + TRACK TRAILS ===
+  const paths=[];
   if(measureA){
     if(measureB){
       globe.arcsData([...arcs, {startLat:measureA.lat,startLng:measureA.lng,endLat:measureB.lat,endLng:measureB.lng,color:['rgba(143,167,255,0.95)','rgba(143,167,255,0.3)'],stroke:1.4,label:'measured distance'}]);
     }
-    const rings=[500,1000,1500].map(km=>({coords:geoCircle([measureA.lng,measureA.lat],km,72).map(p=>[p[1],p[0]]),color:'rgba(120,150,255,0.35)',stroke:0.4}));
-    globe.pathsData(rings);
+    [500,1000,1500].forEach(km=>paths.push({coords:geoCircle([measureA.lng,measureA.lat],km,72).map(p=>[p[1],p[0]]),color:'rgba(120,150,255,0.35)',stroke:0.4}));
   } else {
-    globe.pathsData([]);
+    globe.arcsData(arcs);
   }
+  if(layerVisible.track && TRACKS && Array.isArray(TRACKS.tracks)){
+    TRACKS.tracks.forEach(t=>{
+      const trail=(t.trail||[]).map(p=>[p.lat,p.lng]);
+      if(trail.length>1) paths.push({coords:trail, color:'rgba(255,158,107,0.55)', stroke:0.3});
+    });
+  }
+  globe.pathsData(paths);
 
   // Zoom-aware marker sizing: scale markers and labels with camera altitude
   const onGlobeZoom = () => {
@@ -1927,6 +1954,20 @@ function plotFlatMarkers(){
   });
   // GDELT geo events
   (D.gdelt?.geoPoints||[]).forEach(g=>{addPt(g.lat,g.lon,2.5,'rgba(106,168,255,0.5)','rgba(106,168,255,0.2)',ev=>showPopup(ev,'GDELT Event',esc(g.name)||'','GDELT · '+g.count+' reports'),3,'gdelt')});
+  // Live drone / missile tracks (Neptun)
+  if(TRACKS && Array.isArray(TRACKS.tracks) && layerVisible.track){
+    TRACKS.tracks.forEach(t=>{
+      if(!inActiveRegion(t.lat,t.lon)) return;
+      const col=(t.type==='missile'||t.type==='shahed')?'#ff6b74':(t.type==='fpv'?'#f2c879':'#f59a5e');
+      const [x,y]=proj([t.lon,t.lat]); if(x==null||y==null) return;
+      const g=mg.append('g').attr('transform',`translate(${x},${y})`).style('cursor','pointer').attr('data-priority',1)
+        .on('click',ev=>{ev.stopPropagation();showPopup(ev,(t.title||'Track')+' · '+((t.locality||t.region)||''),`${esc(t.explanation||'')}<br>Heading: ${t.heading!=null?t.heading+'°':'—'}<br>Uncertainty: ±${t.uncertaintyKm||'?'} km`,`${(t.type||'').toUpperCase()} · ${t.confidence||''} · ${t.sourceCount||1} src`)});
+      const [tx,ty]=proj([t.lon,t.lat]); const d=0.02*(flatH||600);
+      const deg=(t.heading!=null?t.heading:90), rad=(deg-90)*Math.PI/180;
+      g.append('line').attr('x1',0).attr('y1',0).attr('x2',Math.cos(rad)*d*0.35).attr('y2',Math.sin(rad)*d*0.35).attr('stroke',col).attr('stroke-width',1.2);
+      g.append('circle').attr('class','marker-circle').attr('r',4).attr('data-base-r',4).attr('fill',col).attr('stroke','rgba(0,0,0,0.4)').attr('stroke-width',0.6);
+    });
+  }
   // ACLED
   (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon).forEach(e=>{
     if(!layerVisible.conflict || !inActiveRegion(e.lat,e.lon)) return;
@@ -1973,7 +2014,8 @@ function plotFlatMarkers(){
     weather: (D.noaa?.alerts||[]).length,
     radiation: (D.epa?.stations||[]).length,
     space: (D.space?.stationPositions||[]).length,
-    gdelt: (D.gdelt?.geoPoints||[]).length
+    gdelt: (D.gdelt?.geoPoints||[]).length,
+    track: (TRACKS?.tracks||[]).length
   };
   renderMapLegend();
   renderMeasure();
@@ -2276,13 +2318,30 @@ async function ensureAlerts(){
 function toggleAlertsAudio(){ alertsAudio=!alertsAudio; const el=document.querySelector('.right-alerts'); if(el) el.innerHTML=alertsHtml(); }
 function beep(){ try{ const ac=new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(), g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value=880; g.gain.value=0.05; o.start(); setTimeout(()=>{o.stop();ac.close();},220); }catch{} }
 
-// === STRIKE / MISSILE WATCH (derived) ===
-function strikesHtml(){
-  const flags=/missile|drone|strike|airstrike|shelling|bomb|attack|shahed|ballistic/i;
-  const posts=(D.tg?.urgent||[]).filter(p=>(p.urgentFlags&&p.urgentFlags.length)||flags.test(p.text||''));
-  return `<div class="sec-head"><h3>Strike &amp; missile watch</h3><span class="badge">${posts.length}</span></div>`
-    +(posts.length? posts.slice(0,6).map(p=>`<div class="strike-row"><span class="strike-tag">${esc(((p.urgentFlags&&p.urgentFlags[0])||'strike').toUpperCase())}</span><span class="strike-text">${cleanText((p.text||'').slice(0,150))}</span></div>`).join('') : '<div class="panel-src" style="opacity:.7">No recent strike reports.</div>')
-    +`<div class="panel-src">Derived from urgent OSINT. Live tracks: <a href="https://neptun.in.ua/karta-shahediv" target="_blank" rel="noopener">Neptun &#8599;</a></div>`;
+// === DRONE / MISSILE TRACKER (Neptun live) ===
+function trackerHtml(){
+  const head=`<div class="sec-head"><h3>Drone &amp; missile tracker</h3><span class="badge">${TRACKS?TRACKS.count+' live':'connecting'}</span></div>`;
+  if(TRACKS===null) return head+'<div class="panel-src">Connecting to Neptun…</div>';
+  const list=(TRACKS.tracks||[]);
+  if(!list.length) return head+'<div class="panel-src" style="opacity:.7">No active tracks.</div>';
+  const typeColor={fpv:'#f2c879',uav:'#f59a5e',missile:'#ff6b74',kab:'#b48cff',shahed:'#ff6b74'};
+  return head+list.slice(0,8).map(x=>{
+    const col=typeColor[(x.type||'').toLowerCase()]||'#ff9e6b';
+    const age=x.updatedAt?getAge(x.updatedAt):'';
+    return `<div class="track-row">
+      <span class="track-type" style="color:${col};border-color:${col}66">${esc((x.type||'track').toUpperCase())}</span>
+      <span class="track-loc">${esc(x.locality||'')}${x.locality&&x.region?', ':''}${esc(x.region||'')}</span>
+      <span class="track-meta">${esc(x.confidence||'')} &#183; ${x.sourceCount||1} src &#183; ${age}</span>
+    </div>`;
+  }).join('')+`<div class="panel-src">Live from <a href="https://neptun.in.ua/karta-shahediv" target="_blank" rel="noopener">Neptun &#8599;</a>${TRACKS.updated?' &#183; updated '+getAge(TRACKS.updated):''}</div>`;
+}
+async function ensureTracks(){
+  if(TRACKS && Date.now()-TRACKS_TS<12000) return;
+  TRACKS_TS=Date.now();
+  try{ const r=await fetch('/api/tracks',{credentials:'same-origin'}); const d=await r.json(); if(d&&!d.error) TRACKS=d; }
+  catch{ if(!TRACKS) TRACKS={count:0,tracks:[]}; }
+  const el=document.querySelector('.right-tracks'); if(el) el.innerHTML=trackerHtml();
+  refreshMap();
 }
 
 function renderRight(){
@@ -2317,7 +2376,7 @@ function renderRight(){
     ${mobile ? '' : buildOsintPanel('right-osint', 420)}
     <div class="g-panel right-alerts">${alertsHtml()}</div>
     <div class="g-panel right-threat">${threatHtml()}</div>
-    <div class="g-panel right-strikes">${strikesHtml()}</div>
+    <div class="g-panel right-tracks">${trackerHtml()}</div>
     <div class="g-panel right-poly">${polyHtml()}</div>
     <div class="g-panel right-delta">
       <div class="sec-head"><h3>${t('panels.sweepDelta','Sweep delta')}</h3><span class="badge ${dirClass}">${ds.direction?t('delta.'+ds.direction,ds.direction.toUpperCase()):t('delta.baseline','Baseline')}</span></div>
@@ -2334,6 +2393,7 @@ function renderRight(){
     </div>`;
   ensureAlerts();
   ensurePolymarket();
+  ensureTracks();
 }
 
 
@@ -2573,6 +2633,10 @@ function init(){
     if(n>=1 && n<=regions.length) setRegion(regions[n-1]);
   });
   if(new URLSearchParams(location.search).get('guide') === '1') openGlossary();
+  // periodic live feeds
+  setInterval(()=>{ TRACKS_TS=0; ensureTracks(); }, 15000);
+  setInterval(()=>{ ALERTS_TS=0; ensureAlerts(); }, 45000);
+  ensureTracks(); ensureAlerts();
   syncResponsiveLayout(true);
 }
 
