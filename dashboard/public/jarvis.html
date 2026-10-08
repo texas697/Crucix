@@ -56,11 +56,14 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .top-left{display:flex;align-items:center;gap:12px;flex:none;white-space:nowrap}
 .brand{display:flex;align-items:center;gap:12px;font-family:var(--sans)}
 .brand .brand-mark{width:34px;height:34px;flex:none;border-radius:6px}
+.brand-mark .bm-bg{fill:#0a0d14}
+.brand-mark .bm-ring,.brand-mark .bm-rays{stroke:#98a8ff;fill:none}
+.brand-mark .bm-dot{fill:#e9ecf2}
 .brand-text{display:flex;flex-direction:column;line-height:1.15}
 .brand-text .b1{font-weight:600;font-size:15px;letter-spacing:-0.01em;color:var(--text)}
 .brand-text .sub{font-size:12px;color:var(--dim);letter-spacing:0}
 .boot-logo{width:min(560px,90vw);height:auto;opacity:0}
-.mainnav{flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
+.mainnav{flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;background:var(--seg-bg,#07090e);border:1px solid var(--border);border-radius:6px}
 .nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);transition:all .15s;text-decoration:none;display:inline-flex;align-items:center}
 .nav-tab:hover{color:var(--text)}
 .nav-tab.active{background:var(--raised-2);color:var(--text)}
@@ -217,6 +220,30 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .map-ctrl-btn.map-toggle .mc-label{color:var(--text-2)}
 .map-ctrl-btn.map-toggle.on .mc-label,.map-ctrl-btn.map-toggle:hover .mc-label{color:var(--text)}
 .map-ctrl-btn.off{opacity:0.4}
+.mc-sep{height:1px;background:var(--border);margin:1px 0}
+.draw-hint{position:absolute;top:14px;left:60px;z-index:6;display:none;align-items:center;gap:8px;padding:7px 12px;background:rgba(10,13,20,0.9);border:1px solid rgba(120,150,255,0.4);border-radius:6px;font-family:var(--sans);font-size:12px;color:var(--text);backdrop-filter:blur(8px);max-width:min(420px,calc(100% - 90px))}
+.draw-hint.show{display:flex}
+html.light .draw-hint{background:rgba(255,255,255,0.94)}
+.sel-panel{position:absolute;top:14px;right:14px;z-index:8;width:300px;max-width:calc(100% - 28px);max-height:calc(100% - 90px);display:none;flex-direction:column;background:rgba(8,11,17,0.94);border:1px solid var(--border-bright);border-radius:8px;backdrop-filter:blur(12px);box-shadow:0 12px 36px rgba(0,0,0,0.4);overflow:hidden}
+.sel-panel.show{display:flex}
+html.light .sel-panel{background:rgba(255,255,255,0.97);box-shadow:0 12px 36px rgba(16,24,40,0.18)}
+.sel-head{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--border);flex:none}
+.sel-title{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--text)}
+.sel-count{font-family:var(--mono);font-size:12px;color:var(--accent);background:var(--accent-soft);padding:1px 8px;border-radius:20px}
+.sel-clear{margin-left:auto;font-family:var(--sans);font-size:11.5px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--dim);cursor:pointer}
+.sel-clear:hover{border-color:var(--border-bright);color:var(--text)}
+.sel-body{overflow-y:auto;padding:10px 12px 12px}
+.sel-summary{font-family:var(--sans);font-size:11.5px;color:var(--dim);margin-bottom:8px}
+.sel-group{margin-bottom:10px}
+.sel-gh{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:4px}
+.sel-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.sel-gc{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.sel-item{display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;padding:6px 8px;border:0;border-radius:5px;background:transparent;cursor:pointer}
+.sel-item:hover{background:var(--raised)}
+.sel-iname{font-family:var(--sans);font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sel-imeta{font-family:var(--mono);font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sel-more{font-family:var(--mono);font-size:10.5px;color:var(--dim);padding:3px 8px}
+.measure-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:7;display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;background:rgba(120,150,255,0.14);border:1px solid rgba(120,150,255,0.45);border-radius:8px;backdrop-filter:blur(10px);color:var(--text);font-family:var(--sans);font-size:12.5px;max-width:min(560px,calc(100% - 120px));box-shadow:0 8px 26px rgba(0,0,0,0.28)}
 .measure-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:7;display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;background:rgba(120,150,255,0.14);border:1px solid rgba(120,150,255,0.45);border-radius:8px;backdrop-filter:blur(10px);color:var(--text);font-family:var(--sans);font-size:12.5px;max-width:min(560px,calc(100% - 120px));box-shadow:0 8px 26px rgba(0,0,0,0.28)}
 .measure-banner.show{display:flex}
 .measure-banner svg{flex:none;color:var(--accent)}
@@ -550,6 +577,12 @@ html.light .byok-empty{background:rgba(70,100,220,0.06);border-color:rgba(70,100
 html.light .nuke-ok{background:rgba(138,90,18,0.08)}
 html.light .news-icon,html.light .osint-src,html.light .news-meta .news-src,html.light .tk-src{color:#5b6b82}
 html.light .poly-item:hover .poly-q,html.light .quake-row:hover .quake-place{color:#0f172a}
+html.light{--seg-bg:#e6eaf1}
+html.light .mainnav{background:var(--seg-bg)}
+html.light .nav-tab.active{background:#ffffff;color:var(--text);box-shadow:0 1px 3px rgba(16,24,40,0.14)}
+html.light .brand-mark .bm-bg{fill:#ffffff;stroke:rgba(16,24,40,0.14);stroke-width:2}
+html.light .brand-mark .bm-ring,html.light .brand-mark .bm-rays{stroke:#4a6cf0}
+html.light .brand-mark .bm-dot{fill:#0f172a}
 </style>
 </head>
 <body>
@@ -573,15 +606,21 @@ html.light .poly-item:hover .poly-q,html.light .quake-row:hover .quake-place{col
       <div class="map-controls">
         <button class="map-ctrl-btn" onclick="mapZoom(1.5)" title="Zoom in" aria-label="Zoom in">+</button>
         <button class="map-ctrl-btn" onclick="mapZoom(0.67)" title="Zoom out" aria-label="Zoom out">&minus;</button>
-        <button class="map-ctrl-btn map-toggle" id="flightToggle" onclick="toggleFlights()" title="Show or hide flight corridors" aria-label="Toggle flight corridors"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 12l20-9-9 20-2-8-9-3z"/></svg><span class="mc-label">Routes</span></button>
-        <button class="map-ctrl-btn map-toggle" id="measureToggle" onclick="toggleMeasure()" title="Measure the distance between two points on the map" aria-label="Measure distance"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21l-4-4z"/><path d="M7.5 13.5l2 2M10.5 10.5l2 2M13.5 7.5l2 2"/></svg><span class="mc-label">Measure</span></button>
+        <div class="mc-sep"></div>
+        <button class="map-ctrl-btn" id="drawCircle" onclick="setDrawTool('circle')" title="Draw a circle — select the data inside it" aria-label="Draw circle to select"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg></button>
+        <button class="map-ctrl-btn" id="drawPoly" onclick="setDrawTool('polygon')" title="Draw a freeform area — select the data inside it" aria-label="Draw freeform area to select"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l8 6-3 10H7L4 9z"/></svg></button>
+        <button class="map-ctrl-btn" id="drawRect" onclick="setDrawTool('rect')" title="Draw a rectangle — select the data inside it" aria-label="Draw rectangle to select"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="1"/></svg></button>
+        <button class="map-ctrl-btn" id="drawClear" onclick="clearSelection()" title="Clear selection" aria-label="Clear selection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="measure-banner" id="measureBanner">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21l-4-4z"/><path d="M7.5 13.5l2 2M10.5 10.5l2 2M13.5 7.5l2 2"/></svg>
-        <span class="mb-text" id="measureBannerText">Measure distance — click a start point, then an end point.</span>
-        <button class="mb-done" onclick="toggleMeasure()">Done</button>
+      <div class="draw-hint" id="drawHint">Click and drag on the map to draw a selection area</div>
+      <div class="sel-panel" id="selPanel">
+        <div class="sel-head">
+          <span class="sel-title">Selected</span>
+          <span class="sel-count" id="selCount">0</span>
+          <button class="sel-clear" onclick="clearSelection()">Clear</button>
+        </div>
+        <div class="sel-body" id="selBody"></div>
       </div>
-      <div class="measure-readout" id="measureReadout"></div>
       <div class="map-popup" id="mapPopup"><button class="pp-close" onclick="closePopup()">&times;</button><div class="pp-head"></div><div class="pp-text"></div><div class="pp-meta"></div></div>
     </div>
   </div>
@@ -923,7 +962,9 @@ function toggleTheme(){
   applyTheme();
   applyThemeToMap();
 }
-let measureMode = false, measureA = null, measureB = null;
+let drawTool = null, drawing = false, drawStart = null, drawPoly = [], drawGeo = null;
+let selectedItems = [];
+let currentMapPoints = [];
 const BASEMAPS = [
   {name:'Dark', style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'},
   {name:'Muted', style:'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json'},
@@ -1160,7 +1201,7 @@ function renderTopbar(){
   document.getElementById('topbar').innerHTML=`
     <div class="top-left">
       <span class="brand">
-        <svg viewBox="0 0 48 48" class="brand-mark" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a0d14"/><circle cx="24" cy="24" r="14" stroke="#98a8ff" stroke-width="4"/><path d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke="#98a8ff" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="4" fill="#e9ecf2"/></svg>
+        <svg viewBox="0 0 48 48" class="brand-mark" aria-hidden="true"><rect class="bm-bg" width="48" height="48" rx="10"/><circle class="bm-ring" cx="24" cy="24" r="14" stroke-width="4" fill="none"/><path class="bm-rays" d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke-width="4" stroke-linecap="round"/><circle class="bm-dot" cx="24" cy="24" r="4"/></svg>
         <span class="brand-text"><span class="b1">MFB Services</span><span class="sub">Intelligence</span></span>
       </span>
     </div>
@@ -1255,7 +1296,7 @@ function bindMapLifecycleEvents(){
   document.addEventListener('keydown', e => {
     if(e.key !== 'Escape') return;
     if(document.querySelector('.glossary-overlay.show') || document.getElementById('settingsOverlay')?.classList.contains('show')) return;
-    if(measureMode) toggleMeasure();
+    if(drawTool) setDrawTool(drawTool);
     else closePopup();
   });
 }
@@ -1271,6 +1312,7 @@ function renderMapLegend(){
       ${regionChip}
       <button class="leg-action" onclick="setAllLayers(true)">All</button>
       <button class="leg-action" onclick="setAllLayers(false)">None</button>
+      <button class="leg-time ${flightsVisible?'on':''}" onclick="toggleFlights()" title="Show or hide flight corridors">Routes</button>
       <span class="leg-divider"></span>
       ${['all','1h','24h','7d'].map(w=>`<button class="leg-time ${timeWindow===w?'on':''}" onclick="setTimeWindow('${w}')">${w==='all'?'All time':w}</button>`).join('')}
       <input class="leg-search" id="legSearch" placeholder="Filter layers" autocomplete="off" oninput="filterLayers(this.value)">
@@ -1342,34 +1384,12 @@ function searchMap(q){
 }
 
 // === MEASURE TOOL + RANGE RINGS ===
-function toggleMeasure(){
-  measureMode=!measureMode;
-  const b=document.getElementById('measureToggle');
-  if(b){ b.classList.toggle('on',measureMode); b.setAttribute('aria-pressed', measureMode?'true':'false'); }
-  const banner=document.getElementById('measureBanner');
-  if(banner) banner.classList.toggle('show',measureMode);
-  if(map && map.getCanvas()) map.getCanvas().style.cursor = measureMode ? 'crosshair' : 'grab';
-  if(!measureMode){ measureA=null; measureB=null; setMapHint('Scroll to zoom · drag to pan'); }
-  else setMapHint('Measure: click two points · Esc to cancel');
-  renderMeasure();
-}
-function addMeasurePoint(lat,lng){
-  if(!measureMode) return;
-  if(!measureA || (measureA&&measureB)){ measureA={lat,lng}; measureB=null; }
-  else { measureB={lat,lng}; }
-  renderMeasure();
-}
+// === SPATIAL DRAW / SELECTION ===
 function haversineKm(a,b){
   const R=6371.0088, toRad=d=>d*Math.PI/180;
   const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
   const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
   return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
-}
-function bearingDeg(a,b){
-  const toRad=d=>d*Math.PI/180, p1=toRad(a.lat), p2=toRad(b.lat), dl=toRad(b.lng-a.lng);
-  const y=Math.sin(dl)*Math.cos(p2);
-  const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
-  return Math.round((Math.atan2(y,x)*180/Math.PI+360)%360);
 }
 function geoCircle(centerLngLat, km, n){
   const [lng,lat]=centerLngLat;
@@ -1383,43 +1403,96 @@ function geoCircle(centerLngLat, km, n){
   const pts=[]; for(let i=0;i<=n;i++) pts.push(dest((i/n)*360));
   return pts;
 }
-function renderMeasure(){
-  if(mapReady){
-    const features=[];
-    if(measureA){
-      [500,1000,1500].forEach(km=>{
-        features.push({type:'Feature',properties:{kind:'ring'},geometry:{type:'LineString',coordinates:geoCircle([measureA.lng,measureA.lat],km,96)}});
-      });
-      features.push({type:'Feature',properties:{kind:'dot'},geometry:{type:'Point',coordinates:[measureA.lng,measureA.lat]}});
-      if(measureB){
-        features.push({type:'Feature',properties:{kind:'line'},geometry:{type:'LineString',coordinates:[[measureA.lng,measureA.lat],[measureB.lng,measureB.lat]]}});
-        features.push({type:'Feature',properties:{kind:'dot'},geometry:{type:'Point',coordinates:[measureB.lng,measureB.lat]}});
-      }
-    }
-    const src=map.getSource('src-measure'); if(src) src.setData({type:'FeatureCollection',features});
-  }
-  updateMeasureReadout();
+function circleFeature(center, radiusKm){
+  const ring=geoCircle([center.lng,center.lat], Math.max(radiusKm,1), 96);
+  if(ring.length>1){ const f=ring[0], l=ring[ring.length-1]; if(f[0]!==l[0]||f[1]!==l[1]) ring.push(f); }
+  return { type:'Feature', properties:{ kind:'fill', shape:'circle' }, geometry:{ type:'Polygon', coordinates:[ring] }, _circle:{ center, radiusKm } };
 }
-function updateMeasureReadout(){
-  const el=document.getElementById('measureReadout');
-  const bannerText=document.getElementById('measureBannerText');
-  if(!el) return;
-  if(!measureMode || !measureA){
-    el.style.display='none';
-    if(bannerText) bannerText.innerHTML='Measure distance — click a <b>start</b> point, then an <b>end</b> point. Rings mark 500 / 1000 / 1500 km.';
-    return;
+function rectFeature(a,b){
+  const w=Math.min(a.lng,b.lng), e=Math.max(a.lng,b.lng), s=Math.min(a.lat,b.lat), n=Math.max(a.lat,b.lat);
+  return { type:'Feature', properties:{ kind:'fill', shape:'rect' }, geometry:{ type:'Polygon', coordinates:[[[w,s],[e,s],[e,n],[w,n],[w,s]]] } };
+}
+function polyFeature(pts){
+  const ring=pts.map(p=>[p[0],p[1]]);
+  if(ring.length>2){ const f=ring[0], l=ring[ring.length-1]; if(f[0]!==l[0]||f[1]!==l[1]) ring.push([f[0],f[1]]); }
+  return { type:'Feature', properties:{ kind:'fill', shape:'polygon' }, geometry:{ type:'Polygon', coordinates:[ring] } };
+}
+function pointInRing(ring, lng, lat){
+  let inside=false;
+  for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+    const xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1];
+    if(((yi>lat)!==(yj>lat)) && (lng < (xj-xi)*(lat-yi)/(yj-yi)+xi)) inside=!inside;
   }
-  el.style.display='block';
-  let html=`<div class="mr-title">Distance measure</div><div class="mr-row"><span class="mr-k">Start</span>${measureA.lat.toFixed(2)}, ${measureA.lng.toFixed(2)}</div>`;
-  if(measureB){
-    const km=haversineKm(measureA,measureB), brg=bearingDeg(measureA,measureB);
-    html+=`<div class="mr-row"><span class="mr-k">End</span>${measureB.lat.toFixed(2)}, ${measureB.lng.toFixed(2)}</div><div class="mr-dist">${Math.round(km).toLocaleString()} km <span class="mr-alt">${(km*0.539957).toFixed(0)} nm &#183; ${brg}&#176;</span></div>`;
-    if(bannerText) bannerText.innerHTML=`Distance <b>${Math.round(km).toLocaleString()} km</b> — click again to start a new measurement.`;
-  } else {
-    html+='<div class="mr-hint">Click a second point&#8230;</div>';
-    if(bannerText) bannerText.innerHTML='Measure distance — now click the <b>end</b> point.';
+  return inside;
+}
+function insideShape(feature, lat, lng){
+  if(feature._circle) return haversineKm(feature._circle.center, {lat,lng}) <= feature._circle.radiusKm;
+  return pointInRing(feature.geometry.coordinates[0], lng, lat);
+}
+function drawPreview(){
+  if(!mapReady) return;
+  const src=map.getSource('src-draw'); if(!src) return;
+  src.setData({ type:'FeatureCollection', features: drawGeo ? [drawGeo] : [] });
+}
+function setDrawTool(tool){
+  drawTool = (drawTool===tool) ? null : tool;
+  drawing=false; drawStart=null; drawPoly=[];
+  ['circle','polygon','rect'].forEach(k=>{ const b=document.getElementById('draw'+k[0].toUpperCase()+k.slice(1)); if(b) b.classList.toggle('on', drawTool===k); });
+  if(map && map.getCanvas()){
+    map.getCanvas().style.cursor = drawTool ? 'crosshair' : 'grab';
+    if(map.dragPan){ if(drawTool) map.dragPan.disable(); else map.dragPan.enable(); }
   }
-  el.innerHTML=html;
+  const hint=document.getElementById('drawHint');
+  if(hint){
+    if(drawTool==='circle') hint.textContent='Drag from the centre outward to draw a circle';
+    else if(drawTool==='rect') hint.textContent='Drag to draw a rectangle';
+    else if(drawTool==='polygon') hint.textContent='Click to add points · double-click to close the area';
+    hint.classList.toggle('show', !!drawTool);
+  }
+  setMapHint(drawTool ? 'Draw mode — the markers inside your shape become the selection' : 'Scroll to zoom · drag to pan');
+  if(!drawTool){ drawGeo=null; drawPreview(); }
+}
+function runSelection(feature){
+  drawGeo=feature;
+  drawPreview();
+  selectedItems = currentMapPoints.filter(p => insideShape(feature, p.lat, p.lng));
+  const selSrc=map && map.getSource('src-selected');
+  if(selSrc) selSrc.setData({ type:'FeatureCollection', features: selectedItems.map(p=>({ type:'Feature', properties:{ color:p.color||'#8fa7ff' }, geometry:{ type:'Point', coordinates:[p.lng,p.lat] } })) });
+  renderSelection();
+}
+function clearSelection(){
+  drawGeo=null; drawing=false; drawStart=null; drawPoly=[]; selectedItems=[];
+  drawPreview();
+  if(map && map.getSource('src-selected')) map.getSource('src-selected').setData({ type:'FeatureCollection', features: [] });
+  renderSelection();
+}
+function renderSelection(){
+  const panel=document.getElementById('selPanel'), body=document.getElementById('selBody'), count=document.getElementById('selCount');
+  if(!panel||!body) return;
+  if(!selectedItems.length){ panel.classList.remove('show'); if(count) count.textContent='0'; body.innerHTML=''; return; }
+  panel.classList.add('show');
+  if(count) count.textContent=String(selectedItems.length);
+  const groups={};
+  selectedItems.forEach((p,i)=>{ (groups[p.type]=groups[p.type]||[]).push([i,p]); });
+  const keys=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+  let html=`<div class="sel-summary">${selectedItems.length} marker${selectedItems.length>1?'s':''} across ${keys.length} layer${keys.length>1?'s':''}</div>`;
+  keys.forEach(type=>{
+    const arr=groups[type];
+    const def=LAYER_DEFS.find(l=>l.key===type);
+    const color=def?def.color:'#8fa7ff', label=def?def.label:type;
+    html+=`<div class="sel-group"><div class="sel-gh"><span class="sel-dot" style="background:${color}"></span>${esc(label)}<span class="sel-gc">${arr.length}</span></div>`;
+    arr.slice(0,40).forEach(([idx,p])=>{
+      html+=`<button class="sel-item" onclick="focusSelectionItem(${idx})"><span class="sel-iname">${esc(p.popHead||label)}</span><span class="sel-imeta">${esc((p.popMeta||'').slice(0,64))}</span></button>`;
+    });
+    if(arr.length>40) html+=`<div class="sel-more">+${arr.length-40} more</div>`;
+    html+='</div>';
+  });
+  body.innerHTML=html;
+}
+function focusSelectionItem(i){
+  const p=selectedItems[i]; if(!p) return;
+  if(map) map.flyTo({ center:[p.lng,p.lat], zoom:Math.max(map.getZoom(),4), duration:700 });
+  setTimeout(()=>showPopup(null, p.popHead, p.popText, p.popMeta, p.lat, p.lng, 0, {url:p.url}), 780);
 }
 
 let map = null, mapReady = false;
@@ -1444,7 +1517,8 @@ function initMap(){
   map.on('error', () => {});
   map.on('styledata', () => { if(mapReady && !mapStyleReloading) setupMapLayers(); });
   map.on('click', e => {
-    if(measureMode){ addMeasurePoint(e.lngLat.lat, e.lngLat.lng); return; }
+    if(drawTool==='polygon'){ drawPoly.push([e.lngLat.lng, e.lngLat.lat]); drawGeo=polyFeature(drawPoly); drawPreview(); return; }
+    if(drawTool) return;
     const layers = ['lyr-points','lyr-conflict','lyr-rings','lyr-corridors'].filter(l => map.getLayer(l));
     if(!layers.length) return;
     const feats = map.queryRenderedFeatures(e.point, { layers });
@@ -1453,9 +1527,34 @@ function initMap(){
       if(p.head) showPopup(e.originalEvent, p.head, p.text, p.meta, e.lngLat.lat, e.lngLat.lng, 0, { url: p.url, _new: p.isNew === '1' });
     }
   });
+  map.on('dblclick', e => {
+    if(drawTool==='polygon' && drawPoly.length>=3){ runSelection(polyFeature(drawPoly)); drawPoly=[]; }
+  });
+  map.on('mousedown', e => {
+    if(!drawTool || drawTool==='polygon') return;
+    drawing=true; drawStart={ lat:e.lngLat.lat, lng:e.lngLat.lng };
+    if(map.dragPan) map.dragPan.disable();
+  });
+  map.on('mousemove', e => {
+    if(!drawing || !drawStart) return;
+    const end={ lat:e.lngLat.lat, lng:e.lngLat.lng };
+    if(drawTool==='circle') drawGeo=circleFeature(drawStart, haversineKm(drawStart,end));
+    else if(drawTool==='rect') drawGeo=rectFeature(drawStart,end);
+    drawPreview();
+  });
+  map.on('mouseup', e => {
+    if(!drawing) return;
+    drawing=false;
+    const end={ lat:e.lngLat.lat, lng:e.lngLat.lng };
+    let feat=null;
+    if(drawTool==='circle'){ const r=haversineKm(drawStart,end); if(r>3) feat=circleFeature(drawStart,r); }
+    else if(drawTool==='rect'){ if(Math.abs(end.lat-drawStart.lat)>0.2||Math.abs(end.lng-drawStart.lng)>0.2) feat=rectFeature(drawStart,end); }
+    drawStart=null;
+    if(feat) runSelection(feat); else { drawGeo=null; drawPreview(); }
+  });
   for(const lyr of ['lyr-points','lyr-conflict','lyr-rings','lyr-corridors']){
-    map.on('mouseenter', lyr, () => { if(!measureMode) map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', lyr, () => { map.getCanvas().style.cursor = measureMode ? 'crosshair' : 'grab'; });
+    map.on('mouseenter', lyr, () => { if(!drawTool) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', lyr, () => { map.getCanvas().style.cursor = drawTool ? 'crosshair' : 'grab'; });
   }
 }
 
@@ -1466,13 +1565,15 @@ function ensureSource(id){
 function setupMapLayers(){
   if(!map) return;
   mapStyleReloading = true;
-  ['src-corridors','src-trails','src-measure','src-rings','src-points','src-conflict'].forEach(ensureSource);
+  ['src-corridors','src-trails','src-draw','src-selected','src-rings','src-points','src-conflict'].forEach(ensureSource);
+  if(!map.getLayer('lyr-draw-fill')) map.addLayer({ id:'lyr-draw-fill', type:'fill', source:'src-draw',
+    paint:{ 'fill-color':'rgba(120,150,255,0.16)' } });
+  if(!map.getLayer('lyr-draw-line')) map.addLayer({ id:'lyr-draw-line', type:'line', source:'src-draw',
+    paint:{ 'line-color':'#8fa7ff', 'line-width':1.6, 'line-dasharray':[3,2] } });
   if(!map.getLayer('lyr-corridors')) map.addLayer({ id:'lyr-corridors', type:'line', source:'src-corridors',
     paint:{ 'line-color':['get','color'], 'line-width':['get','w'], 'line-opacity':0.55 }, layout:{ 'line-cap':'round' } });
   if(!map.getLayer('lyr-trails')) map.addLayer({ id:'lyr-trails', type:'line', source:'src-trails',
     paint:{ 'line-color':['get','color'], 'line-width':1.6, 'line-opacity':0.8 }, layout:{ 'line-cap':'round' } });
-  if(!map.getLayer('lyr-measure')) map.addLayer({ id:'lyr-measure', type:'line', source:'src-measure',
-    paint:{ 'line-color':['case',['==',['get','kind'],'line'],'#8fa7ff','rgba(120,150,255,0.4)'], 'line-width':['case',['==',['get','kind'],'line'],1.8,1], 'line-dasharray':[2,2] } });
   if(!map.getLayer('lyr-conflict')) map.addLayer({ id:'lyr-conflict', type:'circle', source:'src-conflict',
     paint:{ 'circle-color':'rgba(245,154,94,0.12)', 'circle-radius':['get','r'], 'circle-stroke-color':'rgba(245,154,94,0.85)', 'circle-stroke-width':1.4 } });
   if(!map.getLayer('lyr-rings')) map.addLayer({ id:'lyr-rings', type:'circle', source:'src-rings',
@@ -1483,6 +1584,8 @@ function setupMapLayers(){
       'circle-radius':['interpolate',['linear'],['zoom'],0.5,['*',['get','r'],0.9],2,['get','r'],6,['*',['get','r'],1.4],10,['*',['get','r'],1.8]],
       'circle-stroke-color':['get','stroke'], 'circle-stroke-width':0.8, 'circle-opacity':0.92
     } });
+  if(!map.getLayer('lyr-selected')) map.addLayer({ id:'lyr-selected', type:'circle', source:'src-selected',
+    paint:{ 'circle-color':'rgba(0,0,0,0)', 'circle-radius':['interpolate',['linear'],['zoom'],0.5,6,4,9,10,14], 'circle-stroke-color':'#8fa7ff', 'circle-stroke-width':2 } });
   mapStyleReloading = false;
 }
 
@@ -1520,7 +1623,8 @@ function applyMapData(points, arcs, rings, trails){
     geometry:{ type:'LineString', coordinates: t.coords.map(c => Array.isArray(c)? c : [c[1], c[0]]) } })).filter(f=>f.geometry.coordinates.length>1);
   map.getSource('src-trails').setData({ type:'FeatureCollection', features: trailFeats });
 
-  renderMeasure();
+  currentMapPoints = points;
+  if(drawGeo) runSelection(drawGeo); else renderSelection();
 }
 
 function renderLabels(labels){
