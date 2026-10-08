@@ -170,6 +170,10 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .leg-chip.off{opacity:0.4}
 .leg-chip.off .leg-dot{background:var(--dim-2)!important}
 .leg-count{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-left:1px}
+.leg-info{width:15px;height:15px;margin-left:2px;border:1px solid var(--border);border-radius:50%;background:transparent;color:var(--dim);font:600 9px var(--sans);line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.leg-info:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.leg-search{flex:0 1 150px;min-width:110px;height:28px;padding:0 10px;border:1px solid var(--border);border-radius:5px;background:#07090e;color:var(--text);font-family:var(--sans);font-size:11.5px;outline:none}
+.leg-search:focus{border-color:rgba(120,150,255,0.4)}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:7px;height:7px;border-radius:50%;flex:none}
 .map-search{flex:0 1 240px;min-width:140px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:#07090e;color:var(--text);font-family:var(--sans);font-size:12.5px;outline:none}
@@ -485,6 +489,20 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
     <div class="glossary-foot">Treat these as interpretation guides, not conclusions. Stronger judgments should come from corroboration across multiple layers, not from a single signal viewed in isolation.</div>
   </div>
 </div>
+<div class="glossary-overlay" id="layerOverlay" onclick="if(event.target===this) closeLayerInfo()">
+  <div class="glossary-panel">
+    <div class="glossary-head">
+      <div>
+        <div class="glossary-kicker">Map layer</div>
+        <div class="glossary-title" id="layerTitle"></div>
+        <div class="glossary-sub" id="layerSub"></div>
+      </div>
+      <button class="glossary-close" onclick="closeLayerInfo()" aria-label="Close layer info">&times;</button>
+    </div>
+    <div class="glossary-body" id="layerBody"></div>
+    <div class="glossary-foot">Layer metadata describes the source and its limits. Treat a single layer as one lens, not a conclusion.</div>
+  </div>
+</div>
 <div class="glossary-overlay" id="settingsOverlay" onclick="if(event.target===this) closeSettings()">
   <div class="glossary-panel">
     <div class="glossary-head">
@@ -705,6 +723,37 @@ const LAYER_DEFS = [
   {key:'space', label:'Space', color:'#e9ecf2'},
   {key:'gdelt', label:'GDELT', color:'#6aa8ff'}
 ];
+// Per-layer explainability cards ("what am I looking at")
+const LAYER_INFO = {
+  air: {purpose:'Aircraft counts per theater, as an activity/opacity signal.', source:'OpenSky Network (community ADS-B)', freshness:'Refreshed every sweep (~15 min)', confidence:'Good for relative volume; coverage varies with ADS-B reach.', limitations:['Not flight-level tracking or identity','Sparse over oceans, Africa and active conflict zones']},
+  thermal: {purpose:'Satellite-detected thermal anomalies (fires, flares, heat).', source:'NASA FIRMS (MODIS/VIIRS)', freshness:'Near-real-time; refreshed every sweep', confidence:'Strong for detecting heat sources; can include industrial flaring.', limitations:['Not a confirmation of conflict','Cloud cover and overpass timing create gaps']},
+  conflict: {purpose:'Deadly armed-conflict events, plotted by fatality size.', source:'ACLED (Armed Conflict Location & Event Data)', freshness:'Refreshed every sweep; upstream lags days–weeks', confidence:'Editorially consistent, research-grade.', limitations:['Reports lag real time','Fatality counts are best-estimates, not exact']},
+  maritime: {purpose:'Strategic chokepoints for disruption-path reasoning.', source:'Curated chokepoint registry', freshness:'Static geography', confidence:'High for fixed geography.', limitations:['A marker does not mean an active disruption','No live vessel tracking yet']},
+  nuke: {purpose:'Radiation monitors near civil nuclear sites.', source:'Safecast / public radiation monitors', freshness:'Refreshed every sweep', confidence:'Useful for anomaly screening.', limitations:['Sensor uptime is patchy; "no data" is common','Dose-rate noise can trigger false positives']},
+  sdr: {purpose:'Software-defined radio receivers, a coverage/collection signal.', source:'KiwiSDR public receiver network', freshness:'Refreshed every sweep', confidence:'Good for coverage mapping.', limitations:['Receiver availability is volunteer-driven','Not a detection by itself']},
+  osint: {purpose:'Urgent posts from monitored OSINT channels.', source:'Telegram channels', freshness:'Minutes', confidence:'Fast but unverified.', limitations:['Single-source and often unconfirmed','Geolocation is approximate/canonical, not per-post']},
+  health: {purpose:'WHO outbreak and public-health alerts.', source:'WHO', freshness:'Refreshed every sweep', confidence:'Authoritative for officially declared events.', limitations:['Reporting lags; many alerts are country-level']},
+  news: {purpose:'Geolocated world-news headlines.', source:'Aggregated RSS / GDELT geocoding', freshness:'Minutes', confidence:'Broad coverage, variable quality.', limitations:['Geocoding can be approximate','Duplicate framing across outlets']},
+  weather: {purpose:'Official severe-weather alerts.', source:'NOAA / NWS', freshness:'Minutes', confidence:'Authoritative for the US.', limitations:['US-centric coverage','Alert polygons are approximated as points']},
+  radiation: {purpose:'EPA RadNet environmental radiation stations.', source:'EPA RadNet', freshness:'Refreshed every sweep', confidence:'Reference-grade background readings.', limitations:['US stations only','Sparse sampling cadence']},
+  space: {purpose:'Orbital positions for the ISS and tracked stations.', source:'Celestrak (TLE-derived)', freshness:'Refreshed every sweep', confidence:'Approximate position estimate.', limitations:['Estimated, not live tracking','No payload/identity detail']},
+  gdelt: {purpose:'Geo-coded global event clusters by report volume.', source:'GDELT', freshness:'Every 15 min upstream', confidence:'Good for salience/volume.', limitations:['Can over-represent heavily reported regions','Event coding is automated and noisy']}
+};
+const LAYER_SYNONYMS = {
+  air:['flight','flights','plane','aviation','opensky','aircraft','adsb'],
+  thermal:['fire','fires','wildfire','firms','heat','flare'],
+  conflict:['war','battle','acled','fatality','fatalities','violence'],
+  maritime:['ship','ships','sea','chokepoint','chokepoints','strait','shipping','tanker'],
+  nuke:['nuclear','radiation','radnet','safecast','reactor'],
+  sdr:['radio','kiwisdr','receiver','antenna','signals'],
+  osint:['telegram','tg','social','channels','urgent'],
+  health:['who','outbreak','disease','epidemic','health'],
+  news:['rss','headline','headlines','media','press'],
+  weather:['storm','noaa','nws','alert','flood','hurricane'],
+  radiation:['radnet','epa','radiation','nuclear','safecast'],
+  space:['satellite','satellites','iss','orbit','orbital','space'],
+  gdelt:['event','events','geo','news volume']
+};
 const TIME_WINDOWS = { all:null, '1h':3600000, '24h':86400000, '7d':604800000 };
 let layerVisible = Object.fromEntries(LAYER_DEFS.map(l=>[l.key,true]));
 let timeWindow = 'all';
@@ -1050,11 +1099,39 @@ function renderMapLegend(){
       <button class="leg-action" onclick="setAllLayers(false)">None</button>
       <span class="leg-divider"></span>
       ${['all','1h','24h','7d'].map(w=>`<button class="leg-time ${timeWindow===w?'on':''}" onclick="setTimeWindow('${w}')">${w==='all'?'All time':w}</button>`).join('')}
+      <input class="leg-search" id="legSearch" placeholder="Filter layers" autocomplete="off" oninput="filterLayers(this.value)">
     </div>
     <div class="leg-chips">
-      ${LAYER_DEFS.filter(l=>(layerCounts[l.key]||0)>0).map(l=>`<button class="leg-chip ${layerVisible[l.key]?'':'off'}" onclick="toggleLayer('${l.key}')" title="${layerVisible[l.key]?'Hide':'Show'} ${l.label}"><span class="leg-dot" style="background:${l.color}"></span>${l.label}<span class="leg-count">${layerCounts[l.key]||0}</span></button>`).join('')}
+      ${LAYER_DEFS.filter(l=>(layerCounts[l.key]||0)>0).map(l=>`<span class="leg-chip ${layerVisible[l.key]?'':'off'}" data-layer="${l.key}" onclick="toggleLayer('${l.key}')" title="${layerVisible[l.key]?'Hide':'Show'} ${l.label}"><span class="leg-dot" style="background:${l.color}"></span>${l.label}<span class="leg-count">${layerCounts[l.key]||0}</span><button class="leg-info" onclick="event.stopPropagation();openLayerInfo('${l.key}')" title="About this layer">i</button></span>`).join('')}
     </div>`;
 }
+
+function filterLayers(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#mapLegend .leg-chip').forEach(el=>{
+    const key=el.dataset.layer;
+    const label=(LAYER_DEFS.find(l=>l.key===key)?.label||'').toLowerCase();
+    const syn=(LAYER_SYNONYMS[key]||[]);
+    const match=!q || label.includes(q) || key.includes(q) || syn.some(s=>s.includes(q));
+    el.style.display=match?'':'none';
+  });
+}
+function openLayerInfo(key){
+  const def=LAYER_DEFS.find(l=>l.key===key); const info=LAYER_INFO[key];
+  const ov=document.getElementById('layerOverlay'); if(!ov||!def||!info) return;
+  document.getElementById('layerTitle').textContent=def.label;
+  document.getElementById('layerSub').textContent='What this layer shows, where it comes from, and what it does not prove.';
+  document.getElementById('layerBody').innerHTML=`
+    <div class="glossary-card">
+      <div class="glossary-line"><span class="glossary-label" style="color:${def.color}">Purpose</span>${esc(info.purpose)}</div>
+      <div class="glossary-line"><span class="glossary-label">Source</span>${esc(info.source)}</div>
+      <div class="glossary-line"><span class="glossary-label">Freshness</span>${esc(info.freshness)}</div>
+      <div class="glossary-line"><span class="glossary-label">Confidence</span>${esc(info.confidence)}</div>
+      <div class="glossary-line"><span class="glossary-label">Limitations</span>${info.limitations.map(esc).join(' &middot; ')}</div>
+    </div>`;
+  ov.classList.add('show'); document.body.style.overflow='hidden';
+}
+function closeLayerInfo(){ const ov=document.getElementById('layerOverlay'); if(ov) ov.classList.remove('show'); document.body.style.overflow=''; }
 
 function refreshMap(){
   if(isFlat){ if(flatG){ flatG.selectAll('*').remove(); drawFlatMap(); } }
@@ -2263,7 +2340,7 @@ function init(){
     }
   });
   document.addEventListener('keydown',e=>{
-    if(e.key === 'Escape') closeGlossary();
+    if(e.key === 'Escape'){ closeGlossary(); closeLayerInfo(); closeSettings(); }
   });
   if(new URLSearchParams(location.search).get('guide') === '1') openGlossary();
   syncResponsiveLayout(true);
