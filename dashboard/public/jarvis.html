@@ -1227,7 +1227,7 @@ function openLayerInfo(key){
 function closeLayerInfo(){ const ov=document.getElementById('layerOverlay'); if(ov) ov.classList.remove('show'); document.body.style.overflow=''; }
 
 function refreshMap(){
-  if(isFlat){ if(flatG){ flatG.selectAll('*').remove(); drawFlatMap(); } }
+  if(isFlat){ if(flatG && flatProjection) plotFlatMarkers(); }
   else { plotMarkers(); }
 }
 function toggleLayer(key){ layerVisible[key]=!layerVisible[key]; renderMapLegend(); refreshMap(); }
@@ -1858,10 +1858,7 @@ function toggleFlights() {
   const btn = document.getElementById('flightToggle');
   btn.classList.toggle('off', !flightsVisible);
   if(isFlat){
-    if(flatG){
-      flatG.selectAll('*').remove();
-      drawFlatMap();
-    }
+    if(flatG && flatProjection) plotFlatMarkers();
     return;
   }
   if(!globe){
@@ -1958,6 +1955,8 @@ function drawFlatMap(){
 }
 
 function plotFlatMarkers(){
+  // self-clean so repeated calls (layer toggles, live updates) never stack
+  flatG.selectAll('.markers,.corridors-layer,.measure-layer').remove();
   const mg=flatG.append('g').attr('class','markers');
   const proj=flatProjection;
   const addPt=(lat,lon,r,fill,stroke,onClick,priority,type)=>{

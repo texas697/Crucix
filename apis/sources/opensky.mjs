@@ -66,46 +66,84 @@ const HOTSPOTS = {
   hornOfAfrica: { lamin: 5, lomin: 40, lamax: 15, lomax: 55, label: 'Horn of Africa' },
 };
 
-// Briefing — check hotspot regions for flight activity
+// adsb.lol fallback — free, no key, far less rate-limited than OpenSky.
+// Approximate circular coverage centred on the hotspot box.
+async function fetchAdsbLol(box) {
+  const lat = (box.lamin + box.lamax) / 2;
+  const lon = (box.lomin + box.lomax) / 2;
+  const dLat = ((box.lamax - box.lamin) / 2) * 60;
+  const dLon = ((box.lomax - box.lomin) / 2) * 60 * Math.cos((lat * Math.PI) / 180);
+  const dist = Math.max(50, Math.min(250, Math.round(Math.hypot(dLat, dLon))));
+  const url = `https://api.adsb.lol/v2/lat/${lat.toFixed(2)}/lon/${lon.toFixed(2)}/dist/${dist}`;
+  const data = await safeFetch(url, { timeout: 20000, retries: 1 });
+  return Array.isArray(data?.ac) ? data.ac : [];
+}
+
+// Briefing — check hotspot regions for flight activity.
+// Primary source is OpenSky; when it is rate-limited (frequent 429s) or returns
+// nothing, fall back to adsb.lol so the flight layer is not left blank.
 export async function briefing() {
   const hotspotEntries = Object.entries(HOTSPOTS);
   const results = await Promise.all(
     hotspotEntries.map(async ([key, box]) => {
       const data = await getFlightsInArea(box.lamin, box.lomin, box.lamax, box.lomax);
       const error = data?.error || null;
-      const states = data?.states || [];
+      let states = data?.states || [];
+      let via = 'OpenSky';
+
+      if (error || states.length === 0) {
+        try {
+          const ac = await fetchAdsbLol(box);
+          if (ac.length) {
+            // Normalise to the OpenSky state-vector shape the aggregation expects.
+            states = ac.map(a => [
+              a.hex,
+              a.flight,
+              null,
+              null,
+              null,
+              null,
+              null,
+              typeof a.alt_baro === 'number' ? a.alt_baro * 0.3048 : (a.alt_baro === 'ground' ? 0 : null),
+            ]);
+            via = 'adsb.lol';
+          }
+        } catch { /* keep empty */ }
+      }
+
+      const byCountry = {};
+      if (via === 'OpenSky') {
+        for (const s of states) {
+          const country = s[2] || 'Unknown';
+          byCountry[country] = (byCountry[country] || 0) + 1;
+        }
+      }
       return {
         region: box.label,
         key,
         totalAircraft: states.length,
-        // states format: [icao24, callsign, origin_country, ...]
-        byCountry: states.reduce((acc, s) => {
-          const country = s[2] || 'Unknown';
-          acc[country] = (acc[country] || 0) + 1;
-          return acc;
-        }, {}),
-        // Flag potentially interesting (military often have no callsign or specific patterns)
+        byCountry,
         noCallsign: states.filter(s => !s[1]?.trim()).length,
-        highAltitude: states.filter(s => s[7] && s[7] > 12000).length, // >12km altitude
-        ...(error ? { error } : {}),
+        highAltitude: states.filter(s => s[7] && s[7] > 12000).length,
+        via,
+        ...(via === 'adsb.lol' && error ? { note: `OpenSky: ${error}` } : {}),
+        ...(via === 'OpenSky' && error ? { error } : {}),
       };
     })
   );
 
-  const hotspotErrors = results
-    .filter(r => r.error)
-    .map(r => ({ region: r.region, error: r.error }));
+  const fallbackCount = results.filter(r => r.via !== 'OpenSky').length;
+  const source = fallbackCount === 0
+    ? 'OpenSky'
+    : fallbackCount === results.length
+      ? 'adsb.lol (OpenSky fallback)'
+      : `OpenSky + adsb.lol (${fallbackCount}/${results.length})`;
 
   return {
-    source: 'OpenSky',
+    source,
     timestamp: new Date().toISOString(),
     hotspots: results,
-    ...(hotspotErrors.length ? {
-      error: hotspotErrors.length === results.length
-        ? `OpenSky unavailable across all hotspots: ${hotspotErrors[0].error}`
-        : `OpenSky unavailable for ${hotspotErrors.length}/${results.length} hotspots`,
-      hotspotErrors,
-    } : {}),
+    ...(fallbackCount ? { note: `${fallbackCount}/${results.length} hotspots via adsb.lol fallback` } : {}),
   };
 }
 
