@@ -179,6 +179,9 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .map-search{flex:0 1 240px;min-width:140px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:#07090e;color:var(--text);font-family:var(--sans);font-size:12.5px;outline:none}
 .map-search:focus{border-color:rgba(120,150,255,0.4)}
 #basemapToggle{width:auto;min-width:34px;padding:0 8px;font-size:11px}
+.map-ctrl-btn.on{background:rgba(120,150,255,0.18);color:var(--accent)}
+.measure-readout{position:absolute;top:60px;left:14px;z-index:6;display:none;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--text-2);background:rgba(10,13,20,0.9);border:1px solid rgba(120,150,255,0.3);border-radius:6px;padding:8px 10px;backdrop-filter:blur(8px);max-width:230px}
+.measure-readout b{color:var(--accent)}
 .map-popup .pp-foot{display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
 .pp-copy{font-family:var(--mono);font-size:10px;color:var(--dim);background:transparent;border:1px solid var(--border);border-radius:4px;padding:2px 6px;cursor:pointer}
 .pp-copy:hover{color:var(--text);border-color:var(--border-bright)}
@@ -462,7 +465,9 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
         <button class="map-ctrl-btn" onclick="mapZoom(0.67)" title="Zoom out">&minus;</button>
         <button class="map-ctrl-btn map-toggle" id="flightToggle" onclick="toggleFlights()" title="Toggle flight routes">&#9992;</button>
         <button class="map-ctrl-btn map-toggle" id="basemapToggle" onclick="cycleBasemap()" title="Switch basemap">Night</button>
+        <button class="map-ctrl-btn map-toggle" id="measureToggle" onclick="toggleMeasure()" title="Measure distance &amp; range rings">&#128207;</button>
       </div>
+      <div class="measure-readout" id="measureReadout"></div>
       <button class="proj-toggle" id="projToggle" onclick="toggleMapMode()">GLOBE MODE</button>
       <div class="map-popup" id="mapPopup"><button class="pp-close" onclick="closePopup()">&times;</button><div class="pp-head"></div><div class="pp-text"></div><div class="pp-meta"></div></div>
     </div>
@@ -704,7 +709,7 @@ async function generateMyIdeas() {
 }
 function refreshIdeasPanel() { if (D && D.meta) { applyUserIdeas(D); if (typeof renderLower === 'function') renderLower(); } }
 let isFlat = shouldStartFlat();
-let currentRegion = 'world';
+let currentRegion = (()=>{ try{ const r=localStorage.getItem('crucix_region'); return (r&&['world','americas','europe','middleEast','asiaPacific','africa'].includes(r))?r:'world'; }catch{ return 'world'; } })();
 let flatSvg, flatProjection, flatPath, flatG, flatZoom, flatW, flatH;
 
 // === MAP LAYERS / FILTERS ===
@@ -761,6 +766,7 @@ let layerCounts = {};       // total markers available per type (last plot)
 let seenMarkers = null;     // Set of marker ids seen, null until first plot
 let showAggregates = true;
 let currentBase = 0;
+let measureMode = false, measureA = null, measureB = null;
 const BASEMAPS = [
   {name:'Night', url:'//unpkg.com/three-globe@2.33.0/example/img/earth-night.jpg'},
   {name:'Day', url:'//unpkg.com/three-globe@2.33.0/example/img/earth-day.jpg'},
@@ -1177,9 +1183,76 @@ function searchMap(q){
     }
     setTimeout(()=>showPopup(null, m.head, m.text, m.meta, m.lat, m.lng, 0.01, {url:m.url}), 800);
   } else if(globe){
-    globe.pointOfView({lat:m.lat, lng:m.lng, altitude:1.4}, 900);
-    setTimeout(()=>showPopup(null, m.head, m.text, m.meta, m.lat, m.lng, 0.01, {url:m.url}), 950);
+     globe.pointOfView({lat:m.lat, lng:m.lng, altitude:1.4}, 900);
+     setTimeout(()=>showPopup(null, m.head, m.text, m.meta, m.lat, m.lng, 0.01, {url:m.url}), 950);
+   }
+}
+
+// === MEASURE TOOL + RANGE RINGS ===
+function toggleMeasure(){
+  measureMode=!measureMode;
+  const b=document.getElementById('measureToggle'); if(b) b.classList.toggle('on',measureMode);
+  if(!measureMode){ measureA=null; measureB=null; }
+  else setMapHint('Measure: click two points');
+  refreshMap();
+}
+function addMeasurePoint(lat,lng){
+  if(!measureMode) return;
+  if(!measureA || (measureA&&measureB)){ measureA={lat,lng}; measureB=null; }
+  else { measureB={lat,lng}; }
+  renderMeasure();
+}
+function geoCircle(centerLngLat, km, n){
+  const [lng,lat]=centerLngLat;
+  const R=6371.0088, d=km/R, φ1=lat*Math.PI/180, λ1=lng*Math.PI/180;
+  const dest=(brg)=>{
+    const θ=brg*Math.PI/180;
+    const φ2=Math.asin(Math.sin(φ1)*Math.cos(d)+Math.cos(φ1)*Math.sin(d)*Math.cos(θ));
+    const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(d)*Math.cos(φ1), Math.cos(d)-Math.sin(φ1)*Math.sin(φ2));
+    return [λ2*180/Math.PI, φ2*180/Math.PI];
+  };
+  const pts=[]; for(let i=0;i<=n;i++) pts.push(dest((i/n)*360));
+  return pts;
+}
+function renderMeasure(){
+  if(isFlat){
+    if(flatG && flatProjection){
+      flatG.selectAll('.measure-layer').remove();
+      if(measureA){
+        const g=flatG.append('g').attr('class','measure-layer');
+        [500,1000,1500].forEach(km=>{
+          const ring=geoCircle([measureA.lng,measureA.lat],km,72).map(p=>flatProjection(p)).filter(Boolean);
+          if(ring.length>1) g.append('path').attr('d',d3.line()(ring)+'Z').attr('fill','none').attr('stroke','rgba(120,150,255,0.3)').attr('stroke-width',1).attr('stroke-dasharray','4 4').attr('pointer-events','none');
+        });
+        const a=flatProjection([measureA.lng,measureA.lat]);
+        if(a) g.append('circle').attr('cx',a[0]).attr('cy',a[1]).attr('r',4).attr('fill','#8fa7ff').attr('pointer-events','none');
+        if(measureB){
+          const interp=d3.geoInterpolate([measureA.lng,measureA.lat],[measureB.lng,measureB.lat]);
+          const line=[]; for(let i=0;i<=64;i++){ const p=flatProjection(interp(i/64)); if(p) line.push(p); }
+          if(line.length>1) g.append('path').attr('d',d3.line()(line)).attr('fill','none').attr('stroke','#8fa7ff').attr('stroke-width',1.5).attr('pointer-events','none');
+          const bpt=flatProjection([measureB.lng,measureB.lat]);
+          if(bpt) g.append('circle').attr('cx',bpt[0]).attr('cy',bpt[1]).attr('r',4).attr('fill','#8fa7ff').attr('pointer-events','none');
+        }
+      }
+    }
+    updateMeasureReadout();
+  } else {
+    plotMarkers();
+    updateMeasureReadout();
   }
+}
+function updateMeasureReadout(){
+  const el=document.getElementById('measureReadout'); if(!el) return;
+  if(!measureMode || !measureA){ el.style.display='none'; return; }
+  el.style.display='block';
+  let html=`A &#183; ${measureA.lat.toFixed(2)}, ${measureA.lng.toFixed(2)}`;
+  if(measureB){
+    const km=d3.geoDistance([measureA.lng,measureA.lat],[measureB.lng,measureB.lat])*6371.0088;
+    html+=`<br>B &#183; ${measureB.lat.toFixed(2)}, ${measureB.lng.toFixed(2)}<br><b>${Math.round(km).toLocaleString()} km</b> <span style="opacity:.6">(${(km*0.539957).toFixed(0)} nm)</span>`;
+  } else {
+    html+='<br><span style="opacity:.7">click a second point</span>';
+  }
+  el.innerHTML=html;
 }
 
 function initMap(){
@@ -1268,6 +1341,13 @@ function initGlobe(){
     .labelDotRadius(0)
     .labelAltitude(0.012)
     .labelResolution(2)
+    // Paths layer (range rings)
+    .pathPoints(d => d.coords)
+    .pathPointLat(p => p[0]).pathPointLng(p => p[1])
+    .pathColor(d => d.color)
+    .pathStroke(d => d.stroke || 0.5)
+    .pathTransitionDuration(0)
+    .onGlobeClick(({lat,lng}) => { if(measureMode) addMeasurePoint(lat,lng); })
     (document.getElementById('globeViz'));
 
   // Style the WebGL scene
@@ -1582,6 +1662,17 @@ function plotMarkers(){
   }
   globe.arcsData(arcs);
 
+  // === MEASURE LINE + RANGE RINGS ===
+  if(measureA){
+    if(measureB){
+      globe.arcsData([...arcs, {startLat:measureA.lat,startLng:measureA.lng,endLat:measureB.lat,endLng:measureB.lng,color:['rgba(143,167,255,0.95)','rgba(143,167,255,0.3)'],stroke:1.4,label:'measured distance'}]);
+    }
+    const rings=[500,1000,1500].map(km=>({coords:geoCircle([measureA.lng,measureA.lat],km,72).map(p=>[p[1],p[0]]),color:'rgba(120,150,255,0.35)',stroke:0.4}));
+    globe.pathsData(rings);
+  } else {
+    globe.pathsData([]);
+  }
+
   // Zoom-aware marker sizing: scale markers and labels with camera altitude
   const onGlobeZoom = () => {
     const alt = globe.pointOfView().altitude;
@@ -1727,6 +1818,12 @@ function initFlatMap(){
       .style('display',k>=2.5?'block':'none');
   });
   flatSvg.call(flatZoom);
+  flatSvg.on('click', ev=>{
+    if(!measureMode || !flatProjection || !flatG) return;
+    const p=d3.pointer(ev, flatG.node());
+    const geo=flatProjection.invert(p);
+    if(geo) addMeasurePoint(geo[1], geo[0]);
+  });
   drawFlatMap();
 }
 
@@ -1850,6 +1947,7 @@ function plotFlatMarkers(){
     gdelt: (D.gdelt?.geoPoints||[]).length
   };
   renderMapLegend();
+  renderMeasure();
 }
 
 // Update setRegion for flat mode
@@ -1860,6 +1958,7 @@ const _origMapZoom = mapZoom;
 
 function setRegion(r){
   currentRegion = r;
+  try{ localStorage.setItem('crucix_region', r); }catch{}
   document.querySelectorAll('.region-btn').forEach(b=>b.classList.toggle('active',b.dataset.region===r));
   closePopup();
   if(isFlat && flatSvg && flatZoom){
@@ -2342,6 +2441,10 @@ function init(){
   });
   document.addEventListener('keydown',e=>{
     if(e.key === 'Escape'){ closeGlossary(); closeLayerInfo(); closeSettings(); }
+    if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    const regions=['world','americas','europe','middleEast','asiaPacific','africa'];
+    const n=parseInt(e.key,10);
+    if(n>=1 && n<=regions.length) setRegion(regions[n-1]);
   });
   if(new URLSearchParams(location.search).get('guide') === '1') openGlossary();
   syncResponsiveLayout(true);
