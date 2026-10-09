@@ -70,6 +70,11 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .top-spacer{flex:1}
 .top-center{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;white-space:nowrap}
+.tb-live{display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);font-size:12.5px;color:var(--text);white-space:nowrap}
+.tb-live .tb-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tb-meta{font-family:var(--sans);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.tb-meta .v{color:var(--text);font-family:var(--mono);font-size:12px;font-weight:400}
+.tb-time{font-family:var(--mono);font-size:12px;color:var(--dim);white-space:nowrap}
 .chip{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 12px;border-radius:5px;border:1px solid}
 .chip.regime{color:var(--warn);background:rgba(233,170,90,0.08);border-color:rgba(233,170,90,0.18)}
 .chip.regime .dot{width:6px;height:6px;border-radius:50%;background:var(--amber)}
@@ -531,9 +536,9 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
 #globeViz .scene-tooltip{font-family:var(--sans)!important;font-size:11px!important;background:rgba(6,10,14,0.9)!important;border:1px solid rgba(120,150,255,0.3)!important;color:var(--text)!important;padding:4px 8px!important;letter-spacing:0}
 
 /* THEME TOGGLE */
-.theme-toggle{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font:500 12.5px var(--sans);color:var(--text-2);border:1px solid var(--border);border-radius:5px;background:rgba(255,255,255,0.02);cursor:pointer;transition:all .15s}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;font:500 13px var(--sans);color:var(--text-2);border:1px solid var(--border);border-radius:5px;background:rgba(255,255,255,0.02);cursor:pointer;transition:all .15s}
 .theme-toggle:hover{border-color:var(--border-bright);color:var(--text)}
-.theme-toggle .tt-ico{font-size:13px;line-height:1}
+.theme-toggle .tt-ico{font-size:15px;line-height:1}
 
 /* LIGHT THEME */
 html.light{
@@ -946,7 +951,7 @@ let currentBase = currentTheme==='light' ? 2 : 0;
 function applyTheme(){
   document.documentElement.classList.toggle('light', currentTheme==='light');
   const btn=document.querySelector('.theme-toggle');
-  if(btn){ const i=btn.querySelector('.tt-ico'), l=btn.querySelector('.tt-lbl'); if(i) i.innerHTML=currentTheme==='light'?'&#9789;':'&#9788;'; if(l) l.textContent=currentTheme==='light'?'Light':'Dark'; }
+  if(btn){ const i=btn.querySelector('.tt-ico'); if(i) i.innerHTML=currentTheme==='light'?'&#9789;':'&#9788;'; }
 }
 function applyThemeToMap(){
   if(!map) return;
@@ -1212,28 +1217,27 @@ function renderTopbar(){
     </nav>
     <div class="top-spacer"></div>
     <div class="top-right">
-      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark mode" aria-label="Toggle light or dark mode"><span class="tt-ico">${currentTheme==='light'?'&#9789;':'&#9788;'}</span><span class="tt-lbl">${currentTheme==='light'?'Light':'Dark'}</span></button>
+      <span class="tb-live" title="Live data feed"><span class="tb-dot"></span>Live</span>
+      <span class="tb-meta" title="Data sources reporting">${t('dashboard.sources','Sources')} <span class="v">${D.meta.sourcesOk}/${D.meta.sourcesQueried}</span></span>
+      <span class="tb-meta" title="Model in use">Model <span class="v">${esc(modelLabel)}</span></span>
+      <span class="tb-time" title="Last sweep">${d} &#183; ${timeStr}</span>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark mode" aria-label="Toggle light or dark mode"><span class="tt-ico">${currentTheme==='light'?'&#9789;':'&#9788;'}</span></button>
       ${ME ? (ME.llm
         ? `<button class="meta-pill btn" onclick="openSettings()" title="Your LLM key settings">AI key <span class="v on">${esc(ME.llm.provider.toUpperCase())}</span></button>`
         : `<button class="byok-cta" onclick="openSettings()" title="Enter an API key to unlock AI trade ideas"><span class="k">&#9889;</span>Add your AI key</button>`) : ''}
       ${ME ? `<button class="user-chip" onclick="logout()" title="Sign out ${esc(ME.email)}"><span class="av">${initials}</span>${uname}</button>` : ''}
     </div>`;
-  renderStatusStrip(d, timeStr, deltaLabel, modelLabel);
+  renderStatusStrip(deltaLabel);
   renderByokBanner();
   renderRegionControls();
 }
 
-function renderStatusStrip(d, timeStr, deltaLabel, modelLabel){
+function renderStatusStrip(deltaLabel){
   const el = document.getElementById('statusStrip'); if(!el) return;
   el.innerHTML = `
-    <span class="st-live"><span class="dot"></span><span>Live</span></span>
-    <span class="st">${t('dashboard.sources','Sources')} <span class="v">${D.meta.sourcesOk}/${D.meta.sourcesQueried}</span></span>
     <span class="st">${t('dashboard.sweep','Sweep')} <span class="v">${(D.meta.totalDurationMs/1000).toFixed(1)}s</span></span>
     <span class="st">${t('dashboard.delta','Delta')} <span class="v">${deltaLabel}</span></span>
-    <span class="st">Model <span class="v">${esc(modelLabel)}</span></span>
-    <button class="perf-pill" onclick="togglePerfMode()" title="Reduce visual effects and start mobile in flat mode" style="border:0;background:none;cursor:pointer;color:var(--dim);font-family:var(--sans);font-size:12.5px;padding:0">${t('dashboard.visuals','Visuals')} <span class="v" id="perfStatus" style="color:var(--text);font-family:var(--mono);font-size:12px">${lowPerfMode?t('dashboard.visualsLite','Lite'):t('dashboard.visualsFull','Full')}</span></button>
-    <div class="st-spacer"></div>
-    <span class="st-time">${d} &#183; ${timeStr}</span>`;
+    <button class="perf-pill" onclick="togglePerfMode()" title="Reduce visual effects and start mobile in flat mode" style="border:0;background:none;cursor:pointer;color:var(--dim);font-family:var(--sans);font-size:12.5px;padding:0">${t('dashboard.visuals','Visuals')} <span class="v" id="perfStatus" style="color:var(--text);font-family:var(--mono);font-size:12px">${lowPerfMode?t('dashboard.visualsLite','Lite'):t('dashboard.visualsFull','Full')}</span></button>`;
 }
 
 // === LEFT RAIL ===
