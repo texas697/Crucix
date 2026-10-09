@@ -601,7 +601,6 @@ html.light .brand-mark .bm-dot{fill:#0f172a}
 <div class="scanline" id="scanline"></div>
 <div id="main">
   <div class="topbar" id="topbar"></div>
-  <div class="status-strip" id="statusStrip"></div>
   <div class="map-wrap">
     <div class="map-region-bar" id="mapRegionBar"></div>
     <div class="map-container" id="mapContainer">
@@ -1198,8 +1197,6 @@ function renderTopbar(){
   const ts = new Date(D.meta.timestamp);
   const d = ts.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const timeStr = ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
-  const ds = D.delta?.summary;
-  const deltaLabel = ds ? (ds.direction==='risk-off'?'Risk-off':ds.direction==='risk-on'?'Risk-on':'Mixed') : 'Baseline';
   const modelLabel = (ME?.llm?.provider || D.ideasMeta?.provider || 'Grok');
   const uname = ME ? esc((ME.email||'you').split('@')[0]) : '';
   const initials = ME ? uname.slice(0,2).toUpperCase() : 'TX';
@@ -1227,17 +1224,8 @@ function renderTopbar(){
         : `<button class="byok-cta" onclick="openSettings()" title="Enter an API key to unlock AI trade ideas"><span class="k">&#9889;</span>Add your AI key</button>`) : ''}
       ${ME ? `<button class="user-chip" onclick="logout()" title="Sign out ${esc(ME.email)}"><span class="av">${initials}</span>${uname}</button>` : ''}
     </div>`;
-  renderStatusStrip(deltaLabel);
   renderByokBanner();
   renderRegionControls();
-}
-
-function renderStatusStrip(deltaLabel){
-  const el = document.getElementById('statusStrip'); if(!el) return;
-  el.innerHTML = `
-    <span class="st">${t('dashboard.sweep','Sweep')} <span class="v">${(D.meta.totalDurationMs/1000).toFixed(1)}s</span></span>
-    <span class="st">${t('dashboard.delta','Delta')} <span class="v">${deltaLabel}</span></span>
-    <button class="perf-pill" onclick="togglePerfMode()" title="Reduce visual effects and start mobile in flat mode" style="border:0;background:none;cursor:pointer;color:var(--dim);font-family:var(--sans);font-size:12.5px;padding:0">${t('dashboard.visuals','Visuals')} <span class="v" id="perfStatus" style="color:var(--text);font-family:var(--mono);font-size:12px">${lowPerfMode?t('dashboard.visualsLite','Lite'):t('dashboard.visualsFull','Full')}</span></button>`;
 }
 
 // === LEFT RAIL ===
