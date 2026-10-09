@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.76 0.13 262);--accent-soft:rgba(120,150,255,0.15);--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
@@ -15,6 +16,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
 .brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
 .brand .mark{width:34px;height:34px;border-radius:6px;flex:none}
+.mark .bm-bg{fill:#0a0d14}
+.mark .bm-ring,.mark .bm-rays{stroke:#98a8ff;fill:none}
+.mark .bm-dot{fill:#e9ecf2}
 .brand .b1{font-size:15px;font-weight:600;letter-spacing:-0.01em;display:block}
 .brand .sub{font-size:12px;color:var(--dim);display:block}
 .mainnav{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
@@ -64,12 +68,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .gridmode video,.gridmode iframe{width:100%;height:100%;border:0;display:block}
 .gridmode .cap{position:absolute;left:6px;bottom:6px;font-size:11px;color:#fff;text-shadow:0 1px 3px #000}
 @media (max-width:900px){.layout{grid-template-columns:1fr}.channels{max-height:none;flex-direction:row;flex-wrap:wrap}.chan{width:auto}}
+html.light{--bg:#eef1f6;--panel:#ffffff;--panel-2:#f6f8fc;--raised:#eef1f7;--raised-2:#e3e8f1;--glass:rgba(255,255,255,0.85);--border:rgba(16,24,40,0.10);--border-bright:rgba(16,24,40,0.22);--text:#0f172a;--text-2:#334155;--sub:#475569;--dim:#5b6b82;--dim-2:#6b7a90;--dim-3:#8593a8;--accent:oklch(0.55 0.16 262);--accent-soft:rgba(70,100,220,0.12);--sky:#2b5f86;--danger:#b3261e;--mint:#0f7a5a;--seg-bg:#e6eaf1}
+html.light body{background-image:none}
+html.light .mainnav{background:var(--seg-bg)}
+html.light .nav-tab.active{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,0.14)}
+html.light .pill{background:var(--raised)}
+html.light .overlay{background:rgba(238,241,246,0.9)}
+html.light .mark .bm-bg{fill:#fff;stroke:rgba(16,24,40,0.14);stroke-width:2}
+html.light .mark .bm-ring,html.light .mark .bm-rays{stroke:#4a6cf0}
+html.light .mark .bm-dot{fill:#0f172a}
 </style>
 </head>
 <body>
 <div class="topbar">
   <a class="brand" href="/" title="Back to the dashboard">
-    <svg viewBox="0 0 48 48" class="mark" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a0d14"/><circle cx="24" cy="24" r="14" stroke="#98a8ff" stroke-width="4"/><path d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke="#98a8ff" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="4" fill="#e9ecf2"/></svg>
+    <svg viewBox="0 0 48 48" class="mark" aria-hidden="true"><rect class="bm-bg" width="48" height="48" rx="10"/><circle class="bm-ring" cx="24" cy="24" r="14" stroke-width="4" fill="none"/><path class="bm-rays" d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke-width="4" stroke-linecap="round"/><circle class="bm-dot" cx="24" cy="24" r="4"/></svg>
     <span><span class="b1">MFB Services</span><span class="sub">Intelligence</span></span>
   </a>
   <nav class="mainnav">
