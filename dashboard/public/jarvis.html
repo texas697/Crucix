@@ -70,32 +70,39 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .top-spacer{flex:1}
 .top-center{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;white-space:nowrap}
-.tb-live{display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);font-size:12.5px;color:var(--text);white-space:nowrap}
-.tb-live .tb-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.tb-meta{font-family:var(--sans);font-size:12.5px;color:var(--dim);white-space:nowrap}
-.tb-meta .v{color:var(--text);font-family:var(--mono);font-size:12px;font-weight:400}
-.tb-time{font-family:var(--mono);font-size:12px;color:var(--dim);white-space:nowrap}
+.tb-status{display:inline-flex;align-items:stretch;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:2px;box-shadow:0 1px 2px rgba(0,0,0,0.18);overflow:hidden}
+.tb-seg{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;font-family:var(--sans);font-size:12.5px;color:var(--dim);white-space:nowrap;border-radius:8px}
+.tb-seg + .tb-seg{box-shadow:inset 1px 0 0 var(--border)}
+.tb-seg b{color:var(--text);font-family:var(--mono);font-size:12.5px;font-weight:600}
+.tb-seg .tb-slash{color:var(--dim-3);margin:0 1px}
+.tb-i{width:13px;height:13px;flex:none;opacity:.75;color:var(--sub)}
+.tb-live{color:var(--text)}
+.tb-live .tb-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:tb-pulse 2.2s ease-in-out infinite}
+@keyframes tb-pulse{0%,100%{box-shadow:0 0 0 0 var(--accent-soft)}50%{box-shadow:0 0 0 5px var(--accent-soft)}}
+.tb-time{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.tb-time .tb-i{opacity:.6}
+@media (max-width:720px){.tb-status{flex-wrap:wrap}.tb-seg + .tb-seg{box-shadow:none}.tb-model{display:none}}
 .chip{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 12px;border-radius:5px;border:1px solid}
 .chip.regime{color:var(--warn);background:rgba(233,170,90,0.08);border-color:rgba(233,170,90,0.18)}
 .chip.regime .dot{width:6px;height:6px;border-radius:50%;background:var(--amber)}
 .chip.alert{font-weight:500;color:var(--danger);background:rgba(240,90,80,0.10);border-color:rgba(240,90,80,0.22)}
 .chip.alert .dot{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(240,90,80,0.18)}
 .top-div{width:1px;height:22px;background:rgba(255,255,255,0.08);margin:0 4px}
-.user-chip{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--text-2);font:500 13px var(--sans);cursor:pointer;padding:4px 6px;border-radius:5px}
+.user-chip{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--text-2);font:500 13px var(--sans);cursor:pointer;padding:4px 6px;border-radius:9px}
 .user-chip:hover{background:var(--raised)}
 .user-chip .av{width:26px;height:26px;border-radius:50%;background:var(--raised-2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)}
 .regime-chip{display:none}
 .region-btn{border:0;cursor:pointer;font:500 12.5px var(--sans);padding:6px 12px;border-radius:4px;background:transparent;color:var(--dim);transition:all .15s}
 .region-btn:hover{color:var(--text)}
 .region-btn.active{background:var(--raised-2);color:var(--text)}
-.meta-pill{font-family:var(--sans);font-size:12.5px;color:var(--dim);letter-spacing:0;padding:6px 12px;border:1px solid var(--border);border-radius:5px;background:rgba(255,255,255,0.02)}
+.meta-pill{font-family:var(--sans);font-size:12.5px;color:var(--dim);letter-spacing:0;padding:6px 12px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,0.02)}
 .meta-pill .v{color:var(--text);font-weight:500}
 .alert-badge{display:none}
 .guide-btn{padding:6px 12px;font-size:12.5px;font-weight:500;border:1px solid var(--border-bright);color:var(--text);background:var(--raised);cursor:pointer;border-radius:5px;transition:all .15s}
 .guide-btn:hover{background:var(--raised-2)}
 .perf-pill{cursor:pointer;background:rgba(255,255,255,0.05)}
 .perf-pill:hover{border-color:var(--accent);color:var(--text);background:var(--accent-soft)}
-.meta-pill.btn{cursor:pointer;background:rgba(255,255,255,0.02)}
+.meta-pill.btn{cursor:pointer;background:var(--panel)}
 .meta-pill.btn:hover{border-color:var(--border-bright);color:var(--text)}
 .meta-pill .v.on{color:var(--accent)}
 .meta-pill.nav{color:var(--accent);border-color:rgba(120,150,255,0.3);text-decoration:none}
@@ -536,8 +543,8 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
 #globeViz .scene-tooltip{font-family:var(--sans)!important;font-size:11px!important;background:rgba(6,10,14,0.9)!important;border:1px solid rgba(120,150,255,0.3)!important;color:var(--text)!important;padding:4px 8px!important;letter-spacing:0}
 
 /* THEME TOGGLE */
-.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;font:500 13px var(--sans);color:var(--text-2);border:1px solid var(--border);border-radius:5px;background:rgba(255,255,255,0.02);cursor:pointer;transition:all .15s}
-.theme-toggle:hover{border-color:var(--border-bright);color:var(--text)}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;font:500 13px var(--sans);color:var(--text-2);border:1px solid var(--border);border-radius:9px;background:var(--panel);cursor:pointer;transition:all .15s;box-shadow:0 1px 2px rgba(0,0,0,0.18)}
+.theme-toggle:hover{border-color:var(--border-bright);color:var(--text);background:var(--raised)}
 .theme-toggle .tt-ico{font-size:15px;line-height:1}
 
 /* LIGHT THEME */
@@ -583,6 +590,8 @@ html.light .nuke-ok{background:rgba(138,90,18,0.08)}
 html.light .news-icon,html.light .osint-src,html.light .news-meta .news-src,html.light .tk-src{color:#5b6b82}
 html.light .poly-item:hover .poly-q,html.light .quake-row:hover .quake-place{color:#0f172a}
 html.light{--seg-bg:#e6eaf1}
+html.light .tb-status,html.light .theme-toggle,html.light .meta-pill{background:#ffffff;box-shadow:0 1px 2px rgba(16,24,40,0.06)}
+html.light .theme-toggle:hover{background:var(--raised)}
 html.light .mainnav{background:var(--seg-bg)}
 html.light .nav-tab.active{background:#ffffff;color:var(--text);box-shadow:0 1px 3px rgba(16,24,40,0.14)}
 html.light .brand-mark .bm-bg{fill:#ffffff;stroke:rgba(16,24,40,0.14);stroke-width:2}
@@ -1214,10 +1223,12 @@ function renderTopbar(){
     </nav>
     <div class="top-spacer"></div>
     <div class="top-right">
-      <span class="tb-live" title="Live data feed"><span class="tb-dot"></span>Live</span>
-      <span class="tb-meta" title="Data sources reporting">${t('dashboard.sources','Sources')} <span class="v">${D.meta.sourcesOk}/${D.meta.sourcesQueried}</span></span>
-      <span class="tb-meta" title="Model in use">Model <span class="v">${esc(modelLabel)}</span></span>
-      <span class="tb-time" title="Last sweep">${d} &#183; ${timeStr}</span>
+      <div class="tb-status" role="status" aria-label="System status">
+        <span class="tb-seg tb-live" title="Live data feed"><span class="tb-dot"></span>Live</span>
+        <span class="tb-seg" title="Sources reporting this sweep"><svg class="tb-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><b>${D.meta.sourcesOk}</b><span class="tb-slash">/</span>${D.meta.sourcesQueried}</span>
+        <span class="tb-seg tb-model" title="Model in use"><svg class="tb-i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.7 5.1L19 9l-5.3 1.9L12 16l-1.7-5.1L5 9l5.3-1.9z"/></svg>${esc(modelLabel)}</span>
+        <span class="tb-seg tb-time" title="Last sweep"><svg class="tb-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${d} &#183; ${timeStr}</span>
+      </div>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark mode" aria-label="Toggle light or dark mode"><span class="tt-ico">${currentTheme==='light'?'&#9789;':'&#9788;'}</span></button>
       ${ME ? (ME.llm
         ? `<button class="meta-pill btn" onclick="openSettings()" title="Your LLM key settings">AI key <span class="v on">${esc(ME.llm.provider.toUpperCase())}</span></button>`
