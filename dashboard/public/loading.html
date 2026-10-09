@@ -11,6 +11,7 @@
 <meta property="og:image" content="/brand/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -40,12 +41,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--m
 #countdown .eta{color:var(--text)}
 #countdown .bar-wrap{width:340px;height:2px;background:rgba(120,150,255,0.1);margin-top:8px;overflow:hidden}
 #countdown .bar-fill{height:100%;background:var(--accent);width:0%;transition:width 1s linear;box-shadow:0 0 6px var(--accent)}
+
+.ll-mark .ll-bg{fill:#0a0d14}
+.ll-mark .ll-ring,.ll-mark .ll-rays{stroke:#98a8ff}
+.ll-mark .ll-dot{fill:#e9ecf2}
+html.light{--bg:#eef1f6;--text:#0f172a;--dim:#5b6b82;--accent:oklch(0.55 0.16 262);--border:rgba(16,24,40,0.18)}
+html.light .ll-mark .ll-bg{fill:#ffffff;stroke:rgba(16,24,40,0.14);stroke-width:2}
+html.light .ll-mark .ll-ring,html.light .ll-mark .ll-rays{stroke:#4a6cf0}
+html.light .ll-mark .ll-dot{fill:#0f172a}
+html.light #countdown .bar-wrap{background:rgba(16,24,40,0.08)}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="logo-ring">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="60" height="60" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a0d14"/><circle cx="24" cy="24" r="14" stroke="#98a8ff" stroke-width="4" fill="none"/><path d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke="#98a8ff" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="24" r="4" fill="#e9ecf2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="60" height="60" class="ll-mark" aria-hidden="true"><rect class="ll-bg" width="48" height="48" rx="10"/><circle class="ll-ring" cx="24" cy="24" r="14" stroke-width="4" fill="none"/><path class="ll-rays" d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke-width="4" stroke-linecap="round"/><circle class="ll-dot" cx="24" cy="24" r="4"/></svg>
   </div>
 
   <div id="bootLines"></div>

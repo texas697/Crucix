@@ -63,6 +63,11 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .brand-text .b1{font-weight:600;font-size:15px;letter-spacing:-0.01em;color:var(--text)}
 .brand-text .sub{font-size:12px;color:var(--dim);letter-spacing:0}
 .boot-logo{width:min(560px,90vw);height:auto;opacity:0}
+.boot-logo .bl-bg{fill:#0a0d14;stroke:#1a2030}
+.boot-logo .bl-ring,.boot-logo .bl-rays{stroke:#98a8ff}
+.boot-logo .bl-dot{fill:#e9ecf2}
+.boot-logo .bl-title{fill:#e9ecf2}
+.boot-logo .bl-sub{fill:#98a8ff}
 .mainnav{flex:none;white-space:nowrap;display:flex;gap:2px;padding:3px;background:var(--seg-bg,#07090e);border:1px solid var(--border);border-radius:6px}
 .nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);transition:all .15s;text-decoration:none;display:inline-flex;align-items:center}
 .nav-tab:hover{color:var(--text)}
@@ -562,6 +567,13 @@ html.light ::-webkit-scrollbar-thumb{background:#c3ccd9}
 html.light .bg-radial{opacity:0}
 html.light .corridor-flow{opacity:1}
 html.light #boot{background:var(--bg)}
+html.light .boot-logo .bl-bg{fill:#ffffff;stroke:rgba(16,24,40,0.14)}
+html.light .boot-logo .bl-ring,html.light .boot-logo .bl-rays{stroke:#4a6cf0}
+html.light .boot-logo .bl-dot{fill:#0f172a}
+html.light .boot-logo .bl-title{fill:#0f172a}
+html.light .boot-logo .bl-sub{fill:#4a6cf0}
+html.light #bootLines{color:#5b6b82}
+html.light #bootLines .ok,html.light #bootLines .count,html.light #bootFinal{color:var(--accent)}
 html.light .topbar{border-color:var(--border)}
 html.light .col-card,html.light .g-panel{box-shadow:0 1px 2px rgba(16,24,40,0.04)}
 html.light .card-head,html.light .site-row,html.light .econ-row,html.light .map-popup .pp-foot{border-color:rgba(16,24,40,0.08)}
@@ -601,7 +613,7 @@ html.light .brand-mark .bm-dot{fill:#0f172a}
 </head>
 <body>
 <div id="boot">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" class="boot-logo" aria-label="MFB Services Intelligence"><rect x="14" y="24" width="112" height="112" rx="24" fill="#0a0d14" stroke="#1a2030"/><circle cx="70" cy="80" r="34" stroke="#98a8ff" stroke-width="9" fill="none"/><path d="M70 24v18M70 118v18M14 80h18M108 80h18" stroke="#98a8ff" stroke-width="9" stroke-linecap="round"/><circle cx="70" cy="80" r="9" fill="#e9ecf2"/><text x="172" y="78" font-family="Geist,Arial,sans-serif" font-weight="600" font-size="52" letter-spacing="1" fill="#e9ecf2">MFB SERVICES</text><text x="174" y="122" font-family="Geist Mono,monospace" font-weight="500" font-size="22" letter-spacing="8" fill="#98a8ff">INTELLIGENCE</text></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" class="boot-logo" aria-label="MFB Services Intelligence"><rect class="bl-bg" x="14" y="24" width="112" height="112" rx="24"/><circle class="bl-ring" cx="70" cy="80" r="34" stroke-width="9" fill="none"/><path class="bl-rays" d="M70 24v18M70 118v18M14 80h18M108 80h18" stroke-width="9" stroke-linecap="round"/><circle class="bl-dot" cx="70" cy="80" r="9"/><text class="bl-title" x="172" y="78" font-family="Geist,Arial,sans-serif" font-weight="600" font-size="52" letter-spacing="1">MFB SERVICES</text><text class="bl-sub" x="174" y="122" font-family="Geist Mono,monospace" font-weight="500" font-size="22" letter-spacing="8">INTELLIGENCE</text></svg>
   <div id="bootLines"></div>
   <div id="bootFinal">TERMINAL ACTIVE</div>
 </div>
