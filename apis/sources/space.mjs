@@ -16,11 +16,11 @@ const SAT_CATEGORIES = {
   oneweb: '/NORAD/elements/gp.php?GROUP=oneweb&FORMAT=json',
 };
 
-// Get TLE data for a category
+// Get TLE data for a category (fast-fail: CelesTrak is often unreachable / IP-blocked)
 async function getTLEs(category) {
   const path = SAT_CATEGORIES[category];
   if (!path) return { error: 'Invalid category' };
-  const data = await safeFetch(`${CELESTRAK_BASE}${path}`, { timeout: 20000 });
+  const data = await safeFetch(`${CELESTRAK_BASE}${path}`, { timeout: 9000, retries: 0 });
   return data;
 }
 
@@ -136,6 +136,46 @@ function generateSignals(data) {
   return signals;
 }
 
+// === Fallback sources (used when CelesTrak is unreachable) ===
+// tle.ivanstanojevic.me mirrors CelesTrak TLEs and exposes totalItems for a name search.
+const TLE_API = 'https://tle.ivanstanojevic.me/api/tle';
+async function tleCount(search) {
+  const data = await safeFetch(`${TLE_API}?search=${encodeURIComponent(search)}`, {
+    timeout: 9000, retries: 0, headers: { Accept: 'application/json' },
+  });
+  return data && !data.error && Number.isFinite(data.totalItems) ? data.totalItems : 0;
+}
+
+// wheretheiss.at gives a live ISS position (lat/lon/altitude).
+async function fallbackISS() {
+  const d = await safeFetch('https://api.wheretheiss.at/v1/satellites/25544', { timeout: 9000, retries: 0 });
+  if (!d || d.error || typeof d.latitude !== 'number') return null;
+  return {
+    name: 'ISS (ZARYA)',
+    noradId: 25544,
+    lat: +d.latitude.toFixed(2),
+    lon: +d.longitude.toFixed(2),
+    altitude: Math.round(d.altitude),
+    apogee: Math.round(d.altitude),
+    perigee: Math.round(d.altitude),
+    inclination: 51.64,
+    period: 92.9,
+    epoch: new Date((d.timestamp || Math.floor(Date.now() / 1000)) * 1000).toISOString(),
+  };
+}
+
+// SatNOGS catalog carries launch dates — count objects launched in the last 30 days.
+async function fallbackNewObjects() {
+  const arr = await safeFetch('https://db.satnogs.org/api/satellites/?format=json', { timeout: 12000, retries: 0 });
+  if (!Array.isArray(arr)) return 0;
+  const now = Date.now(), win = 30 * 86400000;
+  return arr.filter(s => {
+    if (!s.launched) return false;
+    const t = new Date(s.launched).getTime();
+    return Number.isFinite(t) && (now - t) <= win && (now - t) >= 0;
+  }).length;
+}
+
 // Briefing export
 export async function briefing() {
   try {
@@ -146,37 +186,60 @@ export async function briefing() {
       getConstellationStats(),
     ]);
 
-    const hasData = !launches.error || !stations.error;
+    const launchesFailed = !!launches.error;
+    const stationsFailed = !!stations.error;
+    const militaryFailed = !!military.error || !military.count;
+    const constellationsFailed = !constellations.starlink && !constellations.oneweb;
+
+    // Fallbacks (CelesTrak is frequently unreachable / IP-blocked; these hosts are open)
+    const [fbNewObjects, fbIss, fbMilitary, fbStarlink, fbOneweb] = await Promise.all([
+      launchesFailed ? fallbackNewObjects() : 0,
+      stationsFailed ? fallbackISS() : null,
+      militaryFailed ? tleCount('USA') : 0,
+      constellationsFailed ? tleCount('STARLINK') : 0,
+      constellationsFailed ? tleCount('ONEWEB') : 0,
+    ]);
+
+    const totalNewObjects = launchesFailed ? fbNewObjects : (launches.totalObjects || 0);
+    const iss = stationsFailed ? fbIss : (stations.iss || null);
+    const stationList = stationsFailed ? (fbIss ? [fbIss] : []) : (stations.stations || []);
+    const militaryCount = militaryFailed ? fbMilitary : (military.count || 0);
+    const cons = constellationsFailed ? { starlink: fbStarlink, oneweb: fbOneweb } : constellations;
+
+    const hasData = !launchesFailed || !stationsFailed || Boolean(iss) || totalNewObjects > 0 || cons.starlink > 0;
 
     if (!hasData) {
       return {
-        source: 'Space/CelesTrak',
+        source: 'Space (CelesTrak + fallback)',
         timestamp: new Date().toISOString(),
         status: 'error',
         error: launches.error || stations.error || 'Failed to fetch space data',
       };
     }
 
-    const data = { launches, stations, military, constellations };
-    const signals = generateSignals(data);
+    const signals = generateSignals({
+      launches: { totalObjects: totalNewObjects, byCountry: launches.byCountry || {} },
+      military: { count: militaryCount },
+      constellations: cons,
+    });
 
     return {
-      source: 'Space/CelesTrak',
+      source: 'Space (CelesTrak + fallback)',
       timestamp: new Date().toISOString(),
       status: 'active',
       recentLaunches: launches.recentLaunches || [],
-      totalNewObjects: launches.totalObjects || 0,
+      totalNewObjects,
       launchByCountry: launches.byCountry || {},
-      spaceStations: stations.stations || [],
-      iss: stations.iss || null,
-      militarySatellites: military.count || 0,
+      spaceStations: stationList,
+      iss,
+      militarySatellites: militaryCount,
       militaryByCountry: military.byCountry || {},
-      constellations: constellations || {},
+      constellations: cons,
       signals,
     };
   } catch (e) {
     return {
-      source: 'Space/CelesTrak',
+      source: 'Space (CelesTrak + fallback)',
       timestamp: new Date().toISOString(),
       status: 'error',
       error: e.message,

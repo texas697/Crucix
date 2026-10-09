@@ -486,6 +486,7 @@ export async function synthesize(data) {
   const spaceData = data.sources.Space || {};
   // Approximate subsatellite position from TLE orbital elements
   function estimateSatPosition(sat) {
+    if (sat?.lat != null && sat?.lon != null) return { lat: sat.lat, lon: sat.lon, name: sat.name };
     if (!sat?.inclination || !sat?.epoch) return null;
     const epoch = new Date(sat.epoch);
     const now = new Date();
