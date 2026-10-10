@@ -1,229 +1,133 @@
 <div align="center">
 
-# Crucix
+# MFB Services Intelligence
 
-**Your own intelligence terminal. 27 sources. One command. Zero cloud — or 100% cloud.**
-
-> **This fork** ([texas697/Crucix](https://github.com/texas697/Crucix)) adds a **Firebase login gate**, **bring-your-own-key LLM ideas per user**, and a one-command **Google Cloud Run deployment** (Cloud Scheduler sweeps, persistent state, Secret Manager). It also folds in community fixes upstream hasn't merged: live-data fetch in Docker (#143), stored-XSS hardening (#150), rule-based ideas fallback (#153), 5-digit `PORT` crash (#128), LLM prompt field names (#124), OFAC/NOAA source fixes (#130/#129), 429-aware `safeFetch` (#121) and OpenAI-compatible base URLs (#55). See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md).
-
-## [Visit The Live Site: crucix.live](https://www.crucix.live/)
-
-[![Live Website](https://img.shields.io/badge/live-crucix.live-00d4ff?style=for-the-badge)](https://www.crucix.live/)
-[![Open Demo](https://img.shields.io/badge/open-live%20dashboard-0b1220?style=for-the-badge&logo=googlechrome&logoColor=white)](https://www.crucix.live/)
+**One private dashboard for what's happening in the world. 27 open sources, refreshed every 15 minutes.**
 
 [![Node.js 22+](https://img.shields.io/badge/node-22%2B-brightgreen)](#quick-start)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPLv3-blue.svg)](LICENSE)
-[![Dependencies](https://img.shields.io/badge/dependencies-1%20(express)-orange)](#architecture)
 [![Sources](https://img.shields.io/badge/OSINT%20sources-27-cyan)](#data-sources-27)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](#docker)
 
-**Enter The Signal Network**
-
-[![Signal Wire](https://img.shields.io/badge/Signal%20Wire-%40crucixmonitor-111111?style=for-the-badge&logo=x&logoColor=white)](https://x.com/crucixmonitor)
-[![Ops Room](https://img.shields.io/badge/Ops%20Room-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/ChVy7SF4)
-
-![Crucix Dashboard](docs/dashboard.png)
-
-<details>
-<summary>More screenshots</summary>
-
-| Boot Sequence | World Map |
-|:---:|:---:|
-| ![Boot](docs/boot.png) | ![Map](docs/map.png) |
-
-| 3D Globe View |
-|:---:|
-| ![Globe](docs/globe.png) |
-
-</details>
+[Demo video](docs/media/mfbintelligence-demo.mp4)
 
 </div>
 
-> **Live website:** [https://www.crucix.live/](https://www.crucix.live/)
-> Explore the public demo first, then clone the repo to run Crucix locally.
+MFB Services Intelligence pulls satellite fire detection, flight tracking, radiation monitoring, satellite tracking,
+economic indicators, live markets, conflict data, sanctions lists and social sentiment from 27 public feeds, in
+parallel, every 15 minutes. It puts them on one sign-in-protected dashboard with an interactive map, live TV,
+and a reading library.
 
-Crucix pulls satellite fire detection, flight tracking, radiation monitoring, satellite constellation tracking, economic indicators, live market prices, conflict data, sanctions lists, and social sentiment from 27 open-source intelligence feeds — in parallel, every 15 minutes — and renders everything on a single self-contained Jarvis-style dashboard.
-
-Hook it up to an LLM and it becomes a **two-way intelligence assistant** — pushing multi-tier alerts to Telegram and Discord when something meaningful changes, responding to commands like `/brief` and `/sweep` from your phone, and generating actionable trade ideas grounded in real cross-domain data. Your own analyst that watches the world while you sleep.
-
-Try the live demo first at [https://www.crucix.live/](https://www.crucix.live/), then clone the repo when you want the full local stack.
-
-No cloud. No telemetry. No subscriptions. Just `node server.mjs` and you're running.
-
-## Token / Asset Warning
-
-> [!WARNING]
-> **Crucix has not launched any official token, coin, NFT, airdrop, presale, or other blockchain-based asset.**
-> Any token or digital asset using the Crucix name, logo, or branding is not affiliated with or endorsed by Crucix.
-> Do not buy it, promote it, connect a wallet to claim it, sign transactions, or send funds based on third-party posts, DMs, or websites.
-
----
+It is a fork of the open-source [Crucix](https://github.com/calesthio/Crucix) project (AGPL-3.0) with a new
+interface, a Firebase login, per-user AI keys and a Google Cloud deployment.
 
 ## Why This Exists
 
-Most of the world's real-time intelligence — satellite imagery, radiation levels, conflict events, economic indicators, flight tracking, maritime activity — is publicly available. It's just scattered across dozens of government APIs, research institutions, and open data feeds that nobody has time to check individually.
-
-Crucix brings it all into one place. Not behind a paywall, not locked in an enterprise platform, not requiring a security clearance. Just open data, aggregated and cross-correlated on your own machine, updated every 15 minutes.
-
-It was built for anyone who wants to understand what's actually happening in the world right now — researchers, journalists, traders, OSINT analysts, or just curious people who believe access to information shouldn't depend on your budget.
+Most real-time information about the world (conflict events, flights, radiation levels, economic indicators,
+shipping) is public. It is just scattered across dozens of government and research feeds that nobody has time to
+check one by one. This brings it together in one place, with changes since the last refresh called out so you
+can see what moved.
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/calesthio/Crucix.git
+git clone https://github.com/texas697/Crucix.git
 cd Crucix
-
-# 2. Install dependencies (just Express)
 npm install
-
-# 3. Copy env template and add your API keys (see below)
-cp .env.example .env
-
-# 4. Start the dashboard
-npm run dev
+cp .env.example .env     # add keys (see "API Keys Setup"); none are required to start
+AUTH_MODE=off npm run dev  # AUTH_MODE=off skips the login for local use
 ```
 
-> **If `npm run dev` fails silently** (exits with no output), run Node directly instead:
-> ```bash
-> node --trace-warnings server.mjs
-> ```
-> This bypasses npm's script runner, which can swallow errors on some systems (particularly PowerShell on Windows). You can also run `node diag.mjs` to diagnose the exact issue — it checks your Node version, tests each module import individually, and verifies port availability. See [Troubleshooting](#troubleshooting) for more.
+The dashboard opens at `http://localhost:3117` and starts its first sweep, which queries all 27 sources in
+parallel and takes 30-60 seconds. After that it refreshes every 15 minutes and pushes updates to the browser
+automatically.
 
-The dashboard opens automatically at `http://localhost:3117` and immediately begins its first intelligence sweep. This initial sweep queries all 27 sources in parallel and typically takes 30–60 seconds — the dashboard will appear empty until the sweep completes and pushes the first data update. After that, it auto-refreshes every 15 minutes via SSE (Server-Sent Events). No manual page refresh needed.
+> **If `npm run dev` fails silently**, run `node --trace-warnings server.mjs` directly, or `node diag.mjs`
+> to check your Node version, imports and port. See [Troubleshooting](#troubleshooting).
 
-**Requirements:** Node.js 22+ (uses native `fetch`, top-level `await`, ESM)
+**Requirements:** Node.js 22+.
 
-### Cloud (Google Cloud Run)
+### Cloud (Google Cloud Run + Firebase)
 
 ```bash
-PROJECT=my-crucix ./deploy/cloudrun.sh
+PROJECT=my-project ./deploy/cloudrun.sh
 ```
 
-Full walkthrough, cost notes and other hosts: [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md).
+Full walkthrough, Firebase Hosting front door and cost notes: [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md).
 
 ### Docker
 
 ```bash
-git clone https://github.com/calesthio/Crucix.git
-cd Crucix
-cp .env.example .env    # add your API keys
+cp .env.example .env
 docker compose up -d
 ```
 
-Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/` via volume mount. Includes a health check endpoint.
+Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
 
 ---
 
 ## What You Get
 
-### Live Dashboard
-A self-contained Jarvis-style HUD with:
-- **3D WebGL globe** (Globe.gl) with atmosphere glow, star field, and smooth rotation — plus a classic flat map toggle
-- **9 marker types** across both views: fire detections, air traffic, radiation sites, maritime chokepoints, SDR receivers, OSINT events, health alerts, geolocated news, conflict events
-- **Animated 3D flight corridor arcs** between air traffic hotspots and global hubs
-- **Region filters** (World, Americas, Europe, Middle East, Asia Pacific, Africa) — rotates the globe or zooms the flat map
-- **Live market data** — indexes, crypto, energy, commodities via Yahoo Finance (no API key needed)
-- **Risk gauges** — VIX, high-yield spread, supply chain pressure index
-- **OSINT feed** — English-language posts from 17 Telegram intelligence channels (expandable)
-- **News ticker** — merged RSS + GDELT headlines + Telegram posts, auto-scrolling
-- **Sweep delta** — live panel showing what changed since last sweep (new signals, escalations, de-escalations with severity)
-- **Cross-source signals** — correlated intelligence across satellite, economic, conflict, and social domains
-- **Nuclear watch** — real-time radiation readings from Safecast + EPA RadNet
-- **Space watch** — CelesTrak satellite tracking: recent launches, ISS, military constellations, Starlink/OneWeb counts
-- **Leverageable ideas** — AI-generated trade ideas (with LLM) or signal-correlated ideas (without)
+### Dashboard
+- **Interactive map** (MapLibre vector map) with layers for fires, air traffic, radiation sites, shipping
+  chokepoints, SDR receivers, OSINT events, health alerts, news and conflict events. Includes layer filters,
+  region and time filters, search, a marker drawer, curved flight corridors, and distance/range-ring tools.
+- **Light and dark themes**, a responsive layout for phones, and a live Sources / Model / time status bar.
+- **Live markets:** indexes, crypto, energy and commodities (Yahoo Finance, no key needed), plus risk gauges
+  for VIX, high-yield spread and supply-chain pressure.
+- **Sweep delta:** what changed since the last refresh (new signals, escalations, de-escalations).
+- **Cross-source signals:** correlations across satellite, economic, conflict and social data.
+- **Nuclear watch:** radiation readings from Safecast and EPA RadNet.
+- **Space watch:** ISS position, recent launches, and Starlink/OneWeb and military constellation counts, with open
+  fallbacks when CelesTrak is unreachable.
+- **Regional threat view:** air-raid alerts, a live drone and missile tracker, strike watch and prediction markets.
+- **News and OSINT feed:** merged RSS, GDELT and Telegram channel posts.
+- **Live TV:** a news video section with an HLS player (`/media`).
+- **Ideas:** AI-generated trade ideas using your own key, or rule-based ideas from correlated signals when none is set.
 
-### Performance Modes
-The `VISUALS FULL` / `VISUALS LITE` button in the top bar only changes rendering behavior - it does **not** remove data sources or reduce sweep coverage.
+### Readers Digest
+`/digest` is a reading library of 30 curated feeds: think tanks (Brookings, CFR, RAND, Atlantic Council, Hoover,
+Heritage, AEI, Stimson, Crisis Group, Lowy, War on the Rocks, NBER, Foreign Affairs) plus policy, defense and
+markets press. Sports, weather and entertainment are filtered out.
 
-When you switch to **VISUALS LITE**, the dashboard:
-- Disables decorative background effects such as the radial/grid overlays and scanlines
-- Removes expensive blur/backdrop-filter effects on panels and overlays
-- Stops non-essential animations like the logo ring blink, conflict rings, and corridor flow effects
-- Disables globe auto-rotation and turns off animated flight-arc dashes
-- Converts the horizontal news ticker and OSINT stream into static, scrollable lists instead of continuously animated marquees
+- Each piece gets a write-up (TL;DR, key points, why it matters, what to watch) from your AI model.
+- Thumbs up/down train a per-topic ranking that reorders the library after five ratings.
+- **Read more about it** gathers fresh related coverage, reads it, and has your model write a cited deep dive.
+- Dashboard news cards open in the same reader.
 
-Mobile-specific behavior:
-- On mobile, `VISUALS LITE` also forces the dashboard into **flat map mode** if you are currently on the globe
-- Future mobile loads will continue to start flat while low-perf mode is enabled
+Ingest runs after every sweep and from a 30-minute scheduler job (`POST /api/internal/digest`).
 
-The preference is saved in browser local storage, so the UI will remember your last setting.
+### Login and Bring Your Own Key
+Every page and API call requires a signed-in Firebase user (`AUTH_MODE=firebase`), with Google or email/password
+sign-in. After signing in, click **AI KEY** in the top bar and add your own Anthropic, OpenAI, Gemini,
+OpenRouter, Grok, Mistral or MiniMax key (or any OpenAI-compatible endpoint). The key is AES-256-GCM encrypted
+in Firestore and used only for your own ideas and digest write-ups.
+
+Restrict access with `AUTH_ALLOWED_EMAILS` / `AUTH_ALLOWED_DOMAINS`, or set `AUTH_ALLOW_SIGNUP=false` and create
+accounts in the Firebase console.
 
 ### Auto-Refresh
-The server runs a sweep cycle every 15 minutes (configurable). Each cycle:
+Every 15 minutes (configurable) the server:
 1. Queries all 27 sources in parallel (~30s)
-2. Synthesizes raw data into dashboard format
-3. Computes delta from previous run (what changed, escalated, de-escalated) — visible in the **Sweep Delta** panel on the dashboard
-4. Generates LLM trade ideas (if configured)
-5. Evaluates breaking news alerts — multi-tier (FLASH / PRIORITY / ROUTINE) with semantic dedup. Sends to Telegram and/or Discord if configured. Works with LLM evaluation or falls back to rule-based alerting when LLM is unavailable.
-6. Pushes update to all connected browsers via SSE
+2. Synthesizes the raw data for the dashboard
+3. Computes the delta from the previous run
+4. Generates ideas (when a key is configured)
+5. Evaluates alerts (FLASH / PRIORITY / ROUTINE) and sends them to Telegram and/or Discord, **only if you
+   configure one of them**
+6. Pushes the update to connected browsers
 
-### Telegram Bot (Two-Way)
-Crucix doubles as an interactive Telegram bot. Beyond sending alerts, it responds to commands directly from your chat:
+### Optional Telegram and Discord alerts
+Off by default. Set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`, or `DISCORD_BOT_TOKEN` + `DISCORD_CHANNEL_ID`
+(or just `DISCORD_WEBHOOK_URL` for one-way alerts), and the server sends tiered alerts and answers `/status`,
+`/sweep`, `/brief` and `/alerts` (Telegram also has `/mute` and `/unmute`). Alert evaluation uses an LLM when
+one is configured and a rule-based engine otherwise. Discord's full bot needs `npm install discord.js`.
 
-| Command | What It Does |
-|---------|-------------|
-| `/status` | System health, last sweep time, source status, LLM status |
-| `/sweep` | Trigger a manual sweep cycle |
-| `/brief` | Compact text summary of the latest intelligence (direction, key metrics, top OSINT) |
-| `/portfolio` | Portfolio status (if Alpaca connected) |
-| `/alerts` | Recent alert history with tiers |
-| `/mute` / `/mute 2h` | Silence alerts for 1h (or custom duration) |
-| `/unmute` | Resume alerts |
-| `/help` | Show all available commands |
-
-This requires `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env`. The bot polls for messages every 5 seconds (configurable via `TELEGRAM_POLL_INTERVAL`).
-
-### Discord Bot (Two-Way)
-
-Crucix also supports Discord as a full-featured bot with slash commands and rich embed alerts. It mirrors the Telegram bot's capabilities with Discord-native formatting.
-
-| Command | What It Does |
-|---------|-------------|
-| `/status` | System health, last sweep time, source status, LLM status |
-| `/sweep` | Trigger a manual sweep cycle |
-| `/brief` | Compact text summary of the latest intelligence |
-| `/portfolio` | Portfolio status (if Alpaca connected) |
-
-Alerts are delivered as rich embeds with color-coded sidebars: red for FLASH, yellow for PRIORITY, blue for ROUTINE. Each embed includes signal details, confidence scores, and cross-domain correlations.
-
-**Setup requires:** `DISCORD_BOT_TOKEN`, `DISCORD_CHANNEL_ID`, and optionally `DISCORD_GUILD_ID` for instant slash command registration. See [API Keys Setup](#api-keys-setup) for details.
-
-**Webhook fallback:** If you don't want to run a full bot, set `DISCORD_WEBHOOK_URL` instead. This enables one-way alerts (no slash commands) with zero dependencies — no `discord.js` needed.
-
-**Optional dependency:** The full bot requires `discord.js`. Install it with `npm install discord.js`. If it's not installed, Crucix automatically falls back to webhook-only mode.
-
-### Login + Bring Your Own Key (this fork)
-
-Every page and API call requires a signed-in Firebase user (`AUTH_MODE=firebase`); sign in with Google or email/password. After signing in,
-click **AI KEY** in the top bar to add your own Anthropic / OpenAI / Gemini / OpenRouter / Grok / Mistral /
-MiniMax key (or any OpenAI-compatible endpoint). The key is AES-256-GCM encrypted in Firestore and is used
-only to generate *your* trade ideas — on demand (**Generate ideas now**) or automatically after each sweep.
-Operators can still set a server-wide `LLM_PROVIDER`/`LLM_API_KEY` for Telegram/Discord alerts.
-
-Lock the app down with `AUTH_ALLOWED_EMAILS` / `AUTH_ALLOWED_DOMAINS`, or set `AUTH_ALLOW_SIGNUP=false`
-and create accounts in the Firebase console. For a private laptop you can set `AUTH_MODE=off`.
-
-### Readers Digest (this fork)
-
-`/digest` is a reading library in the spirit of the Reading Room: 30 curated feeds — think tanks (Brookings,
-CFR, RAND, Atlantic Council, Hoover, Heritage, AEI, Stimson, Crisis Group, Lowy, War on the Rocks, NBER, Foreign
-Affairs) plus the policy, defense and markets press — with sports, weather and entertainment filtered out.
-Every piece gets a write-up (TL;DR, key points, why it matters, watch-for) from the operator model when one is
-configured, or on demand from the reader's own key. Thumbs up/down are always visible and feed a per-topic
-affinity model that re-ranks the library once you have rated five pieces. **Read more about it** gathers fresh
-related coverage (Bing, DuckDuckGo, GDELT, your own library, optional Tavily), reads it, and has your model write
-a cited deep dive. News cards on the dashboard open in the same reader. Ingest runs after every sweep and from a
-30-minute scheduler job (`POST /api/internal/digest`).
-
-### Optional LLM Layer
-Connect any of 8 LLM providers for enhanced analysis:
-- **AI trade ideas** — quantitative analyst producing 5-8 actionable ideas citing specific data
-- **Smarter alert evaluation** — LLM classifies signals into FLASH/PRIORITY/ROUTINE tiers with cross-domain correlation and confidence scoring
-- Providers: Anthropic Claude, OpenAI, Google Gemini, OpenRouter (Unified API), OpenAI Codex (ChatGPT subscription), MiniMax, Mistral, Grok
-- Graceful fallback — when LLM is unavailable, a rule-based engine takes over alert evaluation. LLM failures never crash the sweep cycle.
+### Optional LLM layer
+Anthropic Claude, OpenAI, Google Gemini, OpenRouter, OpenAI Codex, MiniMax, Mistral, Grok, Ollama and
+OpenAI-compatible endpoints. When no model is available a rule-based engine takes over, and LLM failures never
+break a sweep.
 
 ---
 
@@ -333,7 +237,9 @@ crucix/
 ├── dashboard/
 │   ├── inject.mjs             # Data synthesis + standalone HTML injection
 │   └── public/
-│       └── jarvis.html        # Self-contained Jarvis HUD
+│       ├── jarvis.html        # Main dashboard
+│       ├── digest.html        # Readers Digest
+│       └── media.html         # Live TV
 │
 ├── lib/
 │   ├── llm/                   # LLM abstraction (8 providers, raw fetch, no SDKs)
@@ -469,7 +375,7 @@ When running `npm run dev`:
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /` | Jarvis HUD dashboard |
+| `GET /` | Dashboard (requires sign-in unless `AUTH_MODE=off`) |
 | `GET /api/data` | Current synthesized intelligence data (JSON) |
 | `GET /api/health` | Server status, uptime, source count, LLM status |
 | `GET /events` | SSE stream for live push updates |
@@ -546,49 +452,8 @@ Check these in order:
 
 ---
 
-## Screenshots
-
-The `docs/` folder contains dashboard screenshots referenced by this README:
-
-| File | Description |
-|------|-------------|
-| `docs/dashboard.png` | Full dashboard — hero image at the top of this README |
-| `docs/boot.png` | Cinematic boot sequence animation |
-| `docs/map.png` | D3 world map with marker types and flight arcs |
-| `docs/globe.png` | 3D WebGL globe view with atmosphere glow and markers |
-
-To update them: run the dashboard, wait for a sweep to complete, then use your browser's DevTools (`F12` → `Ctrl+Shift+P` → "Capture full size screenshot") or a tool like [LICEcap](https://www.cockos.com/licecap/) for GIFs.
-
 ---
 
-## Contributing
+## Credits and License
 
-Found a bug? Want to add a 28th source? PRs welcome. Each source is a standalone module in `apis/sources/` — just export a `briefing()` function that returns structured data and add it to the orchestrator in `apis/briefing.mjs`.
-
-If you find this useful, a star helps others find it too.
-
-For contribution guidelines, review expectations, and source-add rules, see `CONTRIBUTING.md`. For security reports, see `SECURITY.md`.
-
-## Contact
-
-For partnerships, integrations, or other non-issue inquiries, you can reach me at `celesthioailabs@gmail.com`.
-
-For bugs and feature requests, please use GitHub Issues so discussion stays visible and actionable.
-
----
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=calesthio%2FCrucix&type=date&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=calesthio/Crucix&type=date&theme=dark&legend=top-left" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=calesthio/Crucix&type=date&legend=top-left" />
-    <img alt="Star History Chart" src="https://api.star-history.com/image?repos=calesthio/Crucix&type=date&legend=top-left" />
-  </picture>
-</a>
-
----
-
-## License
-
-AGPL-3.0
+Built on [Crucix](https://github.com/calesthio/Crucix) by calesthio. Licensed under AGPL-3.0; see `LICENSE`. Contribution guidelines are in `CONTRIBUTING.md` and security reports go through `SECURITY.md`.
