@@ -2,11 +2,11 @@
 
 # MFB Services Intelligence
 
-**One private dashboard for what's happening in the world. 27 open sources, refreshed every 15 minutes.**
+**One private dashboard for what's happening in the world. 29 open sources, refreshed every 15 minutes.**
 
 [![Node.js 22+](https://img.shields.io/badge/node-22%2B-brightgreen)](#quick-start)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPLv3-blue.svg)](LICENSE)
-[![Sources](https://img.shields.io/badge/OSINT%20sources-27-cyan)](#data-sources-27)
+[![Sources](https://img.shields.io/badge/OSINT%20sources-29-cyan)](#data-sources-29)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](#docker)
 
 [Demo video](docs/media/mfbintelligence-demo.mp4)
@@ -14,7 +14,7 @@
 </div>
 
 MFB Services Intelligence pulls satellite fire detection, flight tracking, radiation monitoring, satellite tracking,
-economic indicators, live markets, conflict data, sanctions lists and social sentiment from 27 public feeds, in
+economic indicators, live markets, conflict data, sanctions lists and social sentiment from 29 public feeds, in
 parallel, every 15 minutes. It puts them on one sign-in-protected dashboard with an interactive map, live TV,
 and a reading library.
 
@@ -40,7 +40,7 @@ cp .env.example .env     # add keys (see "API Keys Setup"); none are required to
 AUTH_MODE=off npm run dev  # AUTH_MODE=off skips the login for local use
 ```
 
-The dashboard opens at `http://localhost:3117` and starts its first sweep, which queries all 27 sources in
+The dashboard opens at `http://localhost:3117` and starts its first sweep, which queries all 29 sources in
 parallel and takes 30-60 seconds. After that it refreshes every 15 minutes and pushes updates to the browser
 automatically.
 
@@ -101,7 +101,7 @@ Ingest runs after every sweep and from a 30-minute scheduler job (`POST /api/int
 
 ### Login and Bring Your Own Key
 Every page and API call requires a signed-in Firebase user (`AUTH_MODE=firebase`), with Google or email/password
-sign-in. After signing in, click **AI KEY** in the top bar and add your own Anthropic, OpenAI, Gemini,
+sign-in. After signing in, click **AI key** in the top bar and add your own Anthropic, OpenAI, Gemini,
 OpenRouter, Grok, Mistral or MiniMax key (or any OpenAI-compatible endpoint). The key is AES-256-GCM encrypted
 in Firestore and used only for your own ideas and digest write-ups.
 
@@ -110,7 +110,7 @@ accounts in the Firebase console.
 
 ### Auto-Refresh
 Every 15 minutes (configurable) the server:
-1. Queries all 27 sources in parallel (~30s)
+1. Queries all 29 sources in parallel (~30s)
 2. Synthesizes the raw data for the dashboard
 3. Computes the delta from the previous run
 4. Generates ideas (when a key is configured)
@@ -220,14 +220,14 @@ crucix/
 ├── docs/                      # Screenshots for README
 │
 ├── apis/
-│   ├── briefing.mjs           # Master orchestrator — runs all 27 sources in parallel
+│   ├── briefing.mjs           # Master orchestrator — runs all 29 sources in parallel
 │   ├── save-briefing.mjs      # CLI: save timestamped + latest.json
 │   ├── BRIEFING_PROMPT.md     # Intelligence synthesis protocol
 │   ├── BRIEFING_TEMPLATE.md   # Briefing output structure
 │   ├── utils/
 │   │   ├── fetch.mjs          # safeFetch() — timeout, retries, abort, auto-JSON
 │   │   └── env.mjs            # .env loader (no dotenv dependency)
-│   └── sources/               # 27 self-contained source modules
+│   └── sources/               # 29 self-contained source modules
 │       ├── gdelt.mjs          # Each exports briefing() → structured data
 │       ├── fred.mjs           # Can run standalone: node apis/sources/fred.mjs
 │       ├── space.mjs          # CelesTrak satellite tracking
@@ -270,14 +270,14 @@ crucix/
 ### Design Principles
 - **Pure ESM** — every file is `.mjs` with explicit imports
 - **Minimal dependencies** — Express is the only runtime dependency. `discord.js` is optional (for Discord bot). LLM providers use raw `fetch()`, no SDKs.
-- **Parallel execution** — `Promise.allSettled()` fires all 27 sources simultaneously
+- **Parallel execution** — `Promise.allSettled()` fires all 29 sources simultaneously
 - **Graceful degradation** — missing keys produce errors, not crashes. LLM failures don't kill sweeps.
 - **Each source is standalone** — run `node apis/sources/gdelt.mjs` to test any source independently
 - **Self-contained dashboard** — the HTML file works with or without the server
 
 ---
 
-## Data Sources (27)
+## Data Sources (29)
 
 ### Tier 1: Core OSINT & Geopolitical (11)
 
@@ -307,7 +307,7 @@ crucix/
 | **USAspending** | Federal spending and defense contracts | None |
 | **UN Comtrade** | Strategic commodity trade flows between major powers | None |
 
-### Tier 3: Weather, Environment, Tech, Social, SIGINT (7)
+### Tier 3: Weather, Environment, Tech, Social, SIGINT, Cyber (9)
 
 | Source | What It Tracks | Auth |
 |--------|---------------|------|
@@ -318,6 +318,8 @@ crucix/
 | **Reddit** | Social sentiment from key subreddits | OAuth |
 | **Telegram** | 17 curated OSINT/conflict/finance channels (web scraping, expandable via config) | None |
 | **KiwiSDR** | Global HF radio receiver network (~600 receivers) | None |
+| **CISA KEV** | Known exploited vulnerabilities catalog | None |
+| **Cloudflare Radar** | Internet outages and traffic anomalies | API token |
 
 ### Tier 4: Space & Satellites (1)
 
@@ -428,7 +430,7 @@ Crucix requires Node.js 22 or later. If you have an older version, download the 
 
 ### Dashboard shows empty panels after first start
 
-This is normal — the first sweep takes 30–60 seconds to query all 27 sources. The dashboard will populate automatically once the sweep completes. Check the terminal for sweep progress logs.
+This is normal — the first sweep takes 30–60 seconds to query all 29 sources. The dashboard will populate automatically once the sweep completes. Check the terminal for sweep progress logs.
 
 ### Some sources show errors
 
