@@ -985,7 +985,7 @@ const LAYER_INFO = {
   weather: {purpose:'Official severe-weather alerts.', source:'NOAA / NWS', freshness:'Minutes', confidence:'Authoritative for the US.', limitations:['US-centric coverage','Alert polygons are approximated as points']},
   radiation: {purpose:'EPA RadNet environmental radiation stations.', source:'EPA RadNet', freshness:'Refreshed every sweep', confidence:'Reference-grade background readings.', limitations:['US stations only','Sparse sampling cadence']},
   space: {purpose:'Orbital positions for the ISS and tracked stations.', source:'Celestrak (TLE-derived)', freshness:'Refreshed every sweep', confidence:'Approximate position estimate.', limitations:['Estimated, not live tracking','No payload/identity detail']},
-  gdelt: {purpose:'Geo-coded global event clusters by report volume.', source:'GDELT', freshness:'Every 15 min upstream', confidence:'Good for salience/volume.', limitations:['Can over-represent heavily reported regions','Event coding is automated and noisy']}
+  gdelt: {purpose:'Geocoded conflict events — protests, coercion, assaults, armed clashes, mass violence — clustered by place and sized by how many outlets report them.', source:'GDELT 2.0 event export (raw 15-minute files)', freshness:'Every 15 min upstream · rolling 6-hour window', confidence:'Good for salience and where attention is right now.', limitations:['Machine-coded from news text; one story can yield several events','Geocoding resolves to the place named in the article, which may be a capital rather than the scene','No fatality counts — use ACLED for verified casualty data']}
 };
 const LAYER_SYNONYMS = {
   air:['flight','flights','plane','aviation','opensky','aircraft','adsb'],
@@ -1297,15 +1297,16 @@ function renderLeftRail(){
   const totalThermal=D.thermal.reduce((s,t)=>s+t.det,0);
   const totalNight=D.thermal.reduce((s,t)=>s+t.night,0);
   const newsCount=(D.news||[]).length;
-  const conflictEvents = D.acled?.totalEvents || 0;
+  const conflictEvents = D.acled?.totalEvents || D.gdelt?.conflictEvents || 0;
   const conflictFatal = D.acled?.totalFatalities || 0;
+  const conflictSub = D.acled?.totalEvents ? `${conflictFatal.toLocaleString()} ${t('layers.fatalities','fatalities')}` : (D.gdelt?.conflictEvents ? `GDELT · last ${D.gdelt.window?.hours||6}h` : `0 ${t('layers.fatalities','fatalities')}`);
   const layers=[
     {name:t('layers.airActivity','Air Activity'),count:totalAir,dot:'air',sub:`${D.air.length} ${t('layers.theaters','theaters')}`},
     {name:t('layers.thermalSpikes','Thermal Spikes'),count:totalThermal.toLocaleString(),dot:'thermal',sub:`${totalNight.toLocaleString()} ${t('layers.nightDet','night det.')}`},
     {name:t('layers.sdrCoverage','SDR Coverage'),count:D.sdr.total,dot:'sdr',sub:`${D.sdr.online} ${t('layers.online','online')}`},
     {name:t('layers.maritimeWatch','Maritime Watch'),count:D.chokepoints.length,dot:'maritime',sub:t('layers.chokepoints','chokepoints')},
     {name:t('layers.nuclearSites','Nuclear Sites'),count:D.nuke.length,dot:'nuke',sub:t('layers.monitors','monitors')},
-    {name:t('layers.conflictEvents','Conflict Events'),count:conflictEvents,dot:'thermal',sub:`${conflictFatal.toLocaleString()} ${t('layers.fatalities','fatalities')}`},
+    {name:t('layers.conflictEvents','Conflict Events'),count:conflictEvents.toLocaleString(),dot:'thermal',sub:conflictSub},
     {name:t('layers.healthWatch','Health Watch'),count:D.who.length,dot:'health',sub:t('layers.whoAlerts','WHO alerts')},
     {name:t('layers.worldNews','World News'),count:newsCount,dot:'news',sub:t('layers.rssGeolocated','RSS geolocated')},
     {name:t('layers.spaceActivity','Satellites'),count:D.space?.militarySats||0,dot:'space',sub:`${D.space?.totalNewObjects||0} ${t('space.newLast30d','new (30d)')}`}
@@ -1414,13 +1415,16 @@ function cycleBasemap(){
   const btn=document.getElementById('basemapToggle'); if(btn) btn.textContent=s.name;
 }
 function flyToRegion(r){ setRegion(r); }
+function gdeltSeverity(t){ return ({'Mass violence':6,'Armed clash':5,'Assault':4,'Coercion':3,'Force posture':2,'Protest':1})[t]||0; }
+function severeGdelt(){ return (D.gdelt?.geoPoints||[]).filter(g=>g.lat&&g.lon&&gdeltSeverity(g.worst)>=4); }
+function relTime(iso){ const m=Math.round((Date.now()-new Date(iso).getTime())/60000); if(!isFinite(m)||m<0) return ''; if(m<60) return m+'m ago'; if(m<48*60) return Math.round(m/60)+'h ago'; return Math.round(m/1440)+'d ago'; }
 function findMapMatch(q){
   const list=[];
   const nukeCoords=[{lat:47.5,lon:34.6},{lat:51.4,lon:30.1},{lat:28.8,lon:50.9},{lat:39.8,lon:125.8},{lat:37.4,lon:141},{lat:31.0,lon:35.1}];
   (D.news||[]).forEach(n=>list.push({lat:n.lat,lng:n.lon,head:n.source+' NEWS',text:cleanText(n.title),meta:'keyword: '+n.region,url:n.url}));
   (D.chokepoints||[]).forEach(c=>list.push({lat:c.lat,lng:c.lon,head:c.label,text:esc(c.note),meta:'Maritime'}));
   D.nuke.forEach((n,i)=>{const c=nukeCoords[i];if(c)list.push({lat:c.lat,lng:c.lon,head:n.site,text:n.n?`Avg CPM: ${n.cpm?.toFixed(1)||'--'} (last 30d)`:'No readings in the last 30 days',meta:'Radiation'});});
-  (D.gdelt?.geoPoints||[]).forEach(g=>list.push({lat:g.lat,lng:g.lon,head:'GDELT Event',text:esc(g.name)||'Global event',meta:g.count+' reports'}));
+  (D.gdelt?.geoPoints||[]).forEach(g=>list.push({lat:g.lat,lng:g.lon,head:(g.type||'GDELT event'),text:esc(g.name)||'Global event',meta:'GDELT · '+g.count+' sources',url:g.url}));
   return list.find(it=>((it.head||'')+' '+(it.text||'')).toLowerCase().includes(q));
 }
 function searchMap(q){
@@ -1875,8 +1879,13 @@ function plotMarkers(){
 
   // === GDELT events ===
   (D.gdelt?.geoPoints||[]).forEach(g=>{
-    points.push({ lat:g.lat, lng:g.lon, size:0.15+Math.min(g.count/50,0.2), _r:3, color:'rgba(106,168,255,0.6)', _stroke:'rgba(106,168,255,0.2)', type:'gdelt', priority:3,
-      popHead:'GDELT Event', popMeta:g.count+' reports', popText:esc(g.name)||'Global event detection' });
+    const sev=gdeltSeverity(g.worst);
+    const col=sev>=5?'255,107,116':sev>=3?'245,154,94':'106,168,255';
+    const head=g.worst&&g.worst!==g.type?`${g.type} · incl. ${g.worst}`:(g.type||'GDELT event');
+    const when=g.latest?' · '+relTime(g.latest):'';
+    points.push({ lat:g.lat, lng:g.lon, size:0.15+Math.min(g.count/60,0.25), _r:2.5+Math.min(g.count,40)/12, color:`rgba(${col},0.75)`, _stroke:`rgba(${col},0.25)`, type:'gdelt', priority:sev>=5?2:3, ts:g.latest, url:g.url,
+      popHead:head, popMeta:`GDELT · ${g.count} sources · ${g.events} events${when}`,
+      popText:`${esc(g.name)||'Global event'}${g.actors?'<br>'+esc(g.actors):''}<br><span style="opacity:.7">Goldstein ${g.goldstein??'--'} · tone ${g.tone??'--'}</span>` });
   });
 
   // === Live tracks (Neptun) ===
@@ -1906,7 +1915,7 @@ function plotMarkers(){
 
   layerCounts = {};
   points.forEach(p=>{ layerCounts[p.type] = (layerCounts[p.type]||0)+1; });
-  layerCounts.conflict = (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon).length;
+  layerCounts.conflict = (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon).length || severeGdelt().length;
 
   const plottingPoints = points.filter(pass);
   const firstPlot = seenMarkers === null;
@@ -1929,10 +1938,19 @@ function plotMarkers(){
   // === Conflict rings ===
   const conflictRings = [];
   if(layerVisible.conflict){
-    (D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon&&inActiveRegion(e.lat,e.lon)).forEach(e=>{
-      conflictRings.push({ lat:e.lat, lng:e.lon, maxR:Math.max(2,Math.min(6,1+Math.log2(Math.max(e.fatalities,1)))), popHead:e.type||'CONFLICT', popMeta:'ACLED Conflict Data',
-        popText:`${e.fatalities} fatalities<br>${esc(e.location)}, ${esc(e.country)}` });
-    });
+    const acledPts=(D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon);
+    if(acledPts.length){
+      acledPts.filter(e=>inActiveRegion(e.lat,e.lon)).forEach(e=>{
+        conflictRings.push({ lat:e.lat, lng:e.lon, maxR:Math.max(2,Math.min(6,1+Math.log2(Math.max(e.fatalities,1)))), popHead:e.type||'CONFLICT', popMeta:'ACLED Conflict Data',
+          popText:`${e.fatalities} fatalities<br>${esc(e.location)}, ${esc(e.country)}` });
+      });
+    } else {
+      // No ACLED licence yet: ring the armed-clash / mass-violence clusters GDELT is reporting
+      severeGdelt().filter(g=>inActiveRegion(g.lat,g.lon)).forEach(g=>{
+        conflictRings.push({ lat:g.lat, lng:g.lon, maxR:Math.max(2,Math.min(6,1+Math.log2(Math.max(g.count,1)))), popHead:g.worst, popMeta:`GDELT · ${g.count} sources${g.latest?' · '+relTime(g.latest):''}`,
+          popText:`${esc(g.name)}${g.actors?'<br>'+esc(g.actors):''}` });
+      });
+    }
   }
 
   const arcs = [];
@@ -2204,16 +2222,24 @@ function threatByRegion(){
     const inBox=(lat,lng)=> lat>=box[0][1]&&lat<=box[1][1]&&lng>=box[0][0]&&lng<=box[1][0];
     const acled=(D.acled?.deadliestEvents||[]).filter(e=>e.lat&&e.lon&&inBox(e.lat,e.lon));
     const fat=acled.reduce((s,e)=>s+(e.fatalities||0),0);
-    const score=Math.min(100, Math.round(acled.length*7 + Math.min(fat,600)/12));
+    let score, events, meta;
+    if(D.acled?.totalEvents){
+      score=Math.min(100, Math.round(acled.length*7 + Math.min(fat,600)/12)); events=acled.length; meta=`${fat} fat.`;
+    } else {
+      // GDELT fallback: weight each cluster's distinct sources by the worst event type seen there
+      const g=(D.gdelt?.geoPoints||[]).filter(p=>inBox(p.lat,p.lon));
+      const w=g.reduce((s,p)=>s+p.count*(gdeltSeverity(p.worst)>=5?3:gdeltSeverity(p.worst)>=3?1.5:1),0);
+      score=Math.min(100, Math.round(w/8)); events=g.reduce((s,p)=>s+(p.events||0),0); meta=`${g.length} hotspots`;
+    }
     const lvl = score>=70?['Critical','#ff6b74']:score>=45?['High','#f59a5e']:score>=20?['Elevated','#f2c879']:['Guarded','#7fe0c0'];
-    return {r, label:REGION_LABEL[r], score, level:lvl[0], color:lvl[1], events:acled.length, fat};
+    return {r, label:REGION_LABEL[r], score, level:lvl[0], color:lvl[1], events, fat, meta};
   }).sort((a,b)=>b.score-a.score);
 }
 function threatHtml(){
   const rows=threatByRegion();
   return cardHtml('Regional threat', currentRegion==='world'?'All theaters':REGION_LABEL[currentRegion],
-    rows.map(x=>`<div class="threat-row" onclick="setRegion('${x.r}')" title="Focus ${x.label}"><span class="tdot" style="background:${x.color}"></span><span class="tname">${x.label}</span><span class="tmeta">${x.events} ev &#183; ${x.fat} fat.</span><span class="tlevel" style="color:${x.color}">${x.level}</span></div>`).join('')
-    +`<div class="panel-src">Derived from ACLED events in each theater &#183; click to focus</div>`);
+    rows.map(x=>`<div class="threat-row" onclick="setRegion('${x.r}')" title="Focus ${x.label}"><span class="tdot" style="background:${x.color}"></span><span class="tname">${x.label}</span><span class="tmeta">${x.events} ev &#183; ${x.meta}</span><span class="tlevel" style="color:${x.color}">${x.level}</span></div>`).join('')
+    +`<div class="panel-src">Derived from ${D.acled?.totalEvents?'ACLED events':'GDELT conflict events (last '+(D.gdelt?.window?.hours||6)+'h)'} in each theater &#183; click to focus</div>`);
 }
 
 // === PREDICTION MARKETS (Polymarket) ===
@@ -2395,7 +2421,7 @@ function safeExternalUrl(raw){try{const u=new URL(raw,location.href);return u.pr
 
 // === BOOT SEQUENCE ===
 function runBoot(){
-  const acledStatus = D.acled?.totalEvents > 0 ? `<span class="ok">${D.acled.totalEvents} EVENTS</span>` : '<span style="color:var(--warn)">DEGRADED</span>';
+  const acledStatus = D.acled?.totalEvents > 0 ? `<span class="ok">${D.acled.totalEvents} EVENTS</span>` : (D.gdelt?.conflictEvents > 0 ? `<span class="ok">${D.gdelt.conflictEvents.toLocaleString()} GDELT EVENTS (${D.gdelt.window?.hours||6}H)</span>` : '<span style="color:var(--warn)">DEGRADED</span>');
   const lines=[
     {text:t('boot.initializing','INITIALIZING MFB INTELLIGENCE ENGINE v2.1.0'),delay:0},
     {text:t('boot.connecting','CONNECTING {count} OSINT SOURCES...').replace('{count}',D.meta.sourcesQueried),delay:400},
@@ -2404,7 +2430,7 @@ function runBoot(){
     {text:'&#9500;&#9472; '+t('boot.sourceGroup3','KIWISDR · SAFECAST · EPA · WHO · OFAC'),delay:1100},
     {text:'&#9492;&#9472; '+t('boot.sourceGroup4','GDELT · NOAA · PATENTS · BLUESKY · REDDIT'),delay:1300},
     {text:t('boot.sweepComplete','SWEEP COMPLETE — {ok}/{total} SOURCES').replace('{ok}',`<span class="count">${D.meta.sourcesOk}</span>`).replace('{total}',D.meta.sourcesQueried)+' <span class="ok">'+t('boot.ok','OK')+'</span>',delay:1700},
-    {text:t('boot.acledLayer','ACLED CONFLICT LAYER')+': '+acledStatus,delay:1900},
+    {text:(D.acled?.totalEvents>0?t('boot.acledLayer','ACLED CONFLICT LAYER'):'CONFLICT LAYER')+': '+acledStatus,delay:1900},
     {text:t('boot.tracks','LIVE TRACK FEED')+': <span class="ok">'+t('boot.active','ACTIVE')+'</span> &#183; '+t('boot.dualProjection','DUAL PROJECTION')+': <span class="ok">'+t('boot.ready','READY')+'</span>',delay:2200},
     {text:t('boot.intelligenceSynthesis','INTELLIGENCE SYNTHESIS')+': <span class="ok">'+t('boot.active','ACTIVE')+'</span>',delay:2400},
   ];

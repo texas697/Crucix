@@ -518,8 +518,22 @@ export async function synthesize(data) {
     health: (gdeltData.health || []).length,
     crisis: (gdeltData.crisis || []).length,
     topTitles: (gdeltData.allArticles || []).slice(0, 5).map(a => a.title?.substring(0, 80)),
-    geoPoints: (gdeltData.geoPoints || []).slice(0, 20).map(p => ({
-      lat: p.lat, lon: p.lon, name: (p.name || '').substring(0, 80), count: p.count || 1
+    docStatus: gdeltData.docStatus || null,
+    signals: gdeltData.signals || [],
+    // Conflict events from the raw 15-minute GDELT export (see apis/sources/gdelt.mjs)
+    window: {
+      hours: gdeltData.events?.windowHours || 0, files: gdeltData.events?.filesFetched || 0,
+      newest: gdeltData.events?.newest || null, oldest: gdeltData.events?.oldest || null,
+    },
+    totalEvents: gdeltData.events?.totalEvents || 0,
+    conflictEvents: gdeltData.events?.conflictEvents || 0,
+    byType: gdeltData.events?.byType || {},
+    topCountries: (gdeltData.events?.topCountries || []).slice(0, 8),
+    geoPoints: (gdeltData.geoPoints || []).slice(0, 60).map(p => ({
+      lat: p.lat, lon: p.lon, name: (p.name || '').substring(0, 80), country: p.country || '',
+      count: p.count || 1, events: p.events || 1, type: p.type || 'Event', worst: p.worst || p.type || 'Event',
+      goldstein: p.goldstein ?? null, tone: p.tone ?? null, latest: p.latest || null,
+      actors: p.samples?.[0]?.actors || '', url: p.samples?.[0]?.url || null,
     }))
   };
 

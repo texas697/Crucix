@@ -87,6 +87,9 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
 - **Space watch:** ISS position, recent launches, and Starlink/OneWeb and military constellation counts, with open
   fallbacks when CelesTrak is unreachable.
 - **Regional threat view:** air-raid alerts, a live drone and missile tracker, strike watch and prediction markets.
+- **Conflict events:** geocoded protests, coercion, assaults and armed clashes from GDELT's raw 15-minute event
+  export (rolling 6-hour window, no API key, no rate limit), clustered by place and sized by how many outlets report
+  them. Rings the armed-clash clusters and scores each theater when no ACLED licence is configured.
 - **News feed:** merged RSS and GDELT headlines, geo-tagged by the place named in the headline.
 - **Live TV:** a news video section with an HLS player (`/media`).
 - **Ideas:** AI-generated trade ideas using your own key, or rule-based ideas from correlated signals when none is set.
