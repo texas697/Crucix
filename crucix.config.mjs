@@ -30,7 +30,6 @@ export default {
     botToken: process.env.TELEGRAM_BOT_TOKEN || null,
     chatId: process.env.TELEGRAM_CHAT_ID || null,
     botPollingInterval: parseInt(process.env.TELEGRAM_POLL_INTERVAL) || 5000,
-    channels: process.env.TELEGRAM_CHANNELS || null, // Comma-separated extra channel IDs
   },
 
   discord: {

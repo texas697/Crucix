@@ -30,7 +30,9 @@ export async function getOutbreakNews() {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch(DON_API, {
+    // Ask for the newest items explicitly: the unordered default page is the oldest notices, which the
+    // 30-day filter below then drops entirely (that is how the panel ended up permanently empty).
+    const res = await fetch(`${DON_API}?$orderby=PublicationDate%20desc&$top=60`, {
       signal: controller.signal,
       headers: { 'User-Agent': 'Crucix/1.0' },
     });

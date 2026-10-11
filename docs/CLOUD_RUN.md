@@ -67,7 +67,7 @@ Hosting does not stream SSE, so the dashboard also polls for new sweeps every 60
 
 The script builds the image with Cloud Build, deploys with the env below, creates or updates the
 `crucix-sweep` scheduler job, and adds the service hostname to Firebase's authorized domains.
-Optional operator keys (FRED, FIRMS, a server-wide `LLM_API_KEY` for Telegram alerts, …) go in
+Optional operator keys (FRED, FIRMS, a server-wide `LLM_API_KEY` for area briefs and alerts, …) go in
 `deploy/extra-env.yaml` (gitignored, `KEY: "value"` per line) and are merged in.
 
 Useful overrides: `AUTH_ALLOWED_EMAILS=a@x.com,b@y.com` (lock the app to specific people),

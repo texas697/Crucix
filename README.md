@@ -2,11 +2,11 @@
 
 # MFB Services Intelligence
 
-**One private dashboard for what's happening in the world. 29 open sources, refreshed every 15 minutes.**
+**One private dashboard for what's happening in the world. 28 open sources, refreshed every 15 minutes.**
 
 [![Node.js 22+](https://img.shields.io/badge/node-22%2B-brightgreen)](#quick-start)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPLv3-blue.svg)](LICENSE)
-[![Sources](https://img.shields.io/badge/OSINT%20sources-29-cyan)](#data-sources-29)
+[![Sources](https://img.shields.io/badge/OSINT%20sources-28-cyan)](#data-sources-28)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](#docker)
 
 [Demo video](docs/media/mfbintelligence-demo.mp4)
@@ -14,7 +14,7 @@
 </div>
 
 MFB Services Intelligence pulls satellite fire detection, flight tracking, radiation monitoring, satellite tracking,
-economic indicators, live markets, conflict data, sanctions lists and social sentiment from 29 public feeds, in
+economic indicators, live markets, conflict data, sanctions lists and social sentiment from 28 public feeds, in
 parallel, every 15 minutes. It puts them on one sign-in-protected dashboard with an interactive map, live TV,
 and a reading library.
 
@@ -40,7 +40,7 @@ cp .env.example .env     # add keys (see "API Keys Setup"); none are required to
 AUTH_MODE=off npm run dev  # AUTH_MODE=off skips the login for local use
 ```
 
-The dashboard opens at `http://localhost:3117` and starts its first sweep, which queries all 29 sources in
+The dashboard opens at `http://localhost:3117` and starts its first sweep, which queries all 28 sources in
 parallel and takes 30-60 seconds. After that it refreshes every 15 minutes and pushes updates to the browser
 automatically.
 
@@ -87,7 +87,7 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
 - **Space watch:** ISS position, recent launches, and Starlink/OneWeb and military constellation counts, with open
   fallbacks when CelesTrak is unreachable.
 - **Regional threat view:** air-raid alerts, a live drone and missile tracker, strike watch and prediction markets.
-- **News and OSINT feed:** merged RSS, GDELT and Telegram channel posts.
+- **News feed:** merged RSS and GDELT headlines, geo-tagged by the place named in the headline.
 - **Live TV:** a news video section with an HLS player (`/media`).
 - **Ideas:** AI-generated trade ideas using your own key, or rule-based ideas from correlated signals when none is set.
 
@@ -114,7 +114,7 @@ accounts in the Firebase console.
 
 ### Auto-Refresh
 Every 15 minutes (configurable) the server:
-1. Queries all 29 sources in parallel (~30s)
+1. Queries all 28 sources in parallel (~30s)
 2. Synthesizes the raw data for the dashboard
 3. Computes the delta from the previous run
 4. Generates ideas (when a key is configured)
@@ -184,7 +184,6 @@ For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscr
 |-----|------------|
 | `TELEGRAM_BOT_TOKEN` | Create via [@BotFather](https://t.me/BotFather) on Telegram |
 | `TELEGRAM_CHAT_ID` | Get via [@userinfobot](https://t.me/userinfobot) |
-| `TELEGRAM_CHANNELS` | *(Optional)* Comma-separated extra channel IDs to monitor beyond the 17 built-in channels |
 | `TELEGRAM_POLL_INTERVAL` | *(Optional)* Bot command polling interval in ms (default: 5000) |
 
 ### Discord Bot + Alerts (optional)
@@ -224,14 +223,14 @@ crucix/
 ├── docs/                      # Screenshots for README
 │
 ├── apis/
-│   ├── briefing.mjs           # Master orchestrator — runs all 29 sources in parallel
+│   ├── briefing.mjs           # Master orchestrator — runs all 28 sources in parallel
 │   ├── save-briefing.mjs      # CLI: save timestamped + latest.json
 │   ├── BRIEFING_PROMPT.md     # Intelligence synthesis protocol
 │   ├── BRIEFING_TEMPLATE.md   # Briefing output structure
 │   ├── utils/
 │   │   ├── fetch.mjs          # safeFetch() — timeout, retries, abort, auto-JSON
 │   │   └── env.mjs            # .env loader (no dotenv dependency)
-│   └── sources/               # 29 self-contained source modules
+│   └── sources/               # 28 self-contained source modules
 │       ├── gdelt.mjs          # Each exports briefing() → structured data
 │       ├── fred.mjs           # Can run standalone: node apis/sources/fred.mjs
 │       ├── space.mjs          # CelesTrak satellite tracking
@@ -274,14 +273,14 @@ crucix/
 ### Design Principles
 - **Pure ESM** — every file is `.mjs` with explicit imports
 - **Minimal dependencies** — Express is the only runtime dependency. `discord.js` is optional (for Discord bot). LLM providers use raw `fetch()`, no SDKs.
-- **Parallel execution** — `Promise.allSettled()` fires all 29 sources simultaneously
+- **Parallel execution** — `Promise.allSettled()` fires all 28 sources simultaneously
 - **Graceful degradation** — missing keys produce errors, not crashes. LLM failures don't kill sweeps.
 - **Each source is standalone** — run `node apis/sources/gdelt.mjs` to test any source independently
 - **Self-contained dashboard** — the HTML file works with or without the server
 
 ---
 
-## Data Sources (29)
+## Data Sources (28)
 
 ### Tier 1: Core OSINT & Geopolitical (11)
 
@@ -311,7 +310,7 @@ crucix/
 | **USAspending** | Federal spending and defense contracts | None |
 | **UN Comtrade** | Strategic commodity trade flows between major powers | None |
 
-### Tier 3: Weather, Environment, Tech, Social, SIGINT, Cyber (9)
+### Tier 3: Weather, Environment, Tech, Social, SIGINT, Cyber (8)
 
 | Source | What It Tracks | Auth |
 |--------|---------------|------|
@@ -320,7 +319,6 @@ crucix/
 | **USPTO Patents** | Patent filings in 7 strategic tech areas | None |
 | **Bluesky** | Social sentiment on geopolitical/market topics | None |
 | **Reddit** | Social sentiment from key subreddits | OAuth |
-| **Telegram** | 17 curated OSINT/conflict/finance channels (web scraping, expandable via config) | None |
 | **KiwiSDR** | Global HF radio receiver network (~600 receivers) | None |
 | **CISA KEV** | Known exploited vulnerabilities catalog | None |
 | **Cloudflare Radar** | Internet outages and traffic anomalies | API token |
@@ -364,7 +362,6 @@ All settings are in `.env` with sensible defaults:
 | `LLM_MODEL` | per-provider default | Override model selection |
 | `TELEGRAM_BOT_TOKEN` | disabled | For Telegram alerts + bot commands |
 | `TELEGRAM_CHAT_ID` | — | Your Telegram chat ID |
-| `TELEGRAM_CHANNELS` | — | Extra channel IDs to monitor (comma-separated) |
 | `TELEGRAM_POLL_INTERVAL` | `5000` | Bot command polling interval (ms) |
 | `DISCORD_BOT_TOKEN` | disabled | For Discord alerts + slash commands |
 | `DISCORD_CHANNEL_ID` | — | Discord channel for alerts |
@@ -435,7 +432,7 @@ Crucix requires Node.js 22 or later. If you have an older version, download the 
 
 ### Dashboard shows empty panels after first start
 
-This is normal — the first sweep takes 30–60 seconds to query all 29 sources. The dashboard will populate automatically once the sweep completes. Check the terminal for sweep progress logs.
+This is normal — the first sweep takes 30–60 seconds to query all 28 sources. The dashboard will populate automatically once the sweep completes. Check the terminal for sweep progress logs.
 
 ### Some sources show errors
 

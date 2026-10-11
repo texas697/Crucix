@@ -36,18 +36,25 @@ const NUCLEAR_SITES = {
   dimona: { lat: 31.0, lon: 35.15, label: 'Dimona (Israel)', radius: 100 },
 };
 
+// Only readings from this window count. Safecast coverage near several of these sites is sparse, and a reading
+// from years ago must not be presented as the current state.
+const WINDOW_DAYS = parseInt(process.env.SAFECAST_WINDOW_DAYS) || 30;
+
 // Briefing — check radiation levels near key nuclear sites
 export async function briefing() {
+  const sinceDate = new Date(Date.now() - WINDOW_DAYS * 86400000);
   const results = await Promise.all(
     Object.entries(NUCLEAR_SITES).map(async ([key, site]) => {
       const data = await getMeasurements({
         latitude: site.lat,
         longitude: site.lon,
         distance: site.radius,
-        limit: 10,
+        limit: 25,
       });
 
-      const measurements = Array.isArray(data) ? data : [];
+      const all = Array.isArray(data) ? data : [];
+      const newest = all.map(m => m.captured_at).filter(Boolean).sort().pop() || null;
+      const measurements = all.filter(m => m.captured_at && new Date(m.captured_at) >= sinceDate);
       const values = measurements.map(m => m.value).filter(v => typeof v === 'number');
       const avgCPM = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
 
@@ -59,20 +66,25 @@ export async function briefing() {
         maxCPM: values.length > 0 ? Math.max(...values) : null,
         // Normal background: 10-80 CPM. >100 CPM warrants attention.
         anomaly: avgCPM !== null && avgCPM > 100,
-        lastReading: measurements[0]?.captured_at || null,
+        lastReading: newest,
+        windowDays: WINDOW_DAYS,
       };
     })
   );
 
   const anomalies = results.filter(r => r.anomaly);
+  const withData = results.filter(r => r.recentReadings > 0);
 
   return {
     source: 'Safecast',
     timestamp: new Date().toISOString(),
+    windowDays: WINDOW_DAYS,
     sites: results,
     signals: anomalies.length > 0
-      ? anomalies.map(a => `ELEVATED RADIATION at ${a.site}: ${a.avgCPM?.toFixed(1)} CPM (normal: 10-80)`)
-      : ['All monitored nuclear sites within normal radiation levels'],
+      ? anomalies.map(a => `ELEVATED RADIATION at ${a.site}: ${a.avgCPM?.toFixed(1)} CPM (normal: 10-80, last ${WINDOW_DAYS}d)`)
+      : withData.length > 0
+        ? [`${withData.length} of ${results.length} monitored nuclear sites have Safecast readings in the last ${WINDOW_DAYS} days — all within normal levels`]
+        : [`No Safecast readings near any monitored nuclear site in the last ${WINDOW_DAYS} days`],
   };
 }
 

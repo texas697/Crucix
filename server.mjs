@@ -839,7 +839,7 @@ function renderBanner(title, subtitle, rows) {
 async function start() {
   const port = config.port;
 
-  console.log(renderBanner('MFB SERVICES INTELLIGENCE', 'Crucix engine · 29 Sources', [
+  console.log(renderBanner('MFB SERVICES INTELLIGENCE', 'Crucix engine · 28 Sources', [
     ['Dashboard:', `http://localhost:${port}`],
     ['Health:', `http://localhost:${port}/api/health`],
     ['LLM:', config.llm.provider || 'disabled (users may BYOK)'],
