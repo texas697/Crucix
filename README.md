@@ -74,6 +74,10 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
 - **Interactive map** (MapLibre vector map) with layers for fires, air traffic, radiation sites, shipping
   chokepoints, SDR receivers, OSINT events, health alerts, news and conflict events. Includes layer filters,
   region and time filters, search, a marker drawer, curved flight corridors, and distance/range-ring tools.
+- **Area briefs:** draw a circle, rectangle or freeform area on the map and the panel fills with the places inside
+  it, the freshest headlines about them (sweep RSS, Readers Digest, and a live Google News query) and a short
+  AI-written brief with cited headlines and a "watch" line. Uses your own key if you saved one, otherwise the site's
+  shared key, and shows exactly what each brief cost.
 - **Light and dark themes**, a responsive layout for phones, and a live Sources / Model / time status bar.
 - **Live markets:** indexes, crypto, energy and commodities (Yahoo Finance, no key needed), plus risk gauges
   for VIX, high-yield spread and supply-chain pressure.
@@ -381,6 +385,7 @@ When running `npm run dev`:
 | `GET /api/data` | Current synthesized intelligence data (JSON) |
 | `GET /api/health` | Server status, uptime, source count, LLM status |
 | `GET /events` | SSE stream for live push updates |
+| `POST /api/map/region` | Area brief for a drawn shape: `{shape, markers, mode:"articles"\|"brief"}` → places, ranked headlines, and (brief mode) the LLM brief plus key owner and cost |
 
 ---
 

@@ -37,6 +37,25 @@ REFRESH_INTERVAL_MINUTES: "$REFRESH_MINUTES"
 PUBLIC_URL: "${PUBLIC_URL:-https://${PROJECT}.firebaseapp.com}"
 NODE_ENV: "production"
 YAML
+# Operator LLM (shared key for map area briefs when a user has not saved their own). The key itself lives in
+# Secret Manager as LLM_API_KEY; create it once with:
+#   printf '%s' "$XAI_API_KEY" | gcloud secrets create LLM_API_KEY --data-file=- --project $PROJECT
+LLM_PROVIDER="${LLM_PROVIDER:-grok}"
+LLM_MODEL="${LLM_MODEL:-grok-4.20-0309-non-reasoning}"
+SECRETS="BYOK_ENCRYPTION_KEY=BYOK_ENCRYPTION_KEY:latest,SWEEP_TRIGGER_TOKEN=SWEEP_TRIGGER_TOKEN:latest"
+if gcloud secrets describe LLM_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
+  cat >> deploy/env.yaml <<YAML
+LLM_PROVIDER: "$LLM_PROVIDER"
+LLM_MODEL: "$LLM_MODEL"
+DIGEST_OPERATOR_WRITEUPS: "${DIGEST_OPERATOR_WRITEUPS:-false}"
+BRIEF_SHARED_PER_USER_HOUR: "${BRIEF_SHARED_PER_USER_HOUR:-30}"
+BRIEF_SHARED_PER_DAY: "${BRIEF_SHARED_PER_DAY:-400}"
+YAML
+  SECRETS="$SECRETS,LLM_API_KEY=LLM_API_KEY:latest"
+  echo "▶ Operator LLM: $LLM_PROVIDER / $LLM_MODEL (key from Secret Manager)"
+else
+  echo "▶ No LLM_API_KEY secret — area briefs will require each user's own key"
+fi
 # Optional operator keys: anything in deploy/extra-env.yaml (gitignored) is merged in
 if [ -f deploy/extra-env.yaml ]; then tail -n +1 deploy/extra-env.yaml >> deploy/env.yaml; fi
 
@@ -50,7 +69,7 @@ gcloud run deploy "$SERVICE" \
   --cpu 1 --memory 1Gi --timeout 3600 \
   --session-affinity \
   --env-vars-file deploy/env.yaml \
-  --set-secrets "BYOK_ENCRYPTION_KEY=BYOK_ENCRYPTION_KEY:latest,SWEEP_TRIGGER_TOKEN=SWEEP_TRIGGER_TOKEN:latest" \
+  --set-secrets "$SECRETS" \
   --add-volume "name=runs,type=cloud-storage,bucket=$BUCKET" \
   --add-volume-mount "volume=runs,mount-path=/data/runs" \
   --quiet

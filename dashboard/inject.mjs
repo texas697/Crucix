@@ -24,7 +24,7 @@ function isEnglish(text) {
 }
 
 // === Geo-tagging keyword map ===
-const geoKeywords = {
+export const geoKeywords = {
   'Ukraine':[49,32],'Russia':[56,38],'Moscow':[55.7,37.6],'Kyiv':[50.4,30.5],
   'China':[35,105],'Beijing':[39.9,116.4],'Iran':[32,53],'Tehran':[35.7,51.4],
   'Israel':[31.5,35],'Gaza':[31.4,34.4],'Palestine':[31.9,35.2],
@@ -146,7 +146,7 @@ function loadOpenSkyFallback(currentTimestamp) {
 }
 
 // === RSS Fetching ===
-async function fetchRSS(url, source) {
+export async function fetchRSS(url, source) {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     const xml = await res.text();

@@ -260,6 +260,51 @@ html.light .sel-panel{background:rgba(255,255,255,0.97);box-shadow:0 12px 36px r
 .sel-iname{font-family:var(--sans);font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sel-imeta{font-family:var(--mono);font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sel-more{font-family:var(--mono);font-size:10.5px;color:var(--dim);padding:3px 8px}
+.sel-panel.has-brief{width:380px}
+.ab{margin:-2px -4px 12px;padding:10px 10px 8px;border:1px solid var(--border);border-radius:7px;background:linear-gradient(180deg,rgba(120,150,255,0.07),rgba(120,150,255,0.015))}
+.ab.tone-elevated{border-color:rgba(233,170,90,0.35);background:linear-gradient(180deg,rgba(233,170,90,0.09),rgba(233,170,90,0.015))}
+.ab.tone-critical{border-color:rgba(255,120,120,0.4);background:linear-gradient(180deg,rgba(255,110,110,0.10),rgba(255,110,110,0.015))}
+.ab-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+.ab-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent)}
+.ab.tone-elevated .ab-kicker{color:var(--warn)}.ab.tone-critical .ab-kicker{color:var(--danger)}
+.ab-places{font-family:var(--sans);font-size:11.5px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.ab-places.fb{color:var(--dim);font-style:italic}
+.ab-head{font-family:var(--sans);font-size:14px;font-weight:650;line-height:1.3;color:var(--text);margin:2px 0 6px;letter-spacing:-0.01em}
+.ab-sum{font-family:var(--sans);font-size:12px;line-height:1.5;color:var(--text-2);margin:0 0 7px}
+.ab-dev{margin:0 0 7px;padding:0 0 0 14px;font-family:var(--sans);font-size:11.8px;line-height:1.45;color:var(--text-2)}
+.ab-dev li{margin-bottom:3px}
+.ab-dev li::marker{color:var(--accent)}
+.ab-cite{display:inline-block;font-family:var(--mono);font-size:9.5px;color:var(--accent);background:var(--accent-soft);border-radius:3px;padding:0 4px;margin-left:2px;cursor:pointer;text-decoration:none;vertical-align:1px}
+.ab-cite:hover{filter:brightness(1.2)}
+.ab-watch{font-family:var(--sans);font-size:11.5px;line-height:1.45;color:var(--text-2);padding:6px 8px;border-left:2px solid var(--accent);background:rgba(120,150,255,0.06);border-radius:0 4px 4px 0;margin-bottom:8px}
+.ab-watch b{font-family:var(--mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-right:6px;font-weight:600}
+.ab-news-h{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);margin:6px 0 4px}
+.ab-news-h span{margin-left:auto;color:var(--dim-2)}
+.ab-item{display:flex;flex-direction:column;gap:1px;padding:5px 7px;border-radius:5px;text-decoration:none;color:inherit;cursor:pointer;border:1px solid transparent}
+.ab-item:hover{background:var(--raised)}
+.ab-item.hl{border-color:var(--accent);background:var(--accent-soft)}
+.ab-it{font-family:var(--sans);font-size:11.8px;line-height:1.35;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ab-im{font-family:var(--mono);font-size:10px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-im .live{color:var(--mint)}
+.ab-it .n{font-family:var(--mono);font-size:10px;color:var(--accent);margin-right:6px;vertical-align:1px}
+.ab-foot{display:flex;align-items:flex-start;gap:7px;margin-top:8px;padding-top:7px;border-top:1px dashed var(--border-bright);font-family:var(--sans);font-size:10.8px;line-height:1.4;color:var(--dim)}
+.ab-foot .ic{flex:none;font-size:11px;line-height:1.3}
+.ab-foot b{color:var(--text-2);font-weight:600}
+.ab-foot .cost{font-family:var(--mono);color:var(--text-2)}
+.ab-foot a{color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:rgba(120,150,255,0.4)}
+.ab-err{font-family:var(--sans);font-size:11.8px;line-height:1.45;color:var(--warn);padding:7px 9px;border:1px solid rgba(233,170,90,0.3);border-radius:5px;background:rgba(233,170,90,0.07);margin-bottom:8px}
+.ab-err a{color:var(--accent);cursor:pointer;text-decoration:underline}
+.ab-sk{height:9px;border-radius:4px;background:linear-gradient(90deg,var(--raised) 20%,var(--raised-2) 50%,var(--raised) 80%);background-size:200% 100%;animation:abSk 1.3s linear infinite;margin:0 0 7px}
+.ab-sk.w1{width:72%;height:13px}.ab-sk.w2{width:100%}.ab-sk.w3{width:94%}.ab-sk.w4{width:60%}
+@keyframes abSk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.ab-status{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--dim);margin-bottom:6px}
+.ab-status .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:abPulse 1.1s ease-in-out infinite}
+@keyframes abPulse{0%,100%{opacity:0.25}50%{opacity:1}}
+body.low-perf .ab-sk,body.low-perf .ab-status .pulse{animation:none}
+.sel-divider{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim-2);margin:2px 0 8px}
+.sel-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+html.light .ab{background:linear-gradient(180deg,rgba(70,100,220,0.07),rgba(70,100,220,0.015))}
+html.light .ab-watch{background:rgba(70,100,220,0.06)}
 .measure-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:7;display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;background:rgba(120,150,255,0.14);border:1px solid rgba(120,150,255,0.45);border-radius:8px;backdrop-filter:blur(10px);color:var(--text);font-family:var(--sans);font-size:12.5px;max-width:min(560px,calc(100% - 120px));box-shadow:0 8px 26px rgba(0,0,0,0.28)}
 .measure-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:7;display:none;align-items:center;gap:10px;padding:9px 10px 9px 14px;background:rgba(120,150,255,0.14);border:1px solid rgba(120,150,255,0.45);border-radius:8px;backdrop-filter:blur(10px);color:var(--text);font-family:var(--sans);font-size:12.5px;max-width:min(560px,calc(100% - 120px));box-shadow:0 8px 26px rgba(0,0,0,0.28)}
 .measure-banner.show{display:flex}
@@ -1474,9 +1519,11 @@ function runSelection(feature){
   const selSrc=map && map.getSource('src-selected');
   if(selSrc) selSrc.setData({ type:'FeatureCollection', features: selectedItems.map(p=>({ type:'Feature', properties:{ color:p.color||'#8fa7ff' }, geometry:{ type:'Point', coordinates:[p.lng,p.lat] } })) });
   renderSelection();
+  loadAreaBrief(feature);
 }
 function clearSelection(){
   drawGeo=null; drawing=false; drawStart=null; drawPoly=[]; selectedItems=[];
+  resetAreaBrief();
   drawPreview();
   if(map && map.getSource('src-selected')) map.getSource('src-selected').setData({ type:'FeatureCollection', features: [] });
   renderSelection();
@@ -1484,13 +1531,17 @@ function clearSelection(){
 function renderSelection(){
   const panel=document.getElementById('selPanel'), body=document.getElementById('selBody'), count=document.getElementById('selCount');
   if(!panel||!body) return;
-  if(!selectedItems.length){ panel.classList.remove('show'); if(count) count.textContent='0'; body.innerHTML=''; return; }
+  // The panel stays open while an area brief is loading or shown, even if no markers fall inside the shape
+  if(!selectedItems.length && AB.status==='idle'){ panel.classList.remove('show'); panel.classList.remove('has-brief'); if(count) count.textContent='0'; body.innerHTML=''; return; }
   panel.classList.add('show');
+  panel.classList.toggle('has-brief', AB.status!=='idle');
   if(count) count.textContent=String(selectedItems.length);
   const groups={};
   selectedItems.forEach((p,i)=>{ (groups[p.type]=groups[p.type]||[]).push([i,p]); });
   const keys=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
-  let html=`<div class="sel-summary">${selectedItems.length} marker${selectedItems.length>1?'s':''} across ${keys.length} layer${keys.length>1?'s':''}</div>`;
+  let html=`<div id="abMount">${renderAreaBriefHtml()}</div>`;
+  if(selectedItems.length) html+=`<div class="sel-divider">Markers in area</div>`;
+  html+=selectedItems.length?`<div class="sel-summary">${selectedItems.length} marker${selectedItems.length>1?'s':''} across ${keys.length} layer${keys.length>1?'s':''}</div>`:'';
   keys.forEach(type=>{
     const arr=groups[type];
     const def=LAYER_DEFS.find(l=>l.key===type);
@@ -1508,6 +1559,106 @@ function focusSelectionItem(i){
   const p=selectedItems[i]; if(!p) return;
   if(map) map.flyTo({ center:[p.lng,p.lat], zoom:Math.max(map.getZoom(),4), duration:700 });
   setTimeout(()=>showPopup(null, p.popHead, p.popText, p.popMeta, p.lat, p.lng, 0, {url:p.url}), 780);
+}
+
+// === AREA BRIEF: shape → places → recent news → LLM brief ===
+const AB = { status:'idle', places:[], fallback:false, articles:[], total:0, brief:null, llm:null, error:null, errorKind:null, briefLoading:false };
+let abAbort = null, abSeq = 0, abSessionCost = 0, abSessionCalls = 0;
+
+function resetAreaBrief(){
+  if(abAbort){ abAbort.abort(); abAbort=null; }
+  Object.assign(AB, { status:'idle', places:[], fallback:false, articles:[], total:0, brief:null, llm:null, error:null, errorKind:null, briefLoading:false });
+}
+function shapePayload(feature){
+  if(feature._circle) return { kind:'circle', center:{ lat:feature._circle.center.lat, lng:feature._circle.center.lng }, radiusKm:feature._circle.radiusKm };
+  return { kind:'polygon', ring:(feature.geometry?.coordinates?.[0]||[]).map(p=>[+p[0].toFixed(4), +p[1].toFixed(4)]) };
+}
+function markersPayload(){
+  const counts={};
+  selectedItems.forEach(p=>{ counts[p.type]=(counts[p.type]||0)+1; });
+  const samples=[...selectedItems].sort((a,b)=>(a.priority||9)-(b.priority||9)).slice(0,14)
+    .map(p=>`${(LAYER_DEFS.find(l=>l.key===p.type)?.label||p.type)}: ${(p.popHead||'').replace(/<[^>]+>/g,'')}${p.popMeta?' — '+String(p.popMeta).replace(/<[^>]+>/g,''):''}`);
+  return { counts, samples };
+}
+async function loadAreaBrief(feature){
+  if(abAbort) abAbort.abort();
+  const ctrl = new AbortController(); abAbort = ctrl; const seq = ++abSeq;
+  Object.assign(AB, { status:'loading', places:[], fallback:false, articles:[], total:0, brief:null, llm:null, error:null, errorKind:null, briefLoading:true });
+  renderSelection();
+  const shape = shapePayload(feature), markers = markersPayload();
+  const post = (mode) => fetch('/api/map/region', { method:'POST', credentials:'same-origin', signal:ctrl.signal,
+    headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ shape, markers, mode }) });
+  try{
+    // 1) places + headlines: fast, no AI
+    const r1 = await post('articles');
+    const d1 = await r1.json().catch(()=>({}));
+    if(seq!==abSeq) return;
+    if(!r1.ok) throw Object.assign(new Error(d1.error||'Lookup failed'), { kind:'lookup' });
+    Object.assign(AB, { status:'ready', places:d1.places||[], fallback:!!d1.fallback, articles:d1.articles||[], total:d1.total||0 });
+    renderSelection();
+    // 2) the brief itself
+    const r2 = await post('brief');
+    const d2 = await r2.json().catch(()=>({}));
+    if(seq!==abSeq) return;
+    if(d2.articles) { AB.articles=d2.articles; AB.total=d2.total||AB.total; }
+    if(!r2.ok){ AB.error=d2.error||'Brief failed'; AB.errorKind=d2.budget||'llm'; }
+    else { AB.brief=d2.brief||null; AB.llm=d2.llm||null; if(AB.llm?.costUsd!=null){ abSessionCost+=AB.llm.costUsd; abSessionCalls++; } }
+  }catch(err){
+    if(ctrl.signal.aborted || seq!==abSeq) return;
+    AB.status='ready'; AB.error=err.message||'Request failed'; AB.errorKind=err.kind||'llm';
+  }finally{
+    if(seq===abSeq){ AB.briefLoading=false; if(abAbort===ctrl) abAbort=null; renderSelection(); }
+  }
+}
+function abAge(d){ if(!d) return ''; const h=(Date.now()-new Date(d).getTime())/3600000; if(!(h>=0)) return ''; if(h<1) return 'just now'; if(h<24) return Math.floor(h)+'h ago'; return Math.floor(h/24)+'d ago'; }
+function abCite(text){
+  // "[3]" → clickable chip that highlights headline 3
+  return esc(text).replace(/\[(\d{1,2})\]/g,(m,n)=>{ const a=AB.articles[+n-1]; return a?`<a class="ab-cite" href="${esc(a.url||'#')}" target="_blank" rel="noopener" onmouseenter="abHl(${n},true)" onmouseleave="abHl(${n},false)" title="${esc(a.source||'')}: ${esc(a.title||'')}">${n}</a>`:m; });
+}
+function abHl(n,on){ const el=document.getElementById('abn'+n); if(el) el.classList.toggle('hl',!!on); }
+function abFormatUsd(u){ if(u==null) return null; if(u===0) return '$0.0000'; if(u<0.0001) return '<$0.0001'; return '$'+u.toFixed(u<0.01?4:u<1?3:2); }
+function abLinkFor(a){ return a.id ? `/digest?open=${encodeURIComponent(a.id)}` : (a.url||'#'); }
+function renderAreaBriefHtml(){
+  if(AB.status==='idle') return '';
+  const placeNames = AB.places.map(p=>p.name);
+  const placesHtml = placeNames.length
+    ? `<span class="ab-places ${AB.fallback?'fb':''}" title="${esc(placeNames.join(', '))}">${AB.fallback?'near ':''}${esc(placeNames.slice(0,6).join(' · '))}${placeNames.length>6?` +${placeNames.length-6}`:''}</span>`
+    : (AB.status==='loading'?'':'<span class="ab-places fb">open water / unmapped area</span>');
+  let body='';
+  if(AB.status==='loading'){
+    body=`<div class="ab-status"><span class="pulse"></span>Finding places and headlines…</div><div class="ab-sk w1"></div><div class="ab-sk w2"></div><div class="ab-sk w3"></div><div class="ab-sk w4"></div>`;
+  } else {
+    if(AB.brief){
+      const b=AB.brief;
+      body+=`<div class="ab-head">${esc(b.headline)}</div>`;
+      if(b.summary) body+=`<p class="ab-sum">${abCite(b.summary)}</p>`;
+      if(b.developments?.length) body+=`<ul class="ab-dev">${b.developments.map(d=>`<li>${abCite(d)}</li>`).join('')}</ul>`;
+      if(b.watch) body+=`<div class="ab-watch"><b>Watch</b>${abCite(b.watch)}</div>`;
+    } else if(AB.briefLoading){
+      body+=`<div class="ab-status"><span class="pulse"></span>Writing the brief…</div><div class="ab-sk w1"></div><div class="ab-sk w2"></div><div class="ab-sk w3"></div>`;
+    } else if(AB.error){
+      const settingsLink = ME ? ` <a onclick="openSettings()">Add your own AI key</a>` : '';
+      body+=`<div class="ab-err">${esc(AB.error)}${(AB.errorKind==='shared'||AB.errorKind==='none')&&ME&&!ME.llm?settingsLink:''}</div>`;
+    }
+    if(AB.articles.length){
+      body+=`<div class="ab-news-h">Recent coverage<span>${AB.total>AB.articles.length?`${AB.articles.length} of ${AB.total}`:AB.articles.length}</span></div>`;
+      body+=AB.articles.map((a,i)=>`<a class="ab-item" id="abn${i+1}" href="${esc(abLinkFor(a))}" target="_blank" rel="noopener"><span class="ab-it"><span class="n">${i+1}</span>${esc(a.title)}</span><span class="ab-im">${esc(a.source||'')}${a.publishedAt?' · '+abAge(a.publishedAt):''}${a.via==='live'?' · <span class="live">live</span>':a.id?' · in digest':''}</span></a>`).join('');
+    } else if(AB.status==='ready' && !AB.briefLoading && !AB.brief){
+      body+=`<div class="sel-summary">No recent headlines match this area.</div>`;
+    }
+    if(AB.llm){
+      const l=AB.llm, cost=l.costLabel||abFormatUsd(l.costUsd);
+      const who = l.keyOwner==='user' ? `<b>Your AI key</b>` : (ME ? `<b>Site's shared AI key</b>` : `<b>Site AI key</b>`);
+      const model = `${esc(l.provider||'')}${l.model?' · '+esc(l.model):''}`;
+      const costTxt = cost ? `this brief <span class="cost">${esc(cost)}</span>${l.costExact?'':' est.'}` : 'cost unavailable for this model';
+      const sess = abSessionCalls>1 && abSessionCost>0 ? ` · session <span class="cost">${esc(abFormatUsd(abSessionCost))}</span> over ${abSessionCalls} briefs` : '';
+      const rate = l.inputPerM!=null ? ` title="${esc(`$${l.inputPerM}/M input · $${l.outputPerM}/M output · ${l.inputTokens} in / ${l.outputTokens} out tokens`)}"` : '';
+      const cta = l.keyOwner!=='user' && ME && !ME.llm ? ` <a onclick="openSettings()">Use your own key</a>` : '';
+      body+=`<div class="ab-foot"><span class="ic">${l.keyOwner==='user'?'🔑':'⚡'}</span><span${rate}>${who} · ${model} · ${costTxt}${sess}.${l.keyOwner!=='user'?' Briefs are generated at the site owner&#39;s expense while you have no key saved.':''}${cta}</span></div>`;
+    }
+  }
+  const tone = AB.brief?.tone || 'calm';
+  return `<div class="ab tone-${tone}"><div class="ab-top"><span class="ab-kicker">Area brief</span>${placesHtml}</div>${body}</div>`;
 }
 
 let map = null, mapReady = false;

@@ -18,6 +18,7 @@ import { TelegramAlerter } from './lib/alerts/telegram.mjs';
 import { DiscordAlerter } from './lib/alerts/discord.mjs';
 import * as users from './lib/auth/users.mjs';
 import { createDigest } from './lib/digest/index.mjs';
+import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -60,7 +61,9 @@ const discordAlerter = new DiscordAlerter(config.discord || {});
 if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmProvider.model})`);
 
 // === Readers Digest ===
-const digest = createDigest({ db: () => authLib.db(), authEnabled: AUTH_ENABLED, operatorProvider: llmProvider?.isConfigured ? llmProvider : null });
+const DIGEST_OPERATOR_WRITEUPS = (process.env.DIGEST_OPERATOR_WRITEUPS || 'false').toLowerCase() === 'true';
+const digest = createDigest({ db: () => authLib.db(), authEnabled: AUTH_ENABLED, operatorProvider: DIGEST_OPERATOR_WRITEUPS && llmProvider?.isConfigured ? llmProvider : null });
+if (llmProvider?.isConfigured && !DIGEST_OPERATOR_WRITEUPS) console.log('[Digest] operator write-ups off (set DIGEST_OPERATOR_WRITEUPS=true to spend the operator key on every ingested article)');
 if (AUTH_ENABLED) digest.init().catch(err => console.error('[Digest] init failed:', err.message));
 const DIGEST_AFTER_SWEEP = (process.env.DIGEST_AFTER_SWEEP || 'true').toLowerCase() !== 'false';
 if (telegramAlerter.isConfigured) {
@@ -602,6 +605,50 @@ app.get('/api/alerts', async (req, res) => {
 });
 const userProvider = async (req) => (AUTH_ENABLED ? users.providerForUser(req.user.uid) : (llmProvider?.isConfigured ? llmProvider : null));
 const sendErr = (res, err) => res.status(err.status || 500).json({ error: err.message });
+
+// ─── Map area brief: draw a shape → places inside → recent news → (optional) LLM brief ──────────────
+// LLM key choice: the signed-in user's own key when they saved one, else the operator's shared key (budgeted).
+const briefBudget = createBudget({
+  perUserPerHour: parseInt(process.env.BRIEF_SHARED_PER_USER_HOUR) || 30,
+  perDay: parseInt(process.env.BRIEF_SHARED_PER_DAY) || 400,
+});
+app.post('/api/map/region', async (req, res) => {
+  const t0 = Date.now();
+  try {
+    const shape = parseShape(req.body?.shape);
+    const mode = req.body?.mode === 'brief' ? 'brief' : 'articles';
+    const markers = req.body?.markers && typeof req.body.markers === 'object' ? {
+      counts: Object.fromEntries(Object.entries(req.body.markers.counts || {}).slice(0, 20).map(([k, v]) => [String(k).slice(0, 20), parseInt(v) || 0])),
+      samples: Array.isArray(req.body.markers.samples) ? req.body.markers.samples.slice(0, 14).map(x => String(x).slice(0, 120)) : [],
+    } : null;
+    const { places, fallback } = placesInShape(shape);
+    const { articles, total, liveErr } = await collectArticles(shape, places, {
+      sweepNews: currentData?.news || [],
+      digestArticles: digest.store.all(),
+      live: true,
+    });
+    const base = { places: places.map(p => ({ name: p.name, lat: p.lat, lon: p.lon })), fallback, articles, total, liveErr, ms: Date.now() - t0 };
+    if (mode !== 'brief') return res.json(base);
+
+    // pick the key
+    let provider = null, keyOwner = null;
+    if (AUTH_ENABLED) { provider = await users.providerForUser(req.user.uid); if (provider) keyOwner = 'user'; }
+    if (!provider && llmProvider?.isConfigured) {
+      const b = briefBudget.take(req.user.uid);
+      if (!b.ok) return res.status(429).json({ ...base, error: b.reason, budget: 'shared' });
+      provider = llmProvider; keyOwner = 'operator';
+    }
+    if (!provider) return res.status(402).json({ ...base, error: 'No AI key available. Add your own key in Settings to get area briefs.', budget: 'none' });
+    if (!articles.length && !(markers?.counts && Object.keys(markers.counts).length)) {
+      return res.json({ ...base, brief: { headline: 'Nothing recent here', summary: 'No headlines or live markers fall inside this area in the last week.', developments: [], watch: '', tone: 'calm' }, llm: null });
+    }
+    const { brief, llm } = await writeBrief(provider, keyOwner, { places, articles, markers, fallback });
+    res.json({ ...base, brief, llm, ms: Date.now() - t0 });
+  } catch (err) {
+    console.error('[MapBrief]', err.message);
+    res.status(err.status || 502).json({ error: err.status ? err.message : `Brief failed: ${err.message}` });
+  }
+});
 
 app.get('/api/digest/list', async (req, res) => {
   try { res.json(await digest.list({ uid: req.user.uid, filter: String(req.query.filter || 'all'), q: String(req.query.q || '').slice(0, 100), topic: String(req.query.topic || '').slice(0, 40), limit: Math.min(300, parseInt(req.query.limit) || 120) })); }

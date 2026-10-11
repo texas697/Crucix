@@ -82,6 +82,7 @@ Useful overrides: `AUTH_ALLOWED_EMAILS=a@x.com,b@y.com` (lock the app to specifi
 | BYOK | `BYOK_ENCRYPTION_KEY` (Secret Manager) | Rotating this key invalidates every stored user key; users just re-enter theirs. |
 | Sweeps | `SWEEP_MODE=external`, `SWEEP_TRIGGER_TOKEN` | Cloud Run throttles CPU outside requests, so the scheduler's request *is* the sweep; there is no startup sweep in this mode (the deploy script fires one). Telegram/Discord bots need `internal` mode + `--no-cpu-throttling` (≈5× the cost). |
 | State | `RUNS_DIR=/data/runs` | Cloud Storage FUSE volume. Delta memory and `latest.json` survive redeploys. |
+| Area briefs | `LLM_PROVIDER`, `LLM_MODEL`, secret `LLM_API_KEY`, `BRIEF_SHARED_PER_USER_HOUR`, `BRIEF_SHARED_PER_DAY` | Drawn-shape briefs use the user's BYOK key when saved, otherwise this shared operator key with a per-user hourly and global daily budget (defaults 30 / 400). The deploy script wires the secret in automatically when it exists. xAI returns the exact charge per call; the panel shows it. |
 | Health | `/api/healthz` (public) | `/api/health` with full detail requires login. Google's front end swallows a bare `/healthz`, hence the prefix. |
 
 ## Readers Digest in the cloud
@@ -90,14 +91,16 @@ Articles and write-ups live in Firestore (`digest/{id}`), votes and deep dives u
 (`users/{uid}/digest_votes`, `users/{uid}/digest_research`). Ingest runs inside the sweep request and from the
 `crucix-digest` scheduler job (every 30 min), so it gets CPU on a throttled instance. Some publishers (NYT,
 France 24, MarketWatch, Heritage) block article fetches from Google IPs; those pieces keep their RSS summary and
-link out to the original. Set a server-wide `LLM_PROVIDER`/`LLM_API_KEY` in `deploy/extra-env.yaml` to have
-every new piece written up automatically; otherwise readers generate write-ups with their own key when they open a piece.
+link out to the original. The operator `LLM_API_KEY` is *not* spent on digest write-ups unless
+`DIGEST_OPERATOR_WRITEUPS=true` (about 40 articles per ingest, so it adds up); otherwise readers generate
+write-ups with their own key when they open a piece.
 
 ## Cost (approximate, us-central1)
 
 One always-on instance with CPU throttling: ≈ $7–10/month idle + a few dollars of request time for
 sweeps and open dashboards. Firestore, Firebase Auth, Secret Manager and the bucket sit inside free tiers
-at personal scale. Users pay their own LLM provider through BYOK.
+at personal scale. Users pay their own LLM provider through BYOK; map area briefs on the shared key run about
+$0.001–0.003 each on `grok-4.20-0309-non-reasoning` ($1.25 / $2.50 per million tokens), capped by the brief budget.
 
 ## Operations
 
