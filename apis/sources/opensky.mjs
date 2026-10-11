@@ -250,16 +250,15 @@ export async function briefing() {
   const deadline = started + BUDGET_MS;
   const entries = Object.entries(HOTSPOTS);
 
-  // adsb.lol calls must not overlap: military feed first, then the paced theater samples
-  const adsbChain = (async () => {
-    const mil = await adsbMilitary().catch(e => ({ error: e.message, list: [] }));
-    const samples = await adsbSampleAll(entries, deadline, Date.now()).catch(() => entries.map(([key]) => ({ key, list: [], sampledAt: null, error: 'sampler failed' })));
-    return { mil, samples };
-  })();
-  const [osRes, { mil: milRes, samples }] = await Promise.all([
+  // OpenSky and the adsb.lol military feed run together; the paced theater samples only run if OpenSky failed
+  const milStarted = Date.now();
+  const [osRes, milRes] = await Promise.all([
     getAllFlights().catch(e => ({ error: e.message })),
-    adsbChain,
+    adsbMilitary().catch(e => ({ error: e.message, list: [] })),
   ]);
+  const samples = osRes.states
+    ? entries.map(([key]) => ({ key, list: [], sampledAt: null, error: null }))
+    : await adsbSampleAll(entries, deadline, milStarted).catch(() => entries.map(([key]) => ({ key, list: [], sampledAt: null, error: 'sampler failed' })));
 
   const osStates = osRes.states ? osRes.states.map(fromOpenSky) : null;
   const milAll = milRes.list.filter(a => a.lat != null);
