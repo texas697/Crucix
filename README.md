@@ -252,7 +252,7 @@ crucix/
 | Source | What It Tracks | Auth |
 |--------|---------------|------|
 | **GDELT** | Global news events, conflict mapping (100+ languages) | None |
-| **OpenSky** | Real-time ADS-B flight tracking across 6 hotspot regions | None |
+| **OpenSky** | One global ADS-B snapshot per sweep sliced into 10 theaters; adsb.lol military feed + rotating theater samples as fallback | None (free OpenSky API client raises the quota) |
 | **NASA FIRMS** | Satellite fire/thermal anomaly detection (3hr latency) | Free key |
 | **Maritime/AIS** | Vessel tracking, dark ships, sanctions evasion | Free key |
 | **Safecast** | Citizen-science radiation monitoring near 6 nuclear sites | None |
@@ -396,7 +396,12 @@ This is normal — the first sweep takes 30–60 seconds to query all 28 sources
 
 Expected behavior. Sources that require API keys will return structured errors if the key isn't set. The rest of the sweep continues normally. Check the Source Integrity section in the dashboard (or the server logs) to see which sources failed and why. The 3 most impactful free keys to add are `FRED_API_KEY`, `FIRMS_MAP_KEY`, and `EIA_API_KEY`.
 
-OpenSky can also return `HTTP 429` when its public hotspots are queried too aggressively. Crucix does not try to evade that limit. Instead, it surfaces the throttle/error in source health and preserves the most recent non-empty air traffic snapshot from `runs/` so the dashboard flight layer does not suddenly go blank on a throttled sweep.
+OpenSky's anonymous quota is 400 credits per IP per day. Crucix spends 4 per sweep (one global snapshot) so a
+15-minute schedule fits, but Cloud Run egress IPs are shared and often already throttled (`HTTP 429`). Crucix does
+not try to evade that. It falls back to adsb.lol: the global military feed every sweep, plus one 250 nm sample per
+theater in rotation (adsb.lol accepts roughly one request every 4 s). Theaters read that way are marked "sampled"
+in their popup. For full coverage create a free OpenSky account, add an API client under Account, and set
+`OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET` (in Secret Manager on Cloud Run; the deploy script wires them).
 
 ---
 

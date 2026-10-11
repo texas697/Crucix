@@ -974,7 +974,7 @@ const LAYER_DEFS = [
 ];
 // Per-layer explainability cards ("what am I looking at")
 const LAYER_INFO = {
-  air: {purpose:'Aircraft counts per theater, as an activity/opacity signal.', source:'OpenSky Network (community ADS-B)', freshness:'Refreshed every sweep (~15 min)', confidence:'Good for relative volume; coverage varies with ADS-B reach.', limitations:['Not flight-level tracking or identity','Sparse over oceans, Africa and active conflict zones']},
+  air: {purpose:'Aircraft counts per theater as an activity signal, plus every military aircraft currently broadcasting ADS-B, plotted at its real position.', source:'OpenSky Network global snapshot; adsb.lol military feed and theater samples when OpenSky is throttled', freshness:'Refreshed every sweep (~15 min); theater samples rotate across sweeps', confidence:'Good for relative volume and for who is flying where; coverage varies with ADS-B reach.', limitations:['A theater marked "sampled" was read through one 250 nm circle, not the whole box','Military aircraft with transponders off are invisible by definition','Sparse over oceans, Africa and active conflict zones']},
   thermal: {purpose:'Satellite-detected thermal anomalies (fires, flares, heat).', source:'NASA FIRMS (MODIS/VIIRS)', freshness:'Near-real-time; refreshed every sweep', confidence:'Strong for detecting heat sources; can include industrial flaring.', limitations:['Not a confirmation of conflict','Cloud cover and overpass timing create gaps']},
   conflict: {purpose:'Deadly armed-conflict events, plotted by fatality size.', source:'ACLED (Armed Conflict Location & Event Data)', freshness:'Refreshed every sweep; upstream lags days–weeks', confidence:'Editorially consistent, research-grade.', limitations:['Reports lag real time','Fatality counts are best-estimates, not exact']},
   maritime: {purpose:'Strategic chokepoints for disruption-path reasoning.', source:'Curated chokepoint registry', freshness:'Static geography', confidence:'High for fixed geography.', limitations:['A marker does not mean an active disruption','No live vessel tracking yet']},
@@ -1301,7 +1301,7 @@ function renderLeftRail(){
   const conflictFatal = D.acled?.totalFatalities || 0;
   const conflictSub = D.acled?.totalEvents ? `${conflictFatal.toLocaleString()} ${t('layers.fatalities','fatalities')}` : (D.gdelt?.conflictEvents ? `GDELT · last ${D.gdelt.window?.hours||6}h` : `0 ${t('layers.fatalities','fatalities')}`);
   const layers=[
-    {name:t('layers.airActivity','Air Activity'),count:totalAir,dot:'air',sub:`${D.air.length} ${t('layers.theaters','theaters')}`},
+    {name:t('layers.airActivity','Air Activity'),count:totalAir,dot:'air',sub:`${D.air.length} ${t('layers.theaters','theaters')}${D.airMeta?.militaryTotal?' · '+D.airMeta.militaryTotal+' military':''}`},
     {name:t('layers.thermalSpikes','Thermal Spikes'),count:totalThermal.toLocaleString(),dot:'thermal',sub:`${totalNight.toLocaleString()} ${t('layers.nightDet','night det.')}`},
     {name:t('layers.sdrCoverage','SDR Coverage'),count:D.sdr.total,dot:'sdr',sub:`${D.sdr.online} ${t('layers.online','online')}`},
     {name:t('layers.maritimeWatch','Maritime Watch'),count:D.chokepoints.length,dot:'maritime',sub:t('layers.chokepoints','chokepoints')},
@@ -1423,6 +1423,7 @@ function findMapMatch(q){
   const nukeCoords=[{lat:47.5,lon:34.6},{lat:51.4,lon:30.1},{lat:28.8,lon:50.9},{lat:39.8,lon:125.8},{lat:37.4,lon:141},{lat:31.0,lon:35.1}];
   (D.news||[]).forEach(n=>list.push({lat:n.lat,lng:n.lon,head:n.source+' NEWS',text:cleanText(n.title),meta:'keyword: '+n.region,url:n.url}));
   (D.chokepoints||[]).forEach(c=>list.push({lat:c.lat,lng:c.lon,head:c.label,text:esc(c.note),meta:'Maritime'}));
+  (D.milAir||[]).forEach(m=>list.push({lat:m.lat,lng:m.lon,head:(m.cs||m.hex)+' '+(m.type||''),text:esc(m.country)+' military aircraft',meta:'Air'}));
   D.nuke.forEach((n,i)=>{const c=nukeCoords[i];if(c)list.push({lat:c.lat,lng:c.lon,head:n.site,text:n.n?`Avg CPM: ${n.cpm?.toFixed(1)||'--'} (last 30d)`:'No readings in the last 30 days',meta:'Radiation'});});
   (D.gdelt?.geoPoints||[]).forEach(g=>list.push({lat:g.lat,lng:g.lon,head:(g.type||'GDELT event'),text:esc(g.name)||'Global event',meta:'GDELT · '+g.count+' sources',url:g.url}));
   return list.find(it=>((it.head||'')+' '+(it.text||'')).toLowerCase().includes(q));
@@ -1810,9 +1811,17 @@ function plotMarkers(){
   D.air.forEach((a,i)=>{
     const c=airCoords[i]; if(!c) return;
     points.push({ lat:c.lat, lng:c.lon, size:0.3, _r:4+Math.min(a.total/40,10), color:'rgba(127,224,192,0.85)', _stroke:'rgba(127,224,192,0.35)', type:'air', priority:1,
-      popHead:a.region, popMeta:`Air Activity · ${a.total} aircraft · theater total, marker at theater centre`,
-      popText:`${a.total} aircraft tracked<br>No callsign: ${a.noCallsign}<br>High altitude: ${a.highAlt}<br>Top: ${esc(a.top.slice(0,3).map(t=>t[0]+' ('+t[1]+')').join(', '))}` });
+      popHead:a.region, popMeta:`Air Activity · ${a.total} aircraft · ${a.coverage==='sampled'?'sampled via adsb.lol'+(a.sampledAt?' '+relTime(a.sampledAt):''):'via '+(a.via||'OpenSky')} · marker at theater centre`,
+      popText:`${a.total} aircraft tracked${a.military?` · <b>${a.military} military</b>`:''}<br>No callsign: ${a.noCallsign}<br>Above FL390: ${a.highAlt}<br>Top: ${esc(a.top.slice(0,3).map(t=>t[0]+' ('+t[1]+')').join(', '))||'--'}${a.note?'<br><span style="opacity:.7">'+esc(a.note)+'</span>':''}` });
     labels.push({ lat:c.lat, lng:c.lon, text:a.region.replace(' Region','')+' '+a.total, color:'#8fa7ff', type:'air' });
+  });
+
+  // === Military aircraft (real positions, adsb.lol military feed) ===
+  (D.milAir||[]).forEach(m=>{
+    const fl=m.alt!=null?(m.alt<=0?'on ground':'FL'+String(Math.round(m.alt/100)).padStart(3,'0')):'alt n/a';
+    points.push({ lat:m.lat, lng:m.lon, size:0.22, _r:3.4, color:'rgba(143,167,255,0.95)', _stroke:'rgba(143,167,255,0.35)', type:'air', priority:2,
+      popHead:(m.cs||m.hex.toUpperCase())+(m.type?' · '+m.type:''), popMeta:`Military aircraft · ${m.country} · ${fl}`,
+      popText:[m.reg?'Reg '+esc(m.reg):'', m.gs!=null?m.gs+' kt':'', m.trk!=null?'hdg '+m.trk+'°':'', m.sq?'squawk '+esc(m.sq):''].filter(Boolean).join(' · ')+`<br><span style="opacity:.7">Live ADS-B via adsb.lol · ICAO ${esc(m.hex)}</span>` });
   });
 
   // === Thermal / fire ===

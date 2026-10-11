@@ -113,6 +113,20 @@ function summarizeAirHotspots(hotspots = []) {
     noCallsign: h.noCallsign || 0,
     highAlt: h.highAltitude || 0,
     top: Object.entries(h.byCountry || {}).sort((a, b) => b[1] - a[1]).slice(0, 5),
+    via: h.via || 'OpenSky',
+    coverage: h.coverage || 'full',
+    sampledAt: h.sampledAt || null,
+    military: h.military || 0,
+    militaryTop: (h.militaryTop || []).slice(0, 5),
+    note: h.note || null,
+  }));
+}
+
+// Military aircraft currently broadcasting (adsb.lol global feed), for real markers on the air layer
+function summarizeMilitary(list = []) {
+  return list.filter(a => typeof a.lat === 'number' && typeof a.lon === 'number').slice(0, 150).map(a => ({
+    hex: a.hex, cs: a.callsign || '', type: a.type || '', reg: a.reg || '', country: a.country || 'Unknown',
+    lat: +a.lat.toFixed(3), lon: +a.lon.toFixed(3), alt: a.altFt ?? null, gs: a.gs ?? null, trk: a.track ?? null, sq: a.squawk || null,
   }));
 }
 
@@ -393,6 +407,12 @@ export async function synthesize(data) {
     : loadOpenSkyFallback(data.sources.OpenSky?.timestamp || data.crucix?.timestamp);
   const effectiveAirHotspots = airFallback?.hotspots || liveAirHotspots;
   const air = summarizeAirHotspots(effectiveAirHotspots);
+  const milAir = summarizeMilitary(data.sources.OpenSky?.military || []);
+  const airLive = {
+    openSky: data.sources.OpenSky?.openSky || null,
+    militaryTotal: data.sources.OpenSky?.militaryTotal || 0,
+    signals: data.sources.OpenSky?.signals || [],
+  };
   const thermal = (data.sources.FIRMS?.hotspots || []).map(h => ({
     region: h.region, det: h.totalDetections || 0, night: h.nightDetections || 0,
     hc: h.highConfidence || 0,
@@ -595,8 +615,9 @@ export async function synthesize(data) {
   const news = await fetchAllNews();
 
   const V2 = {
-    meta: data.crucix, air, thermal, tSignals, chokepoints, nuke, nukeSignals,
+    meta: data.crucix, air, milAir, thermal, tSignals, chokepoints, nuke, nukeSignals,
     airMeta: {
+      ...airLive,
       fallback: Boolean(airFallback),
       liveTotal: sumAirHotspots(liveAirHotspots),
       timestamp: airFallback?.timestamp || data.sources.OpenSky?.timestamp || data.crucix?.timestamp || null,

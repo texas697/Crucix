@@ -65,6 +65,15 @@ if gcloud secrets describe ACLED_EMAIL --project "$PROJECT" >/dev/null 2>&1 && g
 else
   echo "▶ No ACLED_EMAIL/ACLED_PASSWORD secrets — Conflict layer stays empty"
 fi
+# OpenSky API client (optional; opensky-network.org -> Account -> API client). Create once with:
+#   printf '%s' "client-id"     | gcloud secrets create OPENSKY_CLIENT_ID --data-file=- --project $PROJECT
+#   printf '%s' "client-secret" | gcloud secrets create OPENSKY_CLIENT_SECRET --data-file=- --project $PROJECT
+if gcloud secrets describe OPENSKY_CLIENT_ID --project "$PROJECT" >/dev/null 2>&1 && gcloud secrets describe OPENSKY_CLIENT_SECRET --project "$PROJECT" >/dev/null 2>&1; then
+  SECRETS="$SECRETS,OPENSKY_CLIENT_ID=OPENSKY_CLIENT_ID:latest,OPENSKY_CLIENT_SECRET=OPENSKY_CLIENT_SECRET:latest"
+  echo "▶ OpenSky: API client from Secret Manager"
+else
+  echo "▶ No OPENSKY_CLIENT_ID/SECRET secrets — anonymous OpenSky with adsb.lol fallback"
+fi
 # Optional operator keys: anything in deploy/extra-env.yaml (gitignored) is merged in
 if [ -f deploy/extra-env.yaml ]; then tail -n +1 deploy/extra-env.yaml >> deploy/env.yaml; fi
 
