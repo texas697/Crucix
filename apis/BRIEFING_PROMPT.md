@@ -40,7 +40,7 @@ Before drafting, answer these questions internally:
 4. What is likely to happen next if this continues?
 5. What can the user do with that information now?
 
-Do not overweight noisy social sources. Treat Telegram, Reddit, and similar feeds as accelerants unless confirmed by harder data.
+Do not overweight noisy social sources. Treat Reddit, Bluesky and similar feeds as accelerants unless confirmed by harder data.
 
 ## Step 3: Use the Standard Output Order
 

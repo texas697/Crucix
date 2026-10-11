@@ -80,7 +80,7 @@ Useful overrides: `AUTH_ALLOWED_EMAILS=a@x.com,b@y.com` (lock the app to specifi
 |---|---|---|
 | Login | `AUTH_MODE=firebase`, `FIREBASE_WEB_CONFIG` | Session cookie `crucix_session`, 14 days (`AUTH_SESSION_DAYS`). `AUTH_MODE=off` only for a private laptop. |
 | BYOK | `BYOK_ENCRYPTION_KEY` (Secret Manager) | Rotating this key invalidates every stored user key; users just re-enter theirs. |
-| Sweeps | `SWEEP_MODE=external`, `SWEEP_TRIGGER_TOKEN` | Cloud Run throttles CPU outside requests, so the scheduler's request *is* the sweep; there is no startup sweep in this mode (the deploy script fires one). Telegram/Discord bots need `internal` mode + `--no-cpu-throttling` (≈5× the cost). |
+| Sweeps | `SWEEP_MODE=external`, `SWEEP_TRIGGER_TOKEN` | Cloud Run throttles CPU outside requests, so the scheduler's request *is* the sweep; there is no startup sweep in this mode (the deploy script fires one). |
 | State | `RUNS_DIR=/data/runs` | Cloud Storage FUSE volume. Delta memory and `latest.json` survive redeploys. |
 | Area briefs | `LLM_PROVIDER`, `LLM_MODEL`, secret `LLM_API_KEY`, `BRIEF_SHARED_PER_USER_HOUR`, `BRIEF_SHARED_PER_DAY` | Drawn-shape briefs use the user's BYOK key when saved, otherwise this shared operator key with a per-user hourly and global daily budget (defaults 30 / 400). The deploy script wires the secret in automatically when it exists. xAI returns the exact charge per call; the panel shows it. |
 | Health | `/api/healthz` (public) | `/api/health` with full detail requires login. Google's front end swallows a bare `/healthz`, hence the prefix. |

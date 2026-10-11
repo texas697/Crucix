@@ -118,15 +118,7 @@ Every 15 minutes (configurable) the server:
 2. Synthesizes the raw data for the dashboard
 3. Computes the delta from the previous run
 4. Generates ideas (when a key is configured)
-5. Evaluates alerts (FLASH / PRIORITY / ROUTINE) and sends them to Telegram and/or Discord, **only if you
-   configure one of them**
-6. Pushes the update to connected browsers
-
-### Optional Telegram and Discord alerts
-Off by default. Set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`, or `DISCORD_BOT_TOKEN` + `DISCORD_CHANNEL_ID`
-(or just `DISCORD_WEBHOOK_URL` for one-way alerts), and the server sends tiered alerts and answers `/status`,
-`/sweep`, `/brief` and `/alerts` (Telegram also has `/mute` and `/unmute`). Alert evaluation uses an LLM when
-one is configured and a rule-based engine otherwise. Discord's full bot needs `npm install discord.js`.
+5. Pushes the update to connected browsers
 
 ### Optional LLM layer
 Anthropic Claude, OpenAI, Google Gemini, OpenRouter, OpenAI Codex, MiniMax, Mistral, Grok, Ollama and
@@ -178,33 +170,6 @@ Set `LLM_PROVIDER` to one of: `anthropic`, `openai`, `gemini`, `codex`, `openrou
 
 For Codex, run `npx @openai/codex login` to authenticate via your ChatGPT subscription.
 
-### Telegram Bot + Alerts (optional)
-
-| Key | How to Get |
-|-----|------------|
-| `TELEGRAM_BOT_TOKEN` | Create via [@BotFather](https://t.me/BotFather) on Telegram |
-| `TELEGRAM_CHAT_ID` | Get via [@userinfobot](https://t.me/userinfobot) |
-| `TELEGRAM_POLL_INTERVAL` | *(Optional)* Bot command polling interval in ms (default: 5000) |
-
-### Discord Bot + Alerts (optional)
-
-| Key | How to Get |
-|-----|------------|
-| `DISCORD_BOT_TOKEN` | Create at [Discord Developer Portal](https://discord.com/developers/applications) → Bot → Token |
-| `DISCORD_CHANNEL_ID` | Right-click channel in Discord (Developer Mode on) → Copy Channel ID |
-| `DISCORD_GUILD_ID` | *(Optional)* Right-click server → Copy Server ID. Enables instant slash command registration (otherwise takes up to 1 hour for global commands) |
-| `DISCORD_WEBHOOK_URL` | *(Optional)* Channel Settings → Integrations → Webhooks → New Webhook → Copy URL. Use this for alert-only mode without a bot |
-
-**Discord bot setup:**
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications) and create a new application
-2. Go to **Bot** → click **Reset Token** → copy the token to `DISCORD_BOT_TOKEN`
-3. Under **Privileged Gateway Intents**, enable **Message Content Intent**
-4. Go to **OAuth2** → **URL Generator** → select `bot` + `applications.commands` scopes → select `Send Messages` + `Embed Links` permissions
-5. Copy the generated URL and open it in your browser to invite the bot to your server
-6. Install the dependency: `npm install discord.js`
-
-Alerts work with or without an LLM on both Telegram and Discord. With an LLM configured, signal evaluation is richer and more context-aware. Without one, a deterministic rule engine evaluates signals based on severity, cross-domain correlation, and signal counts.
-
 ### Without Any Keys
 
 Crucix still works with zero API keys. 18+ sources require no authentication at all. Sources that need keys return structured errors and the rest of the sweep continues normally.
@@ -219,7 +184,7 @@ crucix/
 ├── crucix.config.mjs          # Configuration with env var overrides + delta thresholds
 ├── diag.mjs                   # Diagnostic script — run if server fails to start
 ├── .env.example               # All documented env vars
-├── package.json               # Runtime: express | Optional: discord.js
+├── package.json               # Runtime: express, firebase-admin
 ├── docs/                      # Screenshots for README
 │
 ├── apis/
@@ -261,9 +226,6 @@ crucix/
 │   │   ├── engine.mjs         # Delta computation — semantic dedup, configurable thresholds, severity scoring
 │   │   ├── memory.mjs         # Hot memory (3 runs, atomic writes) + cold storage (daily archives)
 │   │   └── index.mjs          # Re-exports
-│   └── alerts/
-│       ├── telegram.mjs       # Multi-tier alerts (FLASH/PRIORITY/ROUTINE) + two-way bot commands
-│       └── discord.mjs        # Discord bot (slash commands, rich embeds) + webhook fallback
 │
 └── runs/                      # Runtime data (gitignored)
     ├── latest.json            # Most recent sweep output
@@ -272,7 +234,7 @@ crucix/
 
 ### Design Principles
 - **Pure ESM** — every file is `.mjs` with explicit imports
-- **Minimal dependencies** — Express is the only runtime dependency. `discord.js` is optional (for Discord bot). LLM providers use raw `fetch()`, no SDKs.
+- **Minimal dependencies** — Express and firebase-admin are the only runtime dependencies. LLM providers use raw `fetch()`, no SDKs.
 - **Parallel execution** — `Promise.allSettled()` fires all 28 sources simultaneously
 - **Graceful degradation** — missing keys produce errors, not crashes. LLM failures don't kill sweeps.
 - **Each source is standalone** — run `node apis/sources/gdelt.mjs` to test any source independently
@@ -360,13 +322,6 @@ All settings are in `.env` with sensible defaults:
 | `LLM_PROVIDER` | disabled | `anthropic`, `openai`, `gemini`, `codex`, `openrouter`, `minimax`, `mistral`, or `grok` |
 | `LLM_API_KEY` | — | API key (not needed for codex) |
 | `LLM_MODEL` | per-provider default | Override model selection |
-| `TELEGRAM_BOT_TOKEN` | disabled | For Telegram alerts + bot commands |
-| `TELEGRAM_CHAT_ID` | — | Your Telegram chat ID |
-| `TELEGRAM_POLL_INTERVAL` | `5000` | Bot command polling interval (ms) |
-| `DISCORD_BOT_TOKEN` | disabled | For Discord alerts + slash commands |
-| `DISCORD_CHANNEL_ID` | — | Discord channel for alerts |
-| `DISCORD_GUILD_ID` | — | Server ID (instant slash command registration) |
-| `DISCORD_WEBHOOK_URL` | — | Webhook URL (alert-only fallback, no bot needed) |
 
 Delta engine thresholds (how sensitive the system is to changes between sweeps) can be customized in `crucix.config.mjs` under the `delta.thresholds` section. The defaults are tuned to filter out noise while catching meaningful moves.
 
@@ -439,20 +394,6 @@ This is normal — the first sweep takes 30–60 seconds to query all 28 sources
 Expected behavior. Sources that require API keys will return structured errors if the key isn't set. The rest of the sweep continues normally. Check the Source Integrity section in the dashboard (or the server logs) to see which sources failed and why. The 3 most impactful free keys to add are `FRED_API_KEY`, `FIRMS_MAP_KEY`, and `EIA_API_KEY`.
 
 OpenSky can also return `HTTP 429` when its public hotspots are queried too aggressively. Crucix does not try to evade that limit. Instead, it surfaces the throttle/error in source health and preserves the most recent non-empty air traffic snapshot from `runs/` so the dashboard flight layer does not suddenly go blank on a throttled sweep.
-
-### Telegram bot not responding to commands
-
-Make sure both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set in `.env`. The bot only responds to messages from the configured chat ID (security measure). You should see `[Crucix] Telegram alerts enabled` and `[Crucix] Bot command polling started` in the server logs on startup. If not, double-check your token with `curl https://api.telegram.org/bot<YOUR_TOKEN>/getMe`.
-
-### Discord bot not responding to slash commands
-
-Check these in order:
-1. Make sure `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are set in `.env`
-2. Verify `discord.js` is installed: `npm ls discord.js`. If missing, run `npm install discord.js`
-3. If slash commands don't appear, set `DISCORD_GUILD_ID` — without it, global commands can take up to 1 hour to propagate. Guild-specific commands register instantly
-4. Confirm the bot was invited with `bot` + `applications.commands` scopes and has `Send Messages` + `Embed Links` permissions in the target channel
-5. Check server logs for `[Discord] Bot logged in as ...` on startup. If you see `[Discord] discord.js not installed`, install it and restart
-6. **Webhook-only fallback:** If you just want alerts without slash commands, set `DISCORD_WEBHOOK_URL` instead of the bot token. No `discord.js` needed.
 
 ---
 

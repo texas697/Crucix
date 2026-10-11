@@ -293,61 +293,6 @@
       "routine": "ROUTINE"
     }
   },
-  "alerts": {
-    "tiers": {
-      "flash": {
-        "label": "FLASH",
-        "description": "Immediate action required — market-moving, time-critical"
-      },
-      "priority": {
-        "label": "PRIORITY",
-        "description": "Important signal cluster — act within hours"
-      },
-      "routine": {
-        "label": "ROUTINE",
-        "description": "Noteworthy change — FYI, no urgency"
-      }
-    },
-    "confidence": {
-      "high": "HIGH",
-      "medium": "MEDIUM",
-      "low": "LOW"
-    },
-    "fields": {
-      "direction": "Direction",
-      "confidence": "Confidence",
-      "crossCorrelation": "Cross-Correlation",
-      "action": "Action",
-      "signals": "Signals",
-      "monitor": "Monitor"
-    },
-    "messages": {
-      "alertsMuted": "Alerts Muted",
-      "mutedUntil": "Alerts silenced for {hours}h — until {time} UTC.",
-      "useUnmuteToResume": "Use /unmute to resume.",
-      "alertsResumed": "Alerts Resumed",
-      "willReceiveNext": "You will receive the next signal evaluation."
-    },
-    "ruleBasedHeadlines": {
-      "nuclearAnomaly": "Nuclear Anomaly Detected",
-      "crossDomainSignals": "{count} Critical Cross-Domain Signals",
-      "escalatingSignals": "{count} Escalating Signals",
-      "osintSurge": "OSINT Surge: {count} New Urgent Posts",
-      "signalChangeDetected": "Signal Change Detected"
-    }
-  },
-  "discord": {
-    "commands": {
-      "status": "System health, last sweep time, source status",
-      "sweep": "Trigger a manual sweep cycle",
-      "brief": "Compact intelligence summary",
-      "portfolio": "Portfolio status (if Alpaca connected)",
-      "alerts": "Recent alert history",
-      "mute": "Mute alerts (default 1h)",
-      "unmute": "Resume alerts",
-      "muteHoursOption": "Hours to mute (default: 1)"
-    }
-  },
   "llm": {
     "systemPrompt": "You are a quantitative analyst at a macro intelligence firm. You receive structured OSINT + economic data from 25 sources and produce 5-8 actionable trade ideas.\n\nRules:\n- Each idea must cite specific data points from the input\n- Include entry rationale, risk factors, and time horizon\n- Blend geopolitical, economic, and market signals — cross-correlate across domains\n- Be specific: name instruments (tickers, futures, ETFs), not vague sectors\n- If delta shows significant changes, lead with those\n- Do NOT repeat ideas from the \"previous ideas\" list unless conditions have materially changed\n- Rate confidence: HIGH (multiple confirming signals), MEDIUM (thesis supported), LOW (speculative)\n\nOutput ONLY valid JSON array. Each object:\n{\n  \"title\": \"Short title (max 10 words)\",\n  \"type\": \"LONG|SHORT|HEDGE|WATCH|AVOID\",\n  \"ticker\": \"Primary instrument\",\n  \"confidence\": \"HIGH|MEDIUM|LOW\",\n  \"rationale\": \"2-3 sentence explanation citing specific data\",\n  \"risk\": \"Key risk factor\",\n  \"horizon\": \"Intraday|Days|Weeks|Months\",\n  \"signals\": [\"signal1\", \"signal2\"]\n}"
   },

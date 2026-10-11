@@ -2103,7 +2103,7 @@ function renderLower(){
 
   const srcHtml=D.health.map(s=>`<div class="src-item"><div class="sd ${s.err?'err':'ok'}"></div><span>${s.n}</span></div>`).join('');
 
-  // NEWS TICKER — merges RSS + GDELT + Telegram into flowing cards (moved from right rail)
+  // NEWS TICKER — merges RSS + GDELT into flowing cards (moved from right rail)
   const feed = (D.newsFeed || []).filter(n=>textInRegion((n.region||'')+' '+(n.headline||''))).slice(0, 20);
   const srcClass = s => {
     if (!s) return 'other';
@@ -2116,7 +2116,6 @@ function renderLower(){
     if (sl.includes('bbc')) return 'bbc';
     if (sl.includes('jazeera') || sl.includes('alj')) return 'alj';
     if (sl.includes('gdelt')) return 'gdelt';
-    if (sl.includes('telegram')) return 'tg';
     if (sl.includes('npr')) return 'us';
     if (sl.includes('dw') || sl.includes('deutsche')) return 'dw';
     if (sl.includes('france') || sl.includes('euronews')) return 'eu';

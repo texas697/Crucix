@@ -30,7 +30,7 @@
     "connecting": "CONNEXION À {count} SOURCES OSINT...",
     "sourceGroup1": "OPENSKY · FIRMS · KIWISDR · MARITIME",
     "sourceGroup2": "FRED · BLS · EIA · TREASURY · GSCPI",
-    "sourceGroup3": "TELEGRAM · SAFECAST · EPA · OMS · OFAC",
+    "sourceGroup3": "KIWISDR · SAFECAST · EPA · OMS · OFAC",
     "sourceGroup4": "GDELT · NOAA · BREVETS · BLUESKY · REDDIT",
     "sourceGroup5": "USGS · BCE · CVE · COPERNICUS · CELESTRAK",
     "sweepComplete": "SCAN TERMINÉ — {ok}/{total} SOURCES",
@@ -291,61 +291,6 @@
       "flash": "FLASH",
       "priority": "PRIORITÉ",
       "routine": "ROUTINE"
-    }
-  },
-  "alerts": {
-    "tiers": {
-      "flash": {
-        "label": "FLASH",
-        "description": "Action immédiate requise — impact marché, temps critique"
-      },
-      "priority": {
-        "label": "PRIORITÉ",
-        "description": "Cluster de signaux important — agir dans les heures"
-      },
-      "routine": {
-        "label": "ROUTINE",
-        "description": "Changement notable — informatif, pas d'urgence"
-      }
-    },
-    "confidence": {
-      "high": "HAUTE",
-      "medium": "MOYENNE",
-      "low": "BASSE"
-    },
-    "fields": {
-      "direction": "Direction",
-      "confidence": "Confiance",
-      "crossCorrelation": "Corrélation Croisée",
-      "action": "Action",
-      "signals": "Signaux",
-      "monitor": "Surveiller"
-    },
-    "messages": {
-      "alertsMuted": "Alertes Coupées",
-      "mutedUntil": "Alertes suspendues pour {hours}h — jusqu'à {time} UTC.",
-      "useUnmuteToResume": "Utilisez /unmute pour reprendre.",
-      "alertsResumed": "Alertes Reprises",
-      "willReceiveNext": "Vous recevrez la prochaine évaluation de signal."
-    },
-    "ruleBasedHeadlines": {
-      "nuclearAnomaly": "Anomalie Nucléaire Détectée",
-      "crossDomainSignals": "{count} Signaux Critiques Multi-Domaines",
-      "escalatingSignals": "{count} Signaux en Escalade",
-      "osintSurge": "Surge OSINT : {count} Nouveaux Posts Urgents",
-      "signalChangeDetected": "Changement de Signal Détecté"
-    }
-  },
-  "discord": {
-    "commands": {
-      "status": "Santé système, dernier scan, statut sources",
-      "sweep": "Déclencher un scan manuel",
-      "brief": "Résumé compact de renseignement",
-      "portfolio": "Statut portfolio (si Alpaca connecté)",
-      "alerts": "Historique des alertes récentes",
-      "mute": "Couper les alertes (par défaut 1h)",
-      "unmute": "Reprendre les alertes",
-      "muteHoursOption": "Heures de coupure (par défaut : 1)"
     }
   },
   "llm": {
