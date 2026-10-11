@@ -56,6 +56,15 @@ YAML
 else
   echo "▶ No LLM_API_KEY secret — area briefs will require each user's own key"
 fi
+# ACLED conflict data (myACLED login). Create once with:
+#   printf '%s' "you@example.com" | gcloud secrets create ACLED_EMAIL --data-file=- --project $PROJECT
+#   printf '%s' "your-password"   | gcloud secrets create ACLED_PASSWORD --data-file=- --project $PROJECT
+if gcloud secrets describe ACLED_EMAIL --project "$PROJECT" >/dev/null 2>&1 && gcloud secrets describe ACLED_PASSWORD --project "$PROJECT" >/dev/null 2>&1; then
+  SECRETS="$SECRETS,ACLED_EMAIL=ACLED_EMAIL:latest,ACLED_PASSWORD=ACLED_PASSWORD:latest"
+  echo "▶ ACLED: credentials from Secret Manager"
+else
+  echo "▶ No ACLED_EMAIL/ACLED_PASSWORD secrets — Conflict layer stays empty"
+fi
 # Optional operator keys: anything in deploy/extra-env.yaml (gitignored) is merged in
 if [ -f deploy/extra-env.yaml ]; then tail -n +1 deploy/extra-env.yaml >> deploy/env.yaml; fi
 
