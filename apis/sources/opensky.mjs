@@ -13,8 +13,12 @@
 
 import { safeFetch } from '../utils/fetch.mjs';
 
-const BASE = 'https://opensky-network.org/api';
-const TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
+// OpenSky firewalls Google Cloud address space (TCP connects time out from Cloud Run), so an optional relay
+// (deploy/opensky-relay.py on any non-Google host) forwards both the token exchange and the API calls.
+const RELAY = (process.env.OPENSKY_RELAY_URL || '').replace(/\/$/, '');
+const RELAY_HEADERS = RELAY && process.env.OPENSKY_RELAY_TOKEN ? { 'X-Relay-Token': process.env.OPENSKY_RELAY_TOKEN } : {};
+const BASE = RELAY ? `${RELAY}/api` : 'https://opensky-network.org/api';
+const TOKEN_URL = RELAY ? `${RELAY}/token` : 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
 const ADSB = 'https://api.adsb.lol/v2';
 const BUDGET_MS = 22000;
 // adsb.lol rejects generic agents and throttles at roughly one request per second per IP
@@ -101,7 +105,7 @@ async function openSkyToken() {
   if (tokenCache.value && Date.now() < tokenCache.expires - 60000) return tokenCache.value;
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...RELAY_HEADERS },
     body: new URLSearchParams({ grant_type: 'client_credentials', client_id: id, client_secret: secret }),
     signal: AbortSignal.timeout(8000),
   });
@@ -113,39 +117,39 @@ async function openSkyToken() {
 
 /** One global state-vector snapshot (4 credits). Returns { states, auth } or { error }. */
 export async function getAllFlights() {
-  let headers = {};
+  let headers = { ...RELAY_HEADERS };
   let auth = 'anonymous';
   try {
     const token = await openSkyToken();
-    if (token) { headers = { Authorization: `Bearer ${token}` }; auth = 'account'; }
+    if (token) { headers.Authorization = `Bearer ${token}`; auth = 'account'; }
   } catch (e) {
     return { error: e.message, auth: 'account' };
   }
   const data = await safeFetch(`${BASE}/states/all`, { timeout: 14000, retries: 0, headers });
   if (data?.error) return { error: data.error, auth };
   if (!Array.isArray(data?.states)) return { error: 'no states in response', auth };
-  return { states: data.states, auth, time: data.time };
+  return { states: data.states, auth: RELAY ? `${auth} via relay` : auth, time: data.time };
 }
 
 // Kept for callers that want a single box; costs credits, so briefing() does not use it.
 export async function getFlightsInArea(lamin, lomin, lamax, lomax) {
   const params = new URLSearchParams({ lamin: String(lamin), lomin: String(lomin), lamax: String(lamax), lomax: String(lomax) });
-  return safeFetch(`${BASE}/states/all?${params}`, { timeout: 14000, retries: 0 });
+  return safeFetch(`${BASE}/states/all?${params}`, { timeout: 14000, retries: 0, headers: RELAY_HEADERS });
 }
 
 export async function getFlightsByIcao(icao24List) {
   const icao = Array.isArray(icao24List) ? icao24List : [icao24List];
-  return safeFetch(`${BASE}/states/all?${icao.map(i => `icao24=${i}`).join('&')}`, { timeout: 14000, retries: 0 });
+  return safeFetch(`${BASE}/states/all?${icao.map(i => `icao24=${i}`).join('&')}`, { timeout: 14000, retries: 0, headers: RELAY_HEADERS });
 }
 
 export async function getDepartures(airportIcao, begin, end) {
   const params = new URLSearchParams({ airport: airportIcao, begin: String(Math.floor(begin / 1000)), end: String(Math.floor(end / 1000)) });
-  return safeFetch(`${BASE}/flights/departure?${params}`);
+  return safeFetch(`${BASE}/flights/departure?${params}`, { headers: RELAY_HEADERS });
 }
 
 export async function getArrivals(airportIcao, begin, end) {
   const params = new URLSearchParams({ airport: airportIcao, begin: String(Math.floor(begin / 1000)), end: String(Math.floor(end / 1000)) });
-  return safeFetch(`${BASE}/flights/arrival?${params}`);
+  return safeFetch(`${BASE}/flights/arrival?${params}`, { headers: RELAY_HEADERS });
 }
 
 // OpenSky state vector -> normalised aircraft

@@ -83,6 +83,7 @@ Useful overrides: `AUTH_ALLOWED_EMAILS=a@x.com,b@y.com` (lock the app to specifi
 | Sweeps | `SWEEP_MODE=external`, `SWEEP_TRIGGER_TOKEN` | Cloud Run throttles CPU outside requests, so the scheduler's request *is* the sweep; there is no startup sweep in this mode (the deploy script fires one). |
 | State | `RUNS_DIR=/data/runs` | Cloud Storage FUSE volume. Delta memory and `latest.json` survive redeploys. |
 | Area briefs | `LLM_PROVIDER`, `LLM_MODEL`, secret `LLM_API_KEY`, `BRIEF_SHARED_PER_USER_HOUR`, `BRIEF_SHARED_PER_DAY` | Drawn-shape briefs use the user's BYOK key when saved, otherwise this shared operator key with a per-user hourly and global daily budget (defaults 30 / 400). The deploy script wires the secret in automatically when it exists. xAI returns the exact charge per call; the panel shows it. |
+| Air layer | secrets `OPENSKY_CLIENT_ID`, `OPENSKY_CLIENT_SECRET`, `OPENSKY_RELAY_TOKEN`; env `OPENSKY_RELAY_URL` | OpenSky blocks Google Cloud IPs, so the sweep calls OpenSky through `deploy/opensky-relay.py` running on the DigitalOcean droplet behind a Cloudflare tunnel (`https://opensky.rsanchez-server.com`). Export `OPENSKY_RELAY_URL` before running the deploy script. Without the relay the layer falls back to adsb.lol samples. |
 | Health | `/api/healthz` (public) | `/api/health` with full detail requires login. Google's front end swallows a bare `/healthz`, hence the prefix. |
 
 ## Readers Digest in the cloud

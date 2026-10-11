@@ -74,6 +74,15 @@ if gcloud secrets describe OPENSKY_CLIENT_ID --project "$PROJECT" >/dev/null 2>&
 else
   echo "▶ No OPENSKY_CLIENT_ID/SECRET secrets — anonymous OpenSky with adsb.lol fallback"
 fi
+# OpenSky relay (deploy/opensky-relay.py on a non-Google host; OpenSky blocks Google Cloud IPs). Create once with:
+#   printf '%s' "shared-token" | gcloud secrets create OPENSKY_RELAY_TOKEN --data-file=- --project $PROJECT
+# and set OPENSKY_RELAY_URL below (or in deploy/extra-env.yaml).
+OPENSKY_RELAY_URL="${OPENSKY_RELAY_URL:-}"
+if [ -n "$OPENSKY_RELAY_URL" ] && gcloud secrets describe OPENSKY_RELAY_TOKEN --project "$PROJECT" >/dev/null 2>&1; then
+  printf 'OPENSKY_RELAY_URL: "%s"\n' "$OPENSKY_RELAY_URL" >> deploy/env.yaml
+  SECRETS="$SECRETS,OPENSKY_RELAY_TOKEN=OPENSKY_RELAY_TOKEN:latest"
+  echo "▶ OpenSky: calls relayed through $OPENSKY_RELAY_URL"
+fi
 # Optional operator keys: anything in deploy/extra-env.yaml (gitignored) is merged in
 if [ -f deploy/extra-env.yaml ]; then tail -n +1 deploy/extra-env.yaml >> deploy/env.yaml; fi
 

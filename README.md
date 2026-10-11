@@ -403,6 +403,12 @@ theater in rotation (adsb.lol accepts roughly one request every 4 s). Theaters r
 in their popup. For full coverage create a free OpenSky account, add an API client under Account, and set
 `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET` (in Secret Manager on Cloud Run; the deploy script wires them).
 
+OpenSky also firewalls Google Cloud address space outright (TCP connects from Cloud Run time out, credentials or
+not). `deploy/opensky-relay.py` is a dependency-free Python relay to run on any other host: it forwards the token
+exchange and API calls unchanged and requires an `X-Relay-Token` header. Run it behind TLS (a Cloudflare tunnel
+works well), then set `OPENSKY_RELAY_URL` and `OPENSKY_RELAY_TOKEN` on the service. The deploy script picks both up
+when `OPENSKY_RELAY_URL` is exported and the `OPENSKY_RELAY_TOKEN` secret exists.
+
 ---
 
 ---
