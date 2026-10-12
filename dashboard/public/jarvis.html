@@ -978,7 +978,7 @@ const LAYER_INFO = {
   thermal: {purpose:'Satellite-detected thermal anomalies (fires, flares, heat).', source:'NASA FIRMS (MODIS/VIIRS)', freshness:'Near-real-time; refreshed every sweep', confidence:'Strong for detecting heat sources; can include industrial flaring.', limitations:['Not a confirmation of conflict','Cloud cover and overpass timing create gaps']},
   conflict: {purpose:'Deadly armed-conflict events, plotted by fatality size.', source:'ACLED (Armed Conflict Location & Event Data)', freshness:'Refreshed every sweep; upstream lags days–weeks', confidence:'Editorially consistent, research-grade.', limitations:['Reports lag real time','Fatality counts are best-estimates, not exact']},
   maritime: {purpose:'Strategic chokepoints for disruption-path reasoning.', source:'Curated chokepoint registry', freshness:'Static geography', confidence:'High for fixed geography.', limitations:['A marker does not mean an active disruption','No live vessel tracking yet']},
-  nuke: {purpose:'Radiation monitors near civil nuclear sites.', source:'Safecast / public radiation monitors', freshness:'Refreshed every sweep', confidence:'Useful for anomaly screening.', limitations:['Sensor uptime is patchy; "no data" is common','Dose-rate noise can trigger false positives']},
+  nuke: {purpose:'Live gamma dose rate from fixed radiation sensors around nuclear plants and legacy sites, with the typical (median) reading per site and every sensor plotted.', source:'Safecast realtime sensor network (tt.safecast.org)', freshness:'Sensors report every few minutes; refreshed every sweep', confidence:'Good anomaly screen where sensors exist. Normal outdoor background is 0.05–0.3 µSv/h (roughly 15–100 CPM on an LND 7318 tube).', limitations:['No public sensors near Bushehr, Yongbyon or Dimona','Chernobyl exclusion zone reads permanently above background by design','Single hot sensors are flagged but do not flip a site; the site median does']},
   sdr: {purpose:'Software-defined radio receivers, a coverage/collection signal.', source:'KiwiSDR public receiver network', freshness:'Refreshed every sweep', confidence:'Good for coverage mapping.', limitations:['Receiver availability is volunteer-driven','Not a detection by itself']},
   health: {purpose:'WHO outbreak and public-health alerts.', source:'WHO', freshness:'Refreshed every sweep', confidence:'Authoritative for officially declared events.', limitations:['Reporting lags; many alerts are country-level']},
   news: {purpose:'Geolocated world-news headlines.', source:'Aggregated RSS / GDELT geocoding', freshness:'Minutes', confidence:'Broad coverage, variable quality.', limitations:['Geocoding can be approximate','Duplicate framing across outlets']},
@@ -1305,7 +1305,7 @@ function renderLeftRail(){
     {name:t('layers.thermalSpikes','Thermal Spikes'),count:totalThermal.toLocaleString(),dot:'thermal',sub:`${totalNight.toLocaleString()} ${t('layers.nightDet','night det.')}`},
     {name:t('layers.sdrCoverage','SDR Coverage'),count:D.sdr.total,dot:'sdr',sub:`${D.sdr.online} ${t('layers.online','online')}`},
     {name:t('layers.maritimeWatch','Maritime Watch'),count:D.chokepoints.length,dot:'maritime',sub:t('layers.chokepoints','chokepoints')},
-    {name:t('layers.nuclearSites','Nuclear Sites'),count:D.nuke.length,dot:'nuke',sub:t('layers.monitors','monitors')},
+    {name:t('layers.nuclearSites','Nuclear Sites'),count:D.nuke.reduce((a,s)=>a+(s.n||0),0),dot:'nuke',sub:`${D.nuke.filter(s=>s.coverage==='live').length}/${D.nuke.length} ${t('layers.sitesLive','sites live')}`},
     {name:t('layers.conflictEvents','Conflict Events'),count:conflictEvents.toLocaleString(),dot:'thermal',sub:conflictSub},
     {name:t('layers.healthWatch','Health Watch'),count:D.who.length,dot:'health',sub:t('layers.whoAlerts','WHO alerts')},
     {name:t('layers.worldNews','World News'),count:newsCount,dot:'news',sub:t('layers.rssGeolocated','RSS geolocated')},
@@ -1318,10 +1318,19 @@ function renderLeftRail(){
     '', 'pad-sm');
 
   const allNormal=D.nuke.every(s=>!s.anom);
-  const nukeHtml=D.nuke.map(s=>`<div class="site-row"><span>${s.site}</span><span class="site-val">${s.n>0?(s.cpm?.toFixed(1)||'--')+' CPM':'No data'}</span></div>`).join('');
+  const nukeLive=D.nuke.filter(s=>s.coverage==='live'), nukeDark=D.nuke.filter(s=>s.coverage!=='live');
+  const nukeSensorsN=nukeLive.reduce((a,s)=>a+(s.n||0),0);
+  const nukeNewest=nukeLive.map(s=>s.last).filter(Boolean).sort().pop();
+  const nukeHtml=nukeLive.map(s=>{
+    const val=s.cpm!=null?Math.round(s.cpm)+' CPM':'--';
+    const usv=s.usvh!=null?(s.usvh<0.01?'<0.01':s.usvh.toFixed(2))+' µSv/h':'';
+    const flag=s.anom?' <span style="color:var(--danger)">&#9650;</span>':(s.hot?` <span style="color:var(--warn)" title="${s.hot} sensor${s.hot>1?'s':''} above ${s.alertUsvh} µSv/h">&#9650;</span>`:'');
+    return `<div class="site-row" title="${esc(s.site+' · '+usv+' median · '+s.n+' live sensor'+(s.n>1?'s':'')+' within '+s.radiusKm+' km · nearest '+(s.nearest?s.nearest.name+' ('+s.nearest.distanceKm+' km)':'')+(s.last?' · latest '+relTime(s.last):'')+(s.note?' · '+s.note:''))}"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.site.replace(/ \(.*\)$/,'').replace('Exclusion Zone','zone'))}<span style="color:var(--text-2);font-size:11px"> · ${s.n}</span></span><span class="site-val" style="white-space:nowrap">${val}${flag}</span></div>`;
+  }).join('')+(nukeDark.length?`<div class="site-row" style="color:var(--text-2);font-size:11.5px"><span>${t('nuclear.noSensors','No public sensors')}: ${esc(nukeDark.map(s=>s.site.replace(/ \(.*\)$/,'')).join(', '))}</span></div>`:'');
+  const nukeStatus=D.nukeMeta?.error?'&#9888; '+t('nuclear.feedDown','Sensor feed unavailable'):nukeLive.length===0?t('nuclear.noLive','No live sensors'):allNormal?'&#9679; '+t('nuclear.allSitesNormal','All sites normal'):'&#9888; '+t('nuclear.anomalyDetected','Anomaly detected');
   const nuclearEl=document.getElementById('pNuclear');
-  if(nuclearEl) nuclearEl.innerHTML = cardHtml(t('panels.nuclearWatch','Nuclear watch'), 'Radiation &#183; CPM',
-    `<div class="nuke-ok ${allNormal?'ok':'anom'}">${allNormal?'&#9679; '+t('nuclear.allSitesNormal','All sites normal'):'&#9888; '+t('nuclear.anomalyDetected','Anomaly detected')}</div>${nukeHtml}`);
+  if(nuclearEl) nuclearEl.innerHTML = cardHtml(t('panels.nuclearWatch','Nuclear watch'), `${nukeSensorsN} sensors${nukeNewest?' &#183; '+relTime(nukeNewest):''}`,
+    `<div class="nuke-ok ${allNormal&&nukeLive.length&&!D.nukeMeta?.error?'ok':'anom'}">${nukeStatus}<span style="margin-left:auto;font-size:11px;opacity:0.75">median · CPM</span></div>${nukeHtml}`);
 
   const vix=D.fred.find(f=>f.id==='VIXCLS'), hy=D.fred.find(f=>f.id==='BAMLH0A0HYM2'), usd=D.fred.find(f=>f.id==='DTWEXBGS');
   const m2=D.fred.find(f=>f.id==='M2SL'), mort=D.fred.find(f=>f.id==='MORTGAGE30US'), claims=D.fred.find(f=>f.id==='ICSA');
@@ -1838,13 +1847,26 @@ function plotMarkers(){
     labels.push({ lat:cp.lat, lng:cp.lon, text:cp.label, color:'rgba(180,140,255,0.85)', type:'maritime' });
   });
 
-  // === Nuclear sites ===
-  const nukeCoords=[{lat:47.5,lon:34.6},{lat:51.4,lon:30.1},{lat:28.8,lon:50.9},{lat:39.8,lon:125.8},{lat:37.4,lon:141},{lat:31.0,lon:35.1}];
-  D.nuke.forEach((n,i)=>{
-    const c=nukeCoords[i]; if(!c) return;
-    points.push({ lat:c.lat, lng:c.lon, size:0.3, _r:4.5, color: n.anom ? 'rgba(255,107,116,0.95)' : 'rgba(242,200,121,0.85)', _stroke:'rgba(242,200,121,0.3)', type:'nuke', priority:2,
-      popHead:n.site, popMeta:'Safecast · last 30 days',
-      popText: n.n ? `Status: ${n.anom?'ANOMALY':'Normal'}<br>Avg CPM: ${n.cpm?.toFixed(1)||'--'}<br>Readings (30d): ${n.n}${n.last?`<br>Last reading: ${getAge(n.last)}`:''}` : `No Safecast readings within range in the last 30 days${n.last?`<br>Last known reading: ${new Date(n.last).toISOString().slice(0,10)}`:''}` });
+  // === Nuclear sites + live radiation sensors ===
+  const nukeFallback={zaporizhzhia:{lat:47.51,lon:34.58},chernobyl:{lat:51.39,lon:30.1},bushehr:{lat:28.83,lon:50.89},yongbyon:{lat:39.8,lon:125.75},fukushima:{lat:37.42,lon:141.03},dimona:{lat:31.0,lon:35.15}};
+  const fmtUsvh=v=>v==null?'--':(v<0.01?'<0.01':v.toFixed(2))+' µSv/h';
+  D.nuke.forEach(n=>{
+    const lat=n.lat??nukeFallback[n.key]?.lat, lon=n.lon??nukeFallback[n.key]?.lon; if(lat==null||lon==null) return;
+    const live=n.coverage==='live';
+    const color=n.anom?'rgba(255,107,116,0.95)':live?'rgba(242,200,121,0.9)':'rgba(242,200,121,0.45)';
+    const text=live
+      ? `Status: <b>${n.anom?'ANOMALY':n.hot?'Normal · '+n.hot+' hot sensor'+(n.hot>1?'s':''):'Normal'}</b><br>Median: ${Math.round(n.cpm)} CPM · ${fmtUsvh(n.usvh)}<br>Max: ${n.maxCpm!=null?Math.round(n.maxCpm)+' CPM · ':''}${fmtUsvh(n.maxUsvh)}<br>${n.n} live sensors within ${n.radiusKm} km${n.nearest?`<br>Nearest: ${esc(n.nearest.name)} (${n.nearest.distanceKm} km) ${Math.round(n.nearest.cpm)} CPM`:''}${n.last?`<br>Latest reading ${relTime(n.last)}`:''}${n.note?`<br><span style="opacity:0.7">${esc(n.note)}</span>`:''}`
+      : n.coverage==='none' ? `No public radiation sensors within ${n.radiusKm} km.${n.note?'<br><span style="opacity:0.7">'+esc(n.note)+'</span>':''}`
+      : `No live sensor readings within ${n.radiusKm} km in the last ${D.nukeMeta?.windowDays||30} days${n.last?`<br>Last known reading: ${new Date(n.last).toISOString().slice(0,10)}`:''}`;
+    points.push({ lat, lng:lon, size:0.3, _r:4.5, color, _stroke:'rgba(242,200,121,0.3)', type:'nuke', priority:2, ts:n.last||undefined,
+      popHead:n.site, popMeta:'Nuclear site · Safecast live sensors', popText:text });
+    (n.sensors||[]).forEach(r=>{
+      if(r.lat==null||r.lon==null) return;
+      const hot=n.alertUsvh!=null&&r.usvh>n.alertUsvh;
+      points.push({ lat:r.lat, lng:r.lon, size:0.14, _r:2.4, color:hot?'rgba(255,107,116,0.9)':'rgba(242,200,121,0.6)', _stroke:'rgba(242,200,121,0.2)', type:'nuke', priority:3, ts:r.at,
+        popHead:esc(r.name||'Radiation sensor'), popMeta:`Safecast sensor · ${r.km} km from ${esc(n.site.replace(/ \(.*\)$/,''))}`,
+        popText:`${Math.round(r.cpm)} CPM · ${fmtUsvh(r.usvh)}${hot?' · <b>above '+n.alertUsvh+' µSv/h</b>':''}<br>${esc(r.tube||'')}${r.at?` · ${relTime(r.at)}`:''}` });
+    });
   });
 
   // === SDR receivers ===

@@ -83,7 +83,7 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
   for VIX, high-yield spread and supply-chain pressure.
 - **Sweep delta:** what changed since the last refresh (new signals, escalations, de-escalations).
 - **Cross-source signals:** correlations across satellite, economic, conflict and social data.
-- **Nuclear watch:** radiation readings from Safecast and EPA RadNet.
+- **Nuclear watch:** live gamma dose rate from Safecast's fixed-sensor network around 11 nuclear sites (median per site, every sensor on the map), plus EPA RadNet.
 - **Space watch:** ISS position, recent launches, and Starlink/OneWeb and military constellation counts, with open
   fallbacks when CelesTrak is unreachable.
 - **Regional threat view:** air-raid alerts, a live drone and missile tracker, strike watch and prediction markets.
@@ -255,7 +255,7 @@ crucix/
 | **OpenSky** | One global ADS-B snapshot per sweep sliced into 10 theaters; adsb.lol military feed + rotating theater samples as fallback | None (free OpenSky API client raises the quota) |
 | **NASA FIRMS** | Satellite fire/thermal anomaly detection (3hr latency) | Free key |
 | **Maritime/AIS** | Vessel tracking, dark ships, sanctions evasion | Free key |
-| **Safecast** | Citizen-science radiation monitoring near 6 nuclear sites | None |
+| **Safecast** | Live radiation sensors (tt.safecast.org realtime feed) near 11 nuclear sites; Bushehr, Yongbyon and Dimona have no public coverage | None |
 | **ACLED** | Armed conflict events: battles, explosions, protests | Free (OAuth2) |
 | **ReliefWeb** | UN humanitarian crisis tracking | None |
 | **WHO** | Disease outbreaks and health emergencies | None |

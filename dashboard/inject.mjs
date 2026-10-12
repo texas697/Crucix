@@ -422,10 +422,17 @@ export async function synthesize(data) {
   const chokepoints = Object.values(data.sources.Maritime?.chokepoints || {}).map(c => ({
     label: c.label || c.name, note: c.note || '', lat: c.lat || 0, lon: c.lon || 0
   }));
-  const nuke = (data.sources.Safecast?.sites || []).map(s => ({
-    site: s.site, anom: s.anomaly || false, cpm: s.avgCPM, n: s.recentReadings || 0, last: s.lastReading || null
+  const safecast = data.sources.Safecast || {};
+  const nuke = (safecast.sites || []).map(s => ({
+    site: s.site, key: s.key, lat: s.lat, lon: s.lon, radiusKm: s.radiusKm, coverage: s.coverage || (s.recentReadings > 0 ? 'live' : 'stale'),
+    anom: s.anomaly || false, cpm: s.medianCPM ?? s.avgCPM ?? null, maxCpm: s.maxCPM ?? null,
+    usvh: s.medianUsvh ?? null, maxUsvh: s.maxUsvh ?? null, alertUsvh: s.alertUsvh ?? null, hot: s.hotSensors || 0,
+    n: s.sensors ?? s.recentReadings ?? 0, last: s.lastReading || null, nearest: s.nearest || null, note: s.note || null,
+    // Individual live sensors near the site, plotted on the Nuclear layer (name, position, CPM, dose rate, age).
+    sensors: (s.readings || []).map(r => ({ name: r.name, lat: r.lat, lon: r.lon, km: r.distanceKm, cpm: r.cpm, usvh: r.usvh, tube: r.tube, at: r.capturedAt }))
   }));
-  const nukeSignals = (data.sources.Safecast?.signals || []).filter(s => s);
+  const nukeSignals = (safecast.signals || []).filter(s => s);
+  const nukeMeta = { feed: safecast.feed || null, liveSensors: safecast.liveSensors || 0, windowDays: safecast.windowDays || null, error: safecast.error || null, at: safecast.timestamp || null };
   const sdrData = data.sources.KiwiSDR || {};
   const sdrNet = sdrData.network || {};
   const sdrConflict = sdrData.conflictZones || {};
@@ -615,7 +622,7 @@ export async function synthesize(data) {
   const news = await fetchAllNews();
 
   const V2 = {
-    meta: data.crucix, air, milAir, thermal, tSignals, chokepoints, nuke, nukeSignals,
+    meta: data.crucix, air, milAir, thermal, tSignals, chokepoints, nuke, nukeSignals, nukeMeta,
     airMeta: {
       ...airLive,
       fallback: Boolean(airFallback),
