@@ -424,6 +424,13 @@ when `OPENSKY_RELAY_URL` is exported and the `OPENSKY_RELAY_TOKEN` secret exists
 
 Built on [Crucix](https://github.com/calesthio/Crucix) by calesthio. Licensed under AGPL-3.0; see `LICENSE`. Contribution guidelines are in `CONTRIBUTING.md` and security reports go through `SECURITY.md`.
 
+## KiwiSDR probes through the relay
+
+The KiwiSDR community IP blacklist that every receiver downloads covers Google Cloud egress ranges, so `/status`
+probes sent straight from Cloud Run are dropped. When `AIS_RELAY_URL` (or `KIWISDR_RELAY_URL`) and the relay token
+are set, the source POSTs the receiver list to the relay's `/probe` endpoint on the droplet, which fetches each
+status page and returns the bodies. Without a relay the probes go direct, which works from a home connection.
+
 ## Monitoring
 
 `GET /api/status` is a public, unauthenticated freshness probe. It validates the synthesized data the dashboard

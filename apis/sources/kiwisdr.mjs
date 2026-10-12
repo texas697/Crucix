@@ -13,6 +13,10 @@ const UA = 'Crucix/2.0 (MFB Services Intelligence dashboard; +https://crucix-int
 const STATUS_TIMEOUT_MS = parseInt(process.env.KIWISDR_STATUS_TIMEOUT_MS) || 6000;
 const STATUS_BUDGET_MS = parseInt(process.env.KIWISDR_STATUS_BUDGET_MS) || 16000;
 const STATUS_CONCURRENCY = 10;
+// The KiwiSDR community IP blacklist (kiwisdr.com/ip_blacklist) covers Google Cloud egress ranges, so probes sent
+// straight from Cloud Run are dropped by every receiver. When a relay is configured the probes go through it.
+const RELAY_URL = (process.env.KIWISDR_RELAY_URL || process.env.AIS_RELAY_URL || '').replace(/\/+$/, '');
+const RELAY_TOKEN = process.env.KIWISDR_RELAY_TOKEN || process.env.AIS_RELAY_TOKEN || process.env.OPENSKY_RELAY_TOKEN || '';
 
 // receiverbook labels end in a country most of the time, but some end in a US state, a city or a free-text antenna
 // description. Normalise the common cases and blank the rest rather than report "HASENBERG AG 700M" as a country.
@@ -124,7 +128,42 @@ export async function probeReceiver(url) {
   }
 }
 
+async function probeViaRelay(receivers) {
+  const urls = receivers.map(r => String(r.url || '').replace(/\/+$/, '')).filter(u => /^https?:\/\//.test(u));
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), STATUS_BUDGET_MS + 4000);
+  try {
+    const res = await fetch(`${RELAY_URL}/probe`, {
+      method: 'POST', signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', 'X-Relay-Token': RELAY_TOKEN },
+      body: JSON.stringify({ urls, timeout: STATUS_TIMEOUT_MS / 1000 }),
+    });
+    if (!res.ok) throw new Error(`relay HTTP ${res.status}`);
+    const out = await res.json();
+    const results = new Map();
+    for (const rx of receivers) {
+      const r = out[String(rx.url || '').replace(/\/+$/, '')];
+      if (!r) { results.set(rx.url, { reachable: false, error: 'not probed' }); continue; }
+      if (!r.ok) { results.set(rx.url, { reachable: false, error: r.error || `HTTP ${r.status}` }); continue; }
+      const parsed = parseStatus(r.body || '');
+      results.set(rx.url, parsed ? { reachable: true, ...parsed } : { reachable: false, error: 'no status body' });
+    }
+    return results;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function probeAll(receivers) {
+  if (RELAY_URL && RELAY_TOKEN) {
+    try {
+      const viaRelay = await probeViaRelay(receivers);
+      viaRelay.via = 'relay';
+      return viaRelay;
+    } catch (e) {
+      console.log(`[KiwiSDR] relay probe failed (${e.message}) — probing directly`);
+    }
+  }
   const deadline = Date.now() + STATUS_BUDGET_MS;
   const results = new Map();
   let i = 0;
@@ -280,6 +319,7 @@ export async function briefing() {
   const probeStarted = Date.now();
   const probes = await probeAll(zoneRx);
   const probeMs = Date.now() - probeStarted;
+  const probeVia = probes.via || 'direct';
   for (const rx of zoneRx) {
     const pr = probes.get(rx.url);
     if (!pr) { rx.live = 'unprobed'; continue; }
@@ -408,7 +448,7 @@ export async function briefing() {
       online: liveOnline.length,
       private: livePrivate.length,
       unreachable: liveDown.length,
-      probeMs,
+      probeMs, probeVia,
       totalUsers,
       totalCapacity,
       utilizationPct: parseFloat(utilizationPct),

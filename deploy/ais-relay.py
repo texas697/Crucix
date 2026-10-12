@@ -7,6 +7,9 @@ vessel table, and answers:
 
   GET /healthz            -> {"ok": true, ...stats}            (no token)
   GET /snapshot?max=1500  -> same shape as lib/ais/stream.mjs aisSnapshot()   (X-Relay-Token required)
+  POST /probe {"urls":[...]} -> {url: {"ok":bool, "status":int, "body":str|null, "error":str|null}}  (X-Relay-Token required)
+        Fetches <url>/status from each KiwiSDR receiver on the dashboard's behalf: the KiwiSDR community IP
+        blacklist covers Google Cloud egress ranges, so probes from Cloud Run are silently dropped.
 
 Environment: AISSTREAM_API_KEY (required), RELAY_TOKEN (required), PORT (default 3011), BIND (default 127.0.0.1).
 Only dependency: `websockets` (pip). Everything else is the standard library.
@@ -18,6 +21,8 @@ import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from concurrent.futures import ThreadPoolExecutor
+import urllib.request
 from urllib.parse import urlparse, parse_qs
 
 try:
@@ -292,6 +297,36 @@ class Handler(BaseHTTPRequestHandler):
                 mx = 1500
             return self._send(200, snapshot(mx))
         return self._send(404, {"error": "not found"})
+
+    def do_POST(self):
+        u = urlparse(self.path)
+        if self.headers.get("X-Relay-Token", "") != TOKEN or not TOKEN:
+            return self._send(401, {"error": "bad token"})
+        if u.path != "/probe":
+            return self._send(404, {"error": "not found"})
+        try:
+            n = min(int(self.headers.get("Content-Length", "0")), 65536)
+            req = json.loads(self.rfile.read(n) or b"{}")
+            urls = [str(x) for x in (req.get("urls") or [])][:80]
+            timeout = min(max(float(req.get("timeout", 6)), 1), 10)
+        except Exception as e:
+            return self._send(400, {"error": f"bad body: {e}"})
+        urls = [x.rstrip("/") for x in urls if x.startswith("http://") or x.startswith("https://")]
+
+        def one(base):
+            try:
+                r = urllib.request.Request(base + "/status", headers={"User-Agent": "Crucix/2.0 (relay)"})
+                with urllib.request.urlopen(r, timeout=timeout) as resp:
+                    body = resp.read(8192).decode("utf-8", "replace")
+                    return base, {"ok": resp.status == 200, "status": resp.status, "body": body, "error": None}
+            except Exception as e:  # noqa: BLE001
+                return base, {"ok": False, "status": None, "body": None, "error": type(e).__name__ + ": " + str(e)[:80]}
+
+        out = {}
+        with ThreadPoolExecutor(max_workers=16) as ex:
+            for base, res in ex.map(one, urls):
+                out[base] = res
+        return self._send(200, out)
 
 
 def main():
