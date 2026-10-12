@@ -37,7 +37,7 @@ MAX_VESSELS = 40000
 
 # Must match AIS_BOXES in lib/ais/stream.mjs: [[latMin, lonMin], [latMax, lonMax]]
 BOXES = {
-    "chokepoint6": ("Strait of Hormuz", [[23.5, 54.0], [27.5, 58.5]]),
+    "chokepoint6": ("Strait of Hormuz", [[25.6, 55.6], [27.0, 57.4]]),  # the strait itself; excludes Dubai / Fujairah anchorages
     "chokepoint4": ("Bab el-Mandeb", [[11.0, 41.5], [15.0, 45.0]]),
     "chokepoint1": ("Suez Canal", [[29.0, 31.5], [32.5, 33.5]]),
     "chokepoint5": ("Malacca Strait", [[0.5, 100.0], [5.5, 105.0]]),
@@ -185,7 +185,7 @@ def snapshot(max_vessels=1500):
     cutoff = time.time() - LIVE_WINDOW_S
     with LOCK:
         live = [v for v in VESSELS.values() if v["lat"] is not None and v["ts"] >= cutoff]
-        boxes = {bid: {"id": bid, "label": lbl, "box": box, "vessels": 0, "anchored": 0, "moving": 0, "tanker": 0, "cargo": 0, "passenger": 0, "military": 0, "other": 0}
+        boxes = {bid: {"id": bid, "label": lbl, "box": box, "vessels": 0, "anchored": 0, "moving": 0, "tanker": 0, "cargo": 0, "passenger": 0, "military": 0, "other": 0, "merchant": 0, "merchantStopped": 0}
                  for bid, (lbl, box) in BOXES.items()}
         for v in live:
             b = boxes.get(v["box"]) if v["box"] else None
@@ -195,6 +195,10 @@ def snapshot(max_vessels=1500):
             anchored = v["nav"] in (1, 5) or (v["sog"] is not None and v["sog"] < 0.5)
             b["anchored" if anchored else "moving"] += 1
             c = v["cls"]
+            if c in ("tanker", "cargo"):
+                b["merchant"] += 1
+                if anchored:
+                    b["merchantStopped"] += 1
             if c == "tanker":
                 b["tanker"] += 1
             elif c == "cargo":

@@ -198,9 +198,11 @@ export async function briefing() {
       const b = (snap.boxes || {})[id];
       if (b) cp.live = { vessels: b.vessels, moving: b.moving, anchored: b.anchored, tanker: b.tanker, cargo: b.cargo, passenger: b.passenger, military: b.military, other: b.other };
     }
+    // Holding pattern: most of the identified merchant traffic (tankers + cargo) in the strait is stopped.
     const hormuz = result.chokepoints.chokepoint6;
-    if (hormuz?.live && hormuz.live.vessels > 0 && hormuz.live.anchored / hormuz.live.vessels >= 0.6 && hormuz.live.vessels >= 20) {
-      result.signals.push(`HORMUZ HOLDING PATTERN: ${hormuz.live.anchored} of ${hormuz.live.vessels} ships in the approaches are at anchor or stopped (AIS, last hour)`);
+    const hb = (snap.boxes || {}).chokepoint6;
+    if (hormuz?.live && hb && hb.merchantStopped != null && hb.merchant >= 15 && hb.merchantStopped / hb.merchant >= 0.6) {
+      result.signals.push(`HORMUZ HOLDING PATTERN: ${hb.merchantStopped} of ${hb.merchant} tankers and cargo ships in the strait are stopped or at anchor (AIS, last hour)`);
     }
   }
   return {
