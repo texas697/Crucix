@@ -338,26 +338,26 @@ export function generateIdeas(V2) {
     }
   }
 
-  // ACLED Conflict + Energy Momentum
-  const conflictEvents = V2.acled?.totalEvents || 0;
-  if (conflictEvents > 50 && wtiRecent.length > 1) {
+  // Conflict + Energy Momentum (GDELT armed-conflict events in the sweep window)
+  const conflictEvents = V2.gdelt?.conflictEvents || 0;
+  if (conflictEvents > 500 && wtiRecent.length > 1) {
     const wtiMove = wtiRecent[0] - wtiRecent[wtiRecent.length - 1];
     if (wtiMove > 2) {
       ideas.push({
         title: 'Conflict Fueling Energy Momentum',
-        text: `${conflictEvents} ACLED events this week + WTI up $${wtiMove.toFixed(1)}. Conflict-energy transmission channel active.`,
+        text: `${conflictEvents.toLocaleString()} GDELT conflict events in the last ${V2.gdelt?.window?.hours || 6}h + WTI up $${wtiMove.toFixed(1)}. Conflict-energy transmission channel active.`,
         type: 'long', confidence: 'Medium', horizon: 'swing'
       });
     }
   }
 
   // Defense + Conflict Intensity
-  const totalFatalities = V2.acled?.totalFatalities || 0;
+  const severeClusters = (V2.gdelt?.geoPoints || []).filter(p => ['Mass violence', 'Armed clash', 'Assault'].includes(p.worst)).length;
   const totalThermalAll = thermal.reduce((s, t) => s + t.det, 0);
-  if (totalFatalities > 500 && totalThermalAll > 20000) {
+  if (severeClusters > 25 && totalThermalAll > 20000) {
     ideas.push({
       title: 'Defense Procurement Acceleration Signal',
-      text: `${totalFatalities.toLocaleString()} conflict fatalities + ${totalThermalAll.toLocaleString()} thermal detections. Defense contractors may see accelerated procurement.`,
+      text: `${severeClusters} armed-clash clusters on GDELT + ${totalThermalAll.toLocaleString()} thermal detections. Defense contractors may see accelerated procurement.`,
       type: 'long', confidence: 'Medium', horizon: 'swing'
     });
   }
@@ -591,19 +591,6 @@ export async function synthesize(data) {
     signals: spaceData.signals || [],
   };
 
-  // ACLED conflict events
-  const acledData = data.sources.ACLED || {};
-  const acled = acledData.error ? { totalEvents: 0, totalFatalities: 0, byRegion: {}, byType: {}, deadliestEvents: [] } : {
-    totalEvents: acledData.totalEvents || 0,
-    totalFatalities: acledData.totalFatalities || 0,
-    byRegion: acledData.byRegion || {},
-    byType: acledData.byType || {},
-    deadliestEvents: (acledData.deadliestEvents || []).slice(0, 15).map(e => ({
-      date: e.date, type: e.type, country: e.country, location: e.location,
-      fatalities: e.fatalities || 0, lat: e.lat || null, lon: e.lon || null
-    }))
-  };
-
   // GDELT news articles + geo events
   const gdeltData = data.sources.GDELT || {};
   const gdelt = {
@@ -704,7 +691,7 @@ export async function synthesize(data) {
     sdr: { total: sdrNet.totalReceivers || 0, probed: sdrNet.probed || 0, online: sdrNet.online || 0, private: sdrNet.private || 0, unreachable: sdrNet.unreachable || 0,
       users: sdrNet.totalUsers || 0, capacity: sdrNet.totalCapacity || 0, directory: sdrData.directory || null, error: sdrData.status === 'error' ? (sdrData.message || 'KiwiSDR directory unavailable') : null,
       zones: sdrZones, all: sdrAll },
-    who, healthWatch, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, acled, gdelt, space, health, news,
+    who, healthWatch, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, gdelt, space, health, news,
     markets, // Live Yahoo Finance market data
     ideas: [], ideasSource: 'disabled',
     // newsFeed for ticker (merged RSS + GDELT)

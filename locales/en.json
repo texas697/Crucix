@@ -35,7 +35,6 @@
     "sourceGroup5": "USGS · ECB · CVE · COPERNICUS · CELESTRAK",
     "sweepComplete": "SWEEP COMPLETE — {ok}/{total} SOURCES",
     "ok": "OK",
-    "acledLayer": "ACLED CONFLICT LAYER",
     "events": "EVENTS",
     "degraded": "DEGRADED",
     "flightCorridors": "FLIGHT CORRIDORS",

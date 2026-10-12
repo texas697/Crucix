@@ -12,7 +12,6 @@ import { briefing as opensky } from './sources/opensky.mjs';
 import { briefing as firms } from './sources/firms.mjs';
 import { briefing as ships } from './sources/ships.mjs';
 import { briefing as safecast } from './sources/safecast.mjs';
-import { briefing as acled } from './sources/acled.mjs';
 import { briefing as reliefweb } from './sources/reliefweb.mjs';
 import { briefing as who } from './sources/who.mjs';
 import { briefing as ofac } from './sources/ofac.mjs';
@@ -76,7 +75,6 @@ export async function fullBriefing() {
     runSource('FIRMS', firms),
     runSource('Maritime', ships),
     runSource('Safecast', safecast),
-    runSource('ACLED', acled),
     runSource('ReliefWeb', reliefweb),
     runSource('WHO', who),
     runSource('OFAC', ofac),

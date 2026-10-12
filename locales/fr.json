@@ -35,7 +35,6 @@
     "sourceGroup5": "USGS · BCE · CVE · COPERNICUS · CELESTRAK",
     "sweepComplete": "SCAN TERMINÉ — {ok}/{total} SOURCES",
     "ok": "OK",
-    "acledLayer": "COUCHE CONFLIT ACLED",
     "events": "ÉVÉNEMENTS",
     "degraded": "DÉGRADÉ",
     "flightCorridors": "CORRIDORS AÉRIENS",

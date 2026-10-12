@@ -92,7 +92,7 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
 - **Regional threat view:** air-raid alerts, a live drone and missile tracker, strike watch and prediction markets.
 - **Conflict events:** geocoded protests, coercion, assaults and armed clashes from GDELT's raw 15-minute event
   export (rolling 6-hour window, no API key, no rate limit), clustered by place and sized by how many outlets report
-  them. Rings the armed-clash clusters and scores each theater when no ACLED licence is configured.
+  them, rings the armed-clash clusters and scores each theater.
 - **News feed:** merged RSS and GDELT headlines, geo-tagged by the place named in the headline.
 - **Live TV:** a news video section with an HLS player (`/media`).
 - **Ideas:** AI-generated trade ideas using your own key, or rule-based ideas from correlated signals when none is set.
@@ -155,7 +155,6 @@ These three unlock the most valuable economic and satellite data. Each takes abo
 
 | Key | Source | How to Get |
 |-----|--------|------------|
-| `ACLED_EMAIL` + `ACLED_PASSWORD` | Armed conflict event data | [acleddata.com/register](https://acleddata.com/register/) — free, OAuth2 |
 | `AISSTREAM_API_KEY` | Live AIS vessel positions around the chokepoints (Ships map layer, live counts on the Maritime watch). On Cloud Run set `AIS_RELAY_URL` to a `deploy/ais-relay.py` host instead, since throttled CPU starves a WebSocket | [aisstream.io](https://aisstream.io/) — free |
 | `ADSB_API_KEY` | Unfiltered flight tracking | [RapidAPI](https://rapidapi.com/adsbexchange/api/adsbexchange-com1) — ~$10/mo |
 
@@ -259,7 +258,6 @@ crucix/
 | **NASA FIRMS** | Thermal anomalies in 6 watched regions from the public 24 h Suomi NPP + NOAA-20 VIIRS feeds | None (optional MAP_KEY uses the 48 h area API) |
 | **Maritime (PortWatch)** | Daily transit counts for 28 chokepoints vs 1-year baseline, plus open disruption events (IMF PortWatch open data) | None (AISSTREAM_API_KEY adds live per-vessel AIS) |
 | **Safecast** | Live radiation sensors (tt.safecast.org realtime feed) near 11 nuclear sites; Bushehr, Yongbyon and Dimona have no public coverage | None |
-| **ACLED** | Armed conflict events: battles, explosions, protests | Free (OAuth2) |
 | **ReliefWeb** | UN humanitarian crisis tracking | None |
 | **WHO / CDC** | WHO Disease Outbreak News (JSON API) grouped into active outbreaks with WHO risk levels; CDC Travel Health Notices and CDC outbreak investigation RSS feeds | None |
 | **OFAC** | US Treasury sanctions (SDN list) | None |
