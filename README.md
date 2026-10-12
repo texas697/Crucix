@@ -284,7 +284,7 @@ crucix/
 | **USPTO Patents** | Patent filings in 7 strategic tech areas | None |
 | **Bluesky** | Social sentiment on geopolitical/market topics | None |
 | **Reddit** | Social sentiment from key subreddits | OAuth |
-| **KiwiSDR** | Global HF radio receiver network (~600 receivers) | None |
+| **KiwiSDR** | Public HF receiver directory (receiverbook.de) plus live /status probes of every receiver inside the watched regions | None |
 | **CISA KEV** | Known exploited vulnerabilities catalog | None |
 | **Cloudflare Radar** | Internet outages and traffic anomalies | API token |
 

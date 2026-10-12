@@ -2,19 +2,46 @@
 // No auth required. ~900 public HF receivers worldwide (0-30 MHz).
 // Useful for SIGINT awareness: HF band activity, receiver distribution,
 // detecting unusual radio configurations in conflict zones.
-// Data source: receiverbook.de (embeds full receiver list as JS variable)
+// Data source: receiverbook.de directory (embeds the receiver list as a JS variable) + each receiver's own /status
+// endpoint for live state inside the regions of interest.
 
 import { safeFetch } from '../utils/fetch.mjs';
 
 const RECEIVERBOOK_URL = 'https://www.receiverbook.de/map?type=kiwisdr';
 
-// Fetch the full list of public KiwiSDR receivers from receiverbook.de
+const UA = 'Crucix/2.0 (MFB Services Intelligence dashboard; +https://crucix-intel-41718.firebaseapp.com)';
+const STATUS_TIMEOUT_MS = parseInt(process.env.KIWISDR_STATUS_TIMEOUT_MS) || 6000;
+const STATUS_BUDGET_MS = parseInt(process.env.KIWISDR_STATUS_BUDGET_MS) || 16000;
+const STATUS_CONCURRENCY = 10;
+
+// receiverbook labels end in a country most of the time, but some end in a US state, a city or a free-text antenna
+// description. Normalise the common cases and blank the rest rather than report "HASENBERG AG 700M" as a country.
+const US_STATES = new Set(['alabama','alaska','arizona','arkansas','california','colorado','connecticut','delaware','florida','georgia','hawaii','idaho','illinois','indiana','iowa','kansas','kentucky','louisiana','maine','maryland','massachusetts','michigan','minnesota','mississippi','missouri','montana','nebraska','nevada','new hampshire','new jersey','new mexico','new york','north carolina','north dakota','ohio','oklahoma','oregon','pennsylvania','rhode island','south carolina','south dakota','tennessee','texas','utah','vermont','virginia','washington','west virginia','wisconsin','wyoming']);
+const COUNTRY_ALIASES = { 'usa': 'USA', 'us': 'USA', 'united states': 'USA', 'united states of america': 'USA', 'uk': 'UK', 'united kingdom': 'UK', 'england': 'UK', 'scotland': 'UK', 'wales': 'UK', 'the netherlands': 'Netherlands', 'holland': 'Netherlands', 'deutschland': 'Germany', 'republic of korea': 'South Korea', 'rep. of korea': 'South Korea', 'korea': 'South Korea', 'taiwan, china': 'Taiwan', 'russian federation': 'Russia', 'czechia': 'Czech Republic', 'new south wales': 'Australia', 'queensland': 'Australia', 'victoria': 'Australia', 'south australia': 'Australia', 'western australia': 'Australia', 'tasmania': 'Australia' };
+// Country names (and a few demonyms/abbreviations) searched anywhere in a label when the last segment is not a country.
+const COUNTRY_SCAN = [['USA',/\b(usa|u\.s\.a\.|united states)\b/i],['UK',/\b(uk|united kingdom|england|scotland|wales)\b/i],['Germany',/\b(germany|deutschland|germa)\b/i],['Switzerland',/\b(switzerland|schweiz|suisse)\b/i],['Austria',/\b(austria|österreich)\b/i],['Netherlands',/\b(netherlands|holland|nederland)\b/i],['Belgium',/\bbelgi(um|ë|que)\b/i],['France',/\bfrance\b/i],['Italy',/\b(italy|italia)\b/i],['Spain',/\b(spain|españa)\b/i],['Portugal',/\bportugal\b/i],['Finland',/\b(finland|suomi)\b/i],['Sweden',/\b(sweden|sverige)\b/i],['Norway',/\b(norway|norge)\b/i],['Denmark',/\b(denmark|danmark)\b/i],['Poland',/\b(poland|polska)\b/i],['Czech Republic',/\b(czech|czechia)\b/i],['Slovakia',/\bslovakia\b/i],['Hungary',/\bhungary\b/i],['Romania',/\bromania\b/i],['Bulgaria',/\bbulgaria\b/i],['Greece',/\bgreece\b/i],['Cyprus',/\bcyprus\b/i],['Ireland',/\bireland\b/i],['Iceland',/\biceland\b/i],['Estonia',/\bestonia\b/i],['Latvia',/\blatvia\b/i],['Lithuania',/\blithuania\b/i],['Ukraine',/\bukraine\b/i],['Russia',/\brussia\b/i],['Turkey',/\b(turkey|türkiye)\b/i],['Israel',/\bisrael\b/i],['Qatar',/\bqatar\b/i],['Iraq',/\biraq\b/i],['UAE',/\b(uae|emirates|dubai)\b/i],['Japan',/\bjapan\b/i],['South Korea',/\bkorea\b/i],['Taiwan',/\btaiwan\b/i],['Hong Kong',/\bhong kong\b/i],['China',/\bchina\b/i],['Philippines',/\b(philippines|manila)\b/i],['Thailand',/\bthailand\b/i],['Malaysia',/\bmalaysia\b/i],['Indonesia',/\bindonesia\b/i],['India',/\bindia\b/i],['Australia',/\baustralia\b/i],['New Zealand',/\bnew zealand\b/i],['Canada',/\bcanada\b/i],['Mexico',/\bmexico\b/i],['Brazil',/\b(brazil|brasil)\b/i],['Argentina',/\bargentina\b/i],['Chile',/\bchile\b/i],['South Africa',/\bsouth africa\b/i],['Kenya',/\bkenya\b/i],['Luxembourg',/\bluxembourg\b/i],['Slovenia',/\bslovenia\b/i],['Croatia',/\bcroatia\b/i],['Serbia',/\bserbia\b/i],['Malta',/\bmalta\b/i]];
+function cleanCountry(label) {
+  const text = String(label || '');
+  const parts = text.split(/[,|]/).map(x => x.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    const c = parts[parts.length - 1].replace(/[.!]+$/, '').trim();
+    const key = c.toLowerCase();
+    if (COUNTRY_ALIASES[key]) return COUNTRY_ALIASES[key];
+    if (US_STATES.has(key)) return 'USA';
+    if (!/\d/.test(c) && c.length <= 24 && c.split(' ').length <= 3 && COUNTRY_SCAN.some(([, re]) => re.test(c))) return c.replace(/\b\w/g, ch => ch.toUpperCase());
+  }
+  for (const [name, re] of COUNTRY_SCAN) if (re.test(text)) return name;
+  for (const st of US_STATES) if (new RegExp(`\\b${st}\\b`, 'i').test(text)) return 'USA';
+  return '';
+}
+
+// Fetch the full list of public KiwiSDR receivers from receiverbook.de (a directory: name, position, URL; no live status)
 export async function getAllReceivers() {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 20000);
     const res = await fetch(RECEIVERBOOK_URL, {
-      headers: { 'User-Agent': 'Crucix/1.0' },
+      headers: { 'User-Agent': UA },
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -28,7 +55,7 @@ export async function getAllReceivers() {
     const flat = [];
     for (const site of sites) {
       const [lon, lat] = site.location?.coordinates || [NaN, NaN];
-      const country = site.label?.split(',').pop()?.trim() || '';
+      const country = cleanCountry(site.label);
       for (const rx of (site.receivers || [site])) {
         flat.push({
           name: rx.label || site.label || '',
@@ -50,6 +77,65 @@ export async function getAllReceivers() {
   } catch (e) {
     return { error: e.message };
   }
+}
+
+// Every KiwiSDR answers GET /status with key=value lines (status, offline, name, users, users_max, gps, antenna, snr…).
+// Probing the whole directory each sweep is too slow, so only receivers inside the regions of interest are probed.
+function parseStatus(text) {
+  const kv = {};
+  for (const line of String(text).split('\n')) {
+    const i = line.indexOf('=');
+    if (i > 0) kv[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+  }
+  if (!kv.status && !kv.name) return null;
+  const gps = /\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/.exec(kv.gps || '');
+  const snr = /(\d+)\s*,\s*(\d+)/.exec(kv.snr || '');
+  return {
+    status: kv.status || 'unknown',                 // active | private | ...
+    offline: kv.offline === 'yes',
+    auth: kv.auth || null,
+    name: (kv.name || '').slice(0, 100),
+    hw: (kv.sdr_hw || '').replace(/[^\x20-\x7e]+.*$/, '').trim().slice(0, 40),
+    users: parseInt(kv.users) || 0,
+    usersMax: parseInt(kv.users_max) || 0,
+    antenna: (kv.antenna || '').slice(0, 80),
+    snr: snr ? { all: parseInt(snr[1]), hf: parseInt(snr[2]) } : null,
+    gpsGood: parseInt(kv.gps_good) || 0,
+    gps: gps ? { lat: parseFloat(gps[1]), lon: parseFloat(gps[2]) } : null,
+    uptime: parseInt(kv.uptime) || null,
+  };
+}
+
+export async function probeReceiver(url) {
+  const base = String(url || '').replace(/\/+$/, '');
+  if (!/^https?:\/\//.test(base)) return { reachable: false, error: 'no url' };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), STATUS_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${base}/status`, { signal: controller.signal, headers: { 'User-Agent': UA }, redirect: 'follow' });
+    clearTimeout(timer);
+    if (!res.ok) return { reachable: false, error: `HTTP ${res.status}` };
+    const parsed = parseStatus(await res.text());
+    if (!parsed) return { reachable: false, error: 'no status body' };
+    return { reachable: true, ...parsed };
+  } catch (e) {
+    clearTimeout(timer);
+    return { reachable: false, error: e.name === 'AbortError' ? 'timeout' : (e.cause?.code || e.message) };
+  }
+}
+
+async function probeAll(receivers) {
+  const deadline = Date.now() + STATUS_BUDGET_MS;
+  const results = new Map();
+  let i = 0;
+  async function worker() {
+    while (i < receivers.length && Date.now() < deadline) {
+      const rx = receivers[i++];
+      results.set(rx.url, await probeReceiver(rx.url));
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(STATUS_CONCURRENCY, receivers.length) }, worker));
+  return results;
 }
 
 // Regions of intelligence interest with bounding boxes
@@ -127,6 +213,7 @@ function normalizeReceiver(rx, idx) {
     snr: parseFloat(rx.snr ?? NaN),
     tdoa: rx.tdoa ?? null,
     country: rx.country || '',
+    url: rx.url || '',
   };
 }
 
@@ -188,32 +275,74 @@ export async function briefing() {
     byContinent[continent] = (byContinent[continent] || 0) + 1;
   }
 
-  // --- Receivers in regions of interest ---
+  // --- Receivers in regions of interest: probe each one's /status for live state ---
+  const zoneRx = onlineRx.filter(rx => Object.values(REGIONS_OF_INTEREST).some(box => inBounds(rx, box)));
+  const probeStarted = Date.now();
+  const probes = await probeAll(zoneRx);
+  const probeMs = Date.now() - probeStarted;
+  for (const rx of zoneRx) {
+    const pr = probes.get(rx.url);
+    if (!pr) { rx.live = 'unprobed'; continue; }
+    rx.live = !pr.reachable ? 'unreachable' : pr.offline ? 'offline' : pr.status === 'active' ? 'online' : pr.status;
+    rx.probeError = pr.error || null;
+    if (pr.reachable) {
+      rx.users = pr.users; rx.usersMax = pr.usersMax; rx.antenna = pr.antenna; rx.snr = pr.snr; rx.hw = pr.hw;
+      rx.gpsGood = pr.gpsGood; rx.statusName = pr.name;
+      if (pr.gps && Math.abs(pr.gps.lat) <= 90 && (pr.gps.lat !== 0 || pr.gps.lon !== 0)) { rx.lat = pr.gps.lat; rx.lon = pr.gps.lon; }
+    }
+  }
+  // The directory lists some receivers under several hostnames / IPs; after probing they are recognisable by the
+  // name the receiver itself reports, so keep one entry per reported name.
+  const seenNames = new Set();
+  const dedupedZoneRx = zoneRx.filter(rx => {
+    if (!rx.statusName) return true;
+    const key = rx.statusName + '|' + rx.usersMax;
+    if (seenNames.has(key)) return false;
+    seenNames.add(key); return true;
+  });
+  zoneRx.length = 0; zoneRx.push(...dedupedZoneRx);
+  const probedRx = zoneRx.filter(rx => probes.has(rx.url));
+  const liveOnline = zoneRx.filter(rx => rx.live === 'online');
+  const livePrivate = zoneRx.filter(rx => rx.live === 'private');
+  const liveDown = zoneRx.filter(rx => rx.live === 'unreachable' || rx.live === 'offline');
+
   const conflictZoneReceivers = {};
   for (const [key, box] of Object.entries(REGIONS_OF_INTEREST)) {
-    const rxInRegion = onlineRx.filter(rx => inBounds(rx, box));
+    const rxInRegion = zoneRx.filter(rx => inBounds(rx, box));
+    const online = rxInRegion.filter(rx => rx.live === 'online');
     conflictZoneReceivers[key] = {
       region: box.label,
       count: rxInRegion.length,
-      receivers: rxInRegion.slice(0, 10).map(rx => ({
+      online: online.length,
+      private: rxInRegion.filter(rx => rx.live === 'private').length,
+      down: rxInRegion.filter(rx => rx.live === 'unreachable' || rx.live === 'offline').length,
+      users: online.reduce((n, rx) => n + rx.users, 0),
+      capacity: online.reduce((n, rx) => n + rx.usersMax, 0),
+      receivers: rxInRegion.slice(0, 20).map(rx => ({
         name: rx.name,
         location: rx.location,
         lat: rx.lat,
         lon: rx.lon,
+        url: rx.url,
+        live: rx.live,
         users: rx.users,
+        usersMax: rx.usersMax,
+        snr: rx.snr || null,
         antenna: rx.antenna,
+        hw: rx.hw || null,
+        gpsGood: rx.gpsGood || 0,
         country: rx.country,
       })),
     };
   }
 
-  // --- Activity analysis (users connected) ---
-  const activeRx = onlineRx
+  // --- Activity analysis (users connected; probed receivers only) ---
+  const activeRx = liveOnline
     .filter(r => r.users > 0)
     .sort((a, b) => b.users - a.users);
 
-  const totalUsers = onlineRx.reduce((sum, r) => sum + r.users, 0);
-  const totalCapacity = onlineRx.reduce((sum, r) => sum + r.usersMax, 0);
+  const totalUsers = liveOnline.reduce((sum, r) => sum + r.users, 0);
+  const totalCapacity = liveOnline.reduce((sum, r) => sum + r.usersMax, 0);
 
   const topActive = activeRx.slice(0, 15).map(rx => ({
     name: rx.name,
@@ -227,7 +356,7 @@ export async function briefing() {
   }));
 
   // --- TDOA-capable receivers (direction finding / geolocation) ---
-  const tdoaCapable = onlineRx.filter(r => r.tdoa !== null && r.tdoa > 0);
+  const tdoaCapable = liveOnline.filter(r => r.gpsGood > 0);
 
   // --- Antenna analysis (identify unusual/specialized setups) ---
   const antennaTypes = {};
@@ -243,7 +372,7 @@ export async function briefing() {
     ? ((totalUsers / totalCapacity) * 100).toFixed(1)
     : '0.0';
 
-  const highUtilization = onlineRx
+  const highUtilization = liveOnline
     .filter(r => r.usersMax > 0 && (r.users / r.usersMax) >= 0.8)
     .map(rx => ({
       name: rx.name,
@@ -253,42 +382,40 @@ export async function briefing() {
       usersMax: rx.usersMax,
     }));
 
-  // --- Generate signals ---
+  // --- Generate signals (only probed receivers carry live numbers) ---
   const signals = [];
-
-  // High user count (unusual listening activity)
-  if (totalUsers > onlineRx.length * 0.5) {
-    signals.push(`HIGH LISTENER ACTIVITY: ${totalUsers} total users across ${onlineRx.length} receivers (${utilizationPct}% utilization)`);
+  if (probedRx.length) {
+    signals.push(`${liveOnline.length} of ${probedRx.length} KiwiSDR receivers in watched regions online (${livePrivate.length} private, ${liveDown.length} unreachable); ${totalUsers} listeners on ${totalCapacity} channels`);
   }
-
-  // Conflict zone coverage
-  for (const [key, info] of Object.entries(conflictZoneReceivers)) {
-    if (info.count > 0) {
-      const activeInZone = info.receivers.filter(r => r.users > 0);
-      if (activeInZone.length > 0) {
-        signals.push(`ACTIVE LISTENING in ${info.region}: ${activeInZone.length}/${info.count} receivers have users connected`);
-      }
+  for (const info of Object.values(conflictZoneReceivers)) {
+    if (info.capacity > 0 && info.users / info.capacity >= 0.8 && info.users >= 8) {
+      signals.push(`HF LISTENING DEMAND in ${info.region}: ${info.users}/${info.capacity} receiver channels in use (${Math.round(100 * info.users / info.capacity)}%)`);
     }
-  }
-
-  // High utilization receivers
-  if (highUtilization.length > 5) {
-    signals.push(`${highUtilization.length} receivers at >80% capacity — elevated HF monitoring demand`);
+    if (info.count > 0 && info.online === 0) {
+      signals.push(`NO LIVE HF COVERAGE in ${info.region}: ${info.count} listed receiver${info.count > 1 ? 's' : ''}, none reachable`);
+    }
   }
 
   return {
     source: 'KiwiSDR',
     timestamp: new Date().toISOString(),
     status: 'active',
+    directory: 'receiverbook.de',
     network: {
       totalReceivers: allRx.length,
-      online: onlineRx.length,
-      offline: offlineRx.length,
+      // Live state is only known for the probed receivers inside the regions of interest.
+      probed: probedRx.length,
+      online: liveOnline.length,
+      private: livePrivate.length,
+      unreachable: liveDown.length,
+      probeMs,
       totalUsers,
       totalCapacity,
       utilizationPct: parseFloat(utilizationPct),
       tdoaCapable: tdoaCapable.length,
     },
+    // Compact directory for the coverage map: [name, lat, lon, country, url]
+    all: onlineRx.filter(rx => !isNaN(rx.lat) && !isNaN(rx.lon)).map(rx => [rx.name.slice(0, 60), +rx.lat.toFixed(3), +rx.lon.toFixed(3), rx.country, rx.url]),
     geographic: {
       byContinent,
       topCountries,

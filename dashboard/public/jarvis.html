@@ -980,7 +980,7 @@ const LAYER_INFO = {
   conflict: {purpose:'Deadly armed-conflict events, plotted by fatality size.', source:'ACLED (Armed Conflict Location & Event Data)', freshness:'Refreshed every sweep; upstream lags days–weeks', confidence:'Editorially consistent, research-grade.', limitations:['Reports lag real time','Fatality counts are best-estimates, not exact']},
   maritime: {purpose:'Strategic chokepoints for disruption-path reasoning.', source:'Curated chokepoint registry', freshness:'Static geography', confidence:'High for fixed geography.', limitations:['A marker does not mean an active disruption','No live vessel tracking yet']},
   nuke: {purpose:'Live gamma dose rate from fixed radiation sensors around nuclear plants and legacy sites, with the typical (median) reading per site and every sensor plotted.', source:'Safecast realtime sensor network (tt.safecast.org)', freshness:'Sensors report every few minutes; refreshed every sweep', confidence:'Good anomaly screen where sensors exist. Normal outdoor background is 0.05–0.3 µSv/h (roughly 15–100 CPM on an LND 7318 tube).', limitations:['No public sensors near Bushehr, Yongbyon or Dimona','Chernobyl exclusion zone reads permanently above background by design','Single hot sensors are flagged but do not flip a site; the site median does']},
-  sdr: {purpose:'Software-defined radio receivers, a coverage/collection signal.', source:'KiwiSDR public receiver network', freshness:'Refreshed every sweep', confidence:'Good for coverage mapping.', limitations:['Receiver availability is volunteer-driven','Not a detection by itself']},
+  sdr: {purpose:'Where the public can listen to HF radio (0–30 MHz) right now: every listed KiwiSDR receiver worldwide, with live status, listener load and signal-to-noise for the receivers inside the watched conflict regions.', source:'receiverbook.de directory + each receiver\'s own /status endpoint', freshness:'Directory and watched-region probes refreshed every sweep', confidence:'Live numbers are exact for probed receivers; the rest of the directory is listing only.', limitations:['Only watched-region receivers are probed for live state','Volunteer-run; receivers come and go','Listener load shows interest, not what is being heard']},
   health: {purpose:'WHO outbreak and public-health alerts.', source:'WHO', freshness:'Refreshed every sweep', confidence:'Authoritative for officially declared events.', limitations:['Reporting lags; many alerts are country-level']},
   news: {purpose:'Geolocated world-news headlines.', source:'Aggregated RSS / GDELT geocoding', freshness:'Minutes', confidence:'Broad coverage, variable quality.', limitations:['Geocoding can be approximate','Duplicate framing across outlets']},
   weather: {purpose:'Official severe-weather alerts.', source:'NOAA / NWS', freshness:'Minutes', confidence:'Authoritative for the US.', limitations:['US-centric coverage','Alert polygons are approximated as points']},
@@ -1304,7 +1304,7 @@ function renderLeftRail(){
   const layers=[
     {name:t('layers.airActivity','Air Activity'),count:totalAir,dot:'air',sub:`${D.air.length} ${t('layers.theaters','theaters')}${D.airMeta?.militaryTotal?' · '+D.airMeta.militaryTotal+' military':''}`},
     {name:t('layers.thermalSpikes','Thermal Spikes'),count:totalThermal.toLocaleString(),dot:'thermal',sub:D.thermalMeta?.error&&!totalThermal?t('layers.thermalDown','feed unavailable'):`${totalNight.toLocaleString()} ${t('layers.nightDet','night det.')}${D.thermalMeta?.window?' · '+D.thermalMeta.window:''}${D.thermalMeta?.satellites?.length?' · '+D.thermalMeta.satellites.length+' sats':''}`},
-    {name:t('layers.sdrCoverage','SDR Coverage'),count:D.sdr.total,dot:'sdr',sub:`${D.sdr.online} ${t('layers.online','online')}`},
+    {name:t('layers.sdrCoverage','SDR Coverage'),count:D.sdr.total,dot:'sdr',sub:D.sdr.error?t('layers.sdrDown','directory unavailable'):D.sdr.probed?`${D.sdr.online}/${D.sdr.probed} ${t('layers.onlineInZones','online in watched zones')} · ${D.sdr.users} ${t('layers.listeners','listeners')}`:t('layers.listed','listed receivers')},
     {name:t('layers.maritimeWatch','Maritime Watch'),count:D.chokepoints.length,dot:'maritime',sub:t('layers.chokepoints','chokepoints')},
     {name:t('layers.nuclearSites','Nuclear Sites'),count:D.nuke.reduce((a,s)=>a+(s.n||0),0),dot:'nuke',sub:`${D.nuke.filter(s=>s.coverage==='live').length}/${D.nuke.length} ${t('layers.sitesLive','sites live')}`},
     {name:t('layers.conflictEvents','Conflict Events'),count:conflictEvents.toLocaleString(),dot:'thermal',sub:conflictSub},
@@ -1933,11 +1933,24 @@ function plotMarkers(){
     });
   });
 
-  // === SDR receivers ===
+  // === SDR receivers: whole directory as faint dots, watched-zone receivers with live status ===
+  const sdrLiveUrls=new Set();
   D.sdr.zones.forEach(z=>{ z.receivers.forEach(r=>{
-    points.push({ lat:r.lat, lng:r.lon, size:0.15, _r:2.5, color:'rgba(106,168,255,0.6)', _stroke:'rgba(106,168,255,0.2)', type:'sdr', priority:3,
-      popHead:'SDR Receiver', popMeta:'KiwiSDR Network', popText:`${esc(r.name)}<br>Zone: ${z.region}<br>${z.count} in zone` });
+    if(!r.lat&&!r.lon) return;
+    sdrLiveUrls.add(r.url);
+    const on=r.live==='online', priv=r.live==='private', down=r.live==='unreachable'||r.live==='offline';
+    const col=on?'rgba(106,168,255,0.85)':priv?'rgba(106,168,255,0.45)':down?'rgba(150,150,160,0.5)':'rgba(106,168,255,0.6)';
+    const state=on?'Online':priv?'Private':down?'Unreachable':'Listed';
+    const load=r.max?`${r.users}/${r.max} channels in use`:'';
+    points.push({ lat:r.lat, lng:r.lon, size:on?0.2:0.15, _r:on?3.2:2.5, color:col, _stroke:'rgba(106,168,255,0.2)', type:'sdr', priority:on?2:3, url:r.url||undefined,
+      popHead:(r.name||'KiwiSDR receiver').replace(/\s*\|\s*/g,' · '), popMeta:`KiwiSDR · ${state}${r.country?' · '+esc(r.country):''}`,
+      popText:`${esc(z.region)}${load?'<br>'+load:''}${r.snr!=null?`<br>HF signal-to-noise ${r.snr} dB`:''}${r.ant?`<br>Antenna: ${esc(r.ant)}`:''}${r.hw?`<br><span style="opacity:.7">${esc(r.hw)}${r.gps?' · GPS-timed (TDoA capable)':''}</span>`:''}` });
   }); });
+  (D.sdr.all||[]).forEach(a=>{
+    const [name,lat,lon,country,url]=a; if(lat==null||lon==null||sdrLiveUrls.has(url)) return;
+    points.push({ lat, lng:lon, size:0.1, _r:1.8, color:'rgba(106,168,255,0.35)', _stroke:'rgba(106,168,255,0.12)', type:'sdr', priority:3, url:url||undefined,
+      popHead:(name||'KiwiSDR receiver').replace(/\s*\|\s*/g,' · '), popMeta:`KiwiSDR · listed${country?' · '+esc(country):''}`, popText:'Public HF receiver, 0–30 MHz. Live status is only probed inside the watched regions.' });
+  });
 
   // === WHO alerts (only notices whose title names a place we can locate) ===
   (D.who||[]).forEach(w=>{

@@ -446,9 +446,15 @@ export async function synthesize(data) {
   const sdrNet = sdrData.network || {};
   const sdrConflict = sdrData.conflictZones || {};
   const sdrZones = Object.values(sdrConflict).map(z => ({
-    region: z.region, count: z.count || 0,
-    receivers: (z.receivers || []).slice(0, 5).map(r => ({ name: r.name || '', lat: r.lat || 0, lon: r.lon || 0 }))
+    region: z.region, count: z.count || 0, online: z.online || 0, private: z.private || 0, down: z.down || 0,
+    users: z.users || 0, capacity: z.capacity || 0,
+    receivers: (z.receivers || []).slice(0, 20).map(r => ({
+      name: r.name || '', lat: r.lat || 0, lon: r.lon || 0, url: r.url || '', live: r.live || 'unprobed',
+      users: r.users || 0, max: r.usersMax || 0, snr: r.snr?.hf ?? null, ant: r.antenna || '', hw: r.hw || '', gps: r.gpsGood || 0, country: r.country || ''
+    }))
   }));
+  // Whole directory for the coverage layer: [name, lat, lon, country, url]
+  const sdrAll = (sdrData.all || []).filter(a => Array.isArray(a) && a.length >= 3);
   const who = (data.sources.WHO?.diseaseOutbreakNews || []).slice(0, 12).map(w => {
     const geo = geoTagText(`${w.title || ''} ${w.summary || ''}`);
     return { title: w.title?.substring(0, 120), date: w.date, summary: w.summary?.substring(0, 150),
@@ -643,7 +649,9 @@ export async function synthesize(data) {
       ...(data.sources.OpenSky?.note ? { note: data.sources.OpenSky.note } : {}),
       ...(data.sources.OpenSky?.error ? { error: data.sources.OpenSky.error } : {}),
     },
-    sdr: { total: sdrNet.totalReceivers || 0, online: sdrNet.online || 0, zones: sdrZones },
+    sdr: { total: sdrNet.totalReceivers || 0, probed: sdrNet.probed || 0, online: sdrNet.online || 0, private: sdrNet.private || 0, unreachable: sdrNet.unreachable || 0,
+      users: sdrNet.totalUsers || 0, capacity: sdrNet.totalCapacity || 0, directory: sdrData.directory || null, error: sdrData.status === 'error' ? (sdrData.message || 'KiwiSDR directory unavailable') : null,
+      zones: sdrZones, all: sdrAll },
     who, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, acled, gdelt, space, health, news,
     markets, // Live Yahoo Finance market data
     ideas: [], ideasSource: 'disabled',
