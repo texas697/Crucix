@@ -423,3 +423,12 @@ when `OPENSKY_RELAY_URL` is exported and the `OPENSKY_RELAY_TOKEN` secret exists
 ## Credits and License
 
 Built on [Crucix](https://github.com/calesthio/Crucix) by calesthio. Licensed under AGPL-3.0; see `LICENSE`. Contribution guidelines are in `CONTRIBUTING.md` and security reports go through `SECURITY.md`.
+
+## Monitoring
+
+`GET /api/status` is a public, unauthenticated freshness probe. It validates the synthesized data the dashboard
+renders (run age under `STATUS_MAX_RUN_AGE_MIN`, 90% of sources healthy, and every tile populated: air, thermal,
+conflict, nuclear, risk, space, space weather, SDR, maritime, ships, health, disasters, outages, news) and returns
+200 when all hard checks pass or 503 with the failed check names. Ships is a soft check (the AIS relay is external)
+and only lowers the status to `degraded`. A Cloud Monitoring uptime check polls it through the front door every
+5 minutes and an alert policy emails the owner when it fails.

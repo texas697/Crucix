@@ -74,6 +74,47 @@ app.use(express.json({ limit: '32kb' }));
 // Minimal liveness probe for Docker/Cloud Run — leaks nothing. (Google's front end swallows a bare /healthz.)
 app.get('/api/healthz', (req, res) => res.json({ status: 'ok', uptime: Math.floor((Date.now() - startTime) / 1000) }));
 
+// Public freshness probe for external monitoring (Cloud Monitoring uptime check). Validates the same synthesized
+// data the dashboard renders: the run must be recent, the sources healthy, and every tile must have something to
+// show. Returns 200 only when all checks pass, 503 otherwise, with counts and ages but no payload content.
+const STATUS_MAX_RUN_AGE_MIN = parseInt(process.env.STATUS_MAX_RUN_AGE_MIN) || 45;
+app.get('/api/status', (req, res) => {
+  const now = Date.now();
+  const d = currentData;
+  const ageMin = iso => iso ? Math.round((now - new Date(iso).getTime()) / 60000) : null;
+  const checks = [];
+  const check = (name, ok, detail, soft = false) => checks.push({ name, ok: !!ok, soft, detail });
+  if (!d || !d.meta) {
+    check('run', false, 'no sweep data loaded');
+  } else {
+    const runAge = ageMin(d.meta.timestamp);
+    check('run', runAge != null && runAge <= STATUS_MAX_RUN_AGE_MIN, `run ${runAge} min old (limit ${STATUS_MAX_RUN_AGE_MIN})`);
+    check('sources', d.meta.sourcesOk >= Math.ceil(d.meta.sourcesQueried * 0.9), `${d.meta.sourcesOk}/${d.meta.sourcesQueried} sources ok`);
+    check('air', (d.air || []).reduce((s, a) => s + (a.total || 0), 0) > 0, `${(d.air || []).reduce((s, a) => s + (a.total || 0), 0)} aircraft across theaters`);
+    check('thermal', (d.thermal || []).reduce((s, t) => s + (t.det || 0), 0) > 0, `${(d.thermal || []).reduce((s, t) => s + (t.det || 0), 0)} detections`);
+    check('conflict', (d.gdelt?.conflictEvents || 0) > 0 && Object.keys(d.gdelt?.byRegion || {}).length >= 5, `${d.gdelt?.conflictEvents || 0} GDELT conflict events, ${Object.keys(d.gdelt?.byRegion || {}).length} theaters`);
+    check('nuclear', (d.nuke || []).filter(n => n.coverage === 'live').length > 0, `${(d.nuke || []).filter(n => n.coverage === 'live').length}/${(d.nuke || []).length} sites live`);
+    check('risk', (d.fred || []).filter(f => f.value != null).length >= 5, `${(d.fred || []).filter(f => f.value != null).length} FRED indicators`);
+    check('space', d.space?.iss?.lat != null && (d.space?.stations || []).length > 0, `ISS ${d.space?.iss?.lat != null ? 'tracked' : 'missing'}, ${(d.space?.stations || []).length} stations`);
+    check('spaceWeather', d.spaceWeather?.kp?.time && ageMin(d.spaceWeather.kp.time) <= 480, `Kp ${d.spaceWeather?.kp?.now ?? 'n/a'} from ${ageMin(d.spaceWeather?.kp?.time)} min ago`);
+    check('sdr', (d.sdr?.online || 0) > 0, `${d.sdr?.online || 0} receivers online`);
+    check('maritime', (d.chokepoints || []).length >= 20 && d.maritimeMeta?.asOf && (now - new Date(d.maritimeMeta.asOf).getTime()) < 14 * 86400000, `${(d.chokepoints || []).length} chokepoints to ${d.maritimeMeta?.asOf || 'n/a'}`);
+    check('ships', (d.shipsMeta?.liveVessels || 0) > 0 && !d.shipsMeta?.error, `${d.shipsMeta?.liveVessels || 0} live vessels${d.shipsMeta?.error ? ' · ' + d.shipsMeta.error : ''}`, true);
+    check('health', ((d.healthWatch?.outbreaks || []).length + (d.healthWatch?.travel || []).length) > 0 && !d.healthWatch?.error, `${(d.healthWatch?.outbreaks || []).length} outbreaks, ${(d.healthWatch?.travel || []).length} CDC notices`);
+    check('disasters', !d.disasters?.error && Array.isArray(d.disasters?.events), `${(d.disasters?.events || []).length} GDACS events${d.disasters?.error ? ' · ' + d.disasters.error : ''}`);
+    check('outages', !d.outages?.error && (d.outages?.counts?.critical ?? 0) >= 0 && Array.isArray(d.outages?.countries), `${d.outages?.counts?.critical ?? 0} IODA alerts${d.outages?.error ? ' · ' + d.outages.error : ''}`);
+    check('news', (d.news || []).length > 0 && (d.newsFeed || []).length > 0, `${(d.news || []).length} news, ${(d.newsFeed || []).length} ticker items`);
+  }
+  const failed = checks.filter(c => !c.ok && !c.soft), warnings = checks.filter(c => !c.ok && c.soft);
+  const ok = failed.length === 0;
+  res.status(ok ? 200 : 503).json({
+    status: ok ? (warnings.length ? 'degraded' : 'ok') : 'stale',
+    checkedAt: new Date(now).toISOString(),
+    run: d?.meta?.timestamp || null, runAgeMin: ageMin(d?.meta?.timestamp),
+    failed: failed.map(c => c.name), warnings: warnings.map(c => c.name), checks,
+  });
+});
+
 if (AUTH_ENABLED) {
   const loginHtml = readFileSync(join(ROOT, 'dashboard/auth/login.html'), 'utf-8');
   const webConfig = authLib.parseWebConfig();
