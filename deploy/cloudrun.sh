@@ -74,6 +74,14 @@ if gcloud secrets describe OPENSKY_CLIENT_ID --project "$PROJECT" >/dev/null 2>&
 else
   echo "▶ No OPENSKY_CLIENT_ID/SECRET secrets — anonymous OpenSky with adsb.lol fallback"
 fi
+# NASA FIRMS (optional): without a MAP_KEY the source reads NASA's public 24 h VIIRS CSV downloads. Create with:
+#   printf '%s' "map-key" | gcloud secrets create FIRMS_MAP_KEY --data-file=- --project $PROJECT
+if gcloud secrets describe FIRMS_MAP_KEY --project "$PROJECT" >/dev/null 2>&1; then
+  SECRETS="$SECRETS,FIRMS_MAP_KEY=FIRMS_MAP_KEY:latest"
+  echo "▶ FIRMS: MAP_KEY from Secret Manager"
+else
+  echo "▶ No FIRMS_MAP_KEY secret — FIRMS via public 24 h downloads"
+fi
 # FRED (optional): without a key the source reads the public graph CSV, which carries the same observations. Create with:
 #   printf '%s' "key" | gcloud secrets create FRED_API_KEY --data-file=- --project $PROJECT
 if gcloud secrets describe FRED_API_KEY --project "$PROJECT" >/dev/null 2>&1; then

@@ -413,12 +413,21 @@ export async function synthesize(data) {
     militaryTotal: data.sources.OpenSky?.militaryTotal || 0,
     signals: data.sources.OpenSky?.signals || [],
   };
-  const thermal = (data.sources.FIRMS?.hotspots || []).map(h => ({
+  const firmsData = data.sources.FIRMS || {};
+  const thermal = (firmsData.hotspots || []).map(h => ({
     region: h.region, det: h.totalDetections || 0, night: h.nightDetections || 0,
-    hc: h.highConfidence || 0,
-    fires: (h.highIntensity || []).slice(0, 8).map(f => ({ lat: f.lat, lon: f.lon, frp: f.frp || 0 }))
+    hc: h.highConfidence || 0, hi: h.highIntensityCount ?? (h.highIntensity || []).length,
+    fires: (h.highIntensity || []).slice(0, 15).map(f => ({
+      lat: f.lat, lon: f.lon, frp: f.frp || 0, night: f.daynight === 'N', conf: f.confidence || null, sat: f.satellite || null,
+      at: f.date && f.time ? `${f.date}T${String(f.time).padStart(4, '0').replace(/(\d\d)(\d\d)/, '$1:$2')}:00Z` : null,
+    }))
   }));
-  const tSignals = data.sources.FIRMS?.signals || [];
+  const tSignals = firmsData.signals || [];
+  const thermalMeta = {
+    access: firmsData.access || null, window: firmsData.window || null, satellites: firmsData.satellites || [],
+    lastModified: firmsData.lastModified || null, globalDetections: firmsData.globalDetections || 0,
+    error: firmsData.error || (firmsData.status === 'no_key' ? firmsData.message : null) || null,
+  };
   const chokepoints = Object.values(data.sources.Maritime?.chokepoints || {}).map(c => ({
     label: c.label || c.name, note: c.note || '', lat: c.lat || 0, lon: c.lon || 0
   }));
@@ -623,7 +632,7 @@ export async function synthesize(data) {
   const news = await fetchAllNews();
 
   const V2 = {
-    meta: data.crucix, air, milAir, thermal, tSignals, chokepoints, nuke, nukeSignals, nukeMeta,
+    meta: data.crucix, air, milAir, thermal, tSignals, thermalMeta, chokepoints, nuke, nukeSignals, nukeMeta,
     airMeta: {
       ...airLive,
       fallback: Boolean(airFallback),

@@ -5,6 +5,16 @@
 import '../utils/env.mjs';
 
 const FIRMS_BASE = 'https://firms.modaps.eosdis.nasa.gov/api/area/csv';
+const UA = 'Crucix/2.0 (MFB Services Intelligence dashboard; +https://crucix-intel-41718.firebaseapp.com)';
+
+// Keyless path: NASA publishes the last 24 h of VIIRS active-fire detections as plain CSV downloads (no MAP_KEY,
+// ~10 MB each, refreshed continuously). Both VIIRS satellites are fetched so each region gets two passes a day.
+const PUBLIC_BASE = 'https://firms.modaps.eosdis.nasa.gov/data/active_fire';
+const PUBLIC_FEEDS = [
+  { id: 'VIIRS_SNPP', label: 'Suomi NPP VIIRS', path: 'suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_Global_24h.csv' },
+  { id: 'VIIRS_NOAA20', label: 'NOAA-20 VIIRS', path: 'noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv' },
+];
+const PUBLIC_TIMEOUT_MS = parseInt(process.env.FIRMS_PUBLIC_TIMEOUT_MS) || 22000;
 
 // Parse FIRMS CSV response into structured data
 function parseCSV(rawText) {
@@ -49,6 +59,27 @@ async function fetchFires(opts = {}) {
   }
 }
 
+// Fetch one public 24 h global file: { rows, lastModified } or { error }
+async function fetchPublicFeed(feed) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PUBLIC_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${PUBLIC_BASE}/${feed.path}`, { signal: controller.signal, headers: { 'User-Agent': UA } });
+    clearTimeout(timer);
+    if (!res.ok) return { error: `HTTP ${res.status}` };
+    const text = await res.text();
+    return { rows: parseCSV(text), lastModified: res.headers.get('last-modified') || null, bytes: text.length };
+  } catch (e) {
+    clearTimeout(timer);
+    return { error: e.name === 'AbortError' ? `timeout after ${PUBLIC_TIMEOUT_MS} ms` : e.message };
+  }
+}
+
+function inBox(f, box) {
+  const lat = parseFloat(f.latitude), lon = parseFloat(f.longitude);
+  return lat >= box.south && lat <= box.north && lon >= box.west && lon <= box.east;
+}
+
 // Key conflict/hotspot zones
 const HOTSPOTS = {
   middleEast: { west: 30, south: 12, east: 65, north: 42, label: 'Middle East' },
@@ -69,8 +100,8 @@ function analyzeFires(fires, regionLabel) {
   const nomConf = fires.filter(f => f.confidence === 'n' || f.confidence === 'nominal');
 
   // High intensity fires (FRP > 10 MW) — potential strikes, industrial fires, large explosions
-  const highIntensity = fires
-    .filter(f => parseFloat(f.frp) > 10)
+  const intense = fires.filter(f => parseFloat(f.frp) > 10);
+  const highIntensity = intense
     .map(f => ({
       lat: parseFloat(f.latitude),
       lon: parseFloat(f.longitude),
@@ -80,9 +111,10 @@ function analyzeFires(fires, regionLabel) {
       time: f.acq_time,
       confidence: f.confidence,
       daynight: f.daynight,
+      satellite: ({ N: 'Suomi NPP', 1: 'NOAA-20', 2: 'NOAA-21', N20: 'NOAA-20', N21: 'NOAA-21' })[f.satellite] || f.satellite || null,
     }))
     .sort((a, b) => b.frp - a.frp)
-    .slice(0, 15);
+    .slice(0, 20);
 
   // Night detections are more significant (less likely agricultural burning)
   const nightFires = fires.filter(f => f.daynight === 'N');
@@ -93,6 +125,7 @@ function analyzeFires(fires, regionLabel) {
     highConfidence: highConf.length,
     nominalConfidence: nomConf.length,
     nightDetections: nightFires.length,
+    highIntensityCount: intense.length,
     highIntensity,
     avgFRP: fires.reduce((sum, f) => sum + (parseFloat(f.frp) || 0), 0) / fires.length,
   };
@@ -101,14 +134,7 @@ function analyzeFires(fires, regionLabel) {
 // Briefing
 export async function briefing() {
   const key = process.env.FIRMS_MAP_KEY;
-  if (!key) {
-    return {
-      source: 'NASA FIRMS',
-      timestamp: new Date().toISOString(),
-      status: 'no_key',
-      message: 'Set FIRMS_MAP_KEY for satellite fire/strike detection. Free at https://firms.modaps.eosdis.nasa.gov/api/area/',
-    };
-  }
+  if (!key) return briefingPublic();
 
   // Fetch all hotspots in parallel
   const entries = Object.entries(HOTSPOTS);
@@ -139,8 +165,60 @@ export async function briefing() {
     source: 'NASA FIRMS',
     timestamp: new Date().toISOString(),
     status: 'active',
+    access: 'api',
+    window: '48h',
     hotspots,
     signals,
+  };
+}
+
+// Signals for the 24 h global feed. The region boxes are large and always contain agricultural and wildfire
+// burning, so absolute thresholds fire everywhere; flag only unusually intense or night-heavy regions.
+function signalsFor(hotspots) {
+  const signals = [];
+  for (const h of hotspots) {
+    if (!h.totalDetections) continue;
+    const nightShare = h.nightDetections / h.totalDetections;
+    if (h.highIntensityCount >= 100) {
+      signals.push(`HIGH INTENSITY FIRES in ${h.region}: ${h.highIntensityCount} detections >10 MW FRP in 24 h`);
+    }
+    if (nightShare >= 0.5 && h.nightDetections >= 300) {
+      signals.push(`NIGHT-HEAVY THERMAL ACTIVITY in ${h.region}: ${h.nightDetections} of ${h.totalDetections} detections at night (${Math.round(nightShare * 100)}%; strikes, flaring or combat rather than daytime burning)`);
+    }
+  }
+  return signals;
+}
+
+// Keyless briefing from the public 24 h global files
+async function briefingPublic() {
+  const started = Date.now();
+  const feeds = await Promise.all(PUBLIC_FEEDS.map(async f => ({ ...f, ...(await fetchPublicFeed(f)) })));
+  const ok = feeds.filter(f => Array.isArray(f.rows));
+  if (!ok.length) {
+    return {
+      source: 'NASA FIRMS',
+      timestamp: new Date().toISOString(),
+      status: 'error',
+      access: 'public-24h',
+      error: feeds.map(f => `${f.label}: ${f.error}`).join('; '),
+      message: 'Public FIRMS downloads unavailable; set FIRMS_MAP_KEY to use the keyed API instead.',
+    };
+  }
+  const all = ok.flatMap(f => f.rows);
+  const hotspots = Object.values(HOTSPOTS).map(box => analyzeFires(all.filter(f => inBox(f, box)), box.label));
+  return {
+    source: 'NASA FIRMS',
+    timestamp: new Date().toISOString(),
+    status: 'active',
+    access: 'public-24h',
+    window: '24h',
+    satellites: ok.map(f => f.label),
+    feedErrors: feeds.filter(f => f.error).map(f => `${f.label}: ${f.error}`),
+    lastModified: ok.map(f => f.lastModified).filter(Boolean).sort().pop() || null,
+    globalDetections: all.length,
+    hotspots,
+    signals: signalsFor(hotspots),
+    durationMs: Date.now() - started,
   };
 }
 

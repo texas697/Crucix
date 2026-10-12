@@ -253,7 +253,7 @@ crucix/
 |--------|---------------|------|
 | **GDELT** | Global news events, conflict mapping (100+ languages) | None |
 | **OpenSky** | One global ADS-B snapshot per sweep sliced into 10 theaters; adsb.lol military feed + rotating theater samples as fallback | None (free OpenSky API client raises the quota) |
-| **NASA FIRMS** | Satellite fire/thermal anomaly detection (3hr latency) | Free key |
+| **NASA FIRMS** | Thermal anomalies in 6 watched regions from the public 24 h Suomi NPP + NOAA-20 VIIRS feeds | None (optional MAP_KEY uses the 48 h area API) |
 | **Maritime/AIS** | Vessel tracking, dark ships, sanctions evasion | Free key |
 | **Safecast** | Live radiation sensors (tt.safecast.org realtime feed) near 11 nuclear sites; Bushehr, Yongbyon and Dimona have no public coverage | None |
 | **ACLED** | Armed conflict events: battles, explosions, protests | Free (OAuth2) |
