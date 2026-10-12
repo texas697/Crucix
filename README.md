@@ -155,7 +155,7 @@ These three unlock the most valuable economic and satellite data. Each takes abo
 | Key | Source | How to Get |
 |-----|--------|------------|
 | `ACLED_EMAIL` + `ACLED_PASSWORD` | Armed conflict event data | [acleddata.com/register](https://acleddata.com/register/) — free, OAuth2 |
-| `AISSTREAM_API_KEY` | Live AIS vessel positions around the chokepoints (Ships map layer, live counts on the Maritime watch) | [aisstream.io](https://aisstream.io/) — free |
+| `AISSTREAM_API_KEY` | Live AIS vessel positions around the chokepoints (Ships map layer, live counts on the Maritime watch). On Cloud Run set `AIS_RELAY_URL` to a `deploy/ais-relay.py` host instead, since throttled CPU starves a WebSocket | [aisstream.io](https://aisstream.io/) — free |
 | `ADSB_API_KEY` | Unfiltered flight tracking | [RapidAPI](https://rapidapi.com/adsbexchange/api/adsbexchange-com1) — ~$10/mo |
 
 ### LLM Provider (optional, for AI-enhanced ideas)

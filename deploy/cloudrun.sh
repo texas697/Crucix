@@ -90,6 +90,15 @@ if gcloud secrets describe AISSTREAM_API_KEY --project "$PROJECT" >/dev/null 2>&
 else
   echo "▶ No AISSTREAM_API_KEY secret — chokepoint statistics only (PortWatch)"
 fi
+# AIS relay (deploy/ais-relay.py on the always-on host; Cloud Run throttles CPU between requests so the WebSocket
+# cannot live here). Export AIS_RELAY_URL=https://ais.rsanchez-server.com before deploying; the relay shares the
+# OPENSKY_RELAY_TOKEN secret.
+AIS_RELAY_URL="${AIS_RELAY_URL:-}"
+if [ -n "$AIS_RELAY_URL" ] && gcloud secrets describe OPENSKY_RELAY_TOKEN --project "$PROJECT" >/dev/null 2>&1; then
+  printf 'AIS_RELAY_URL: "%s"\n' "$AIS_RELAY_URL" >> deploy/env.yaml
+  SECRETS="$SECRETS,AIS_RELAY_TOKEN=OPENSKY_RELAY_TOKEN:latest"
+  echo "▶ AIS: snapshots via relay $AIS_RELAY_URL"
+fi
 # FRED (optional): without a key the source reads the public graph CSV, which carries the same observations. Create with:
 #   printf '%s' "key" | gcloud secrets create FRED_API_KEY --data-file=- --project $PROJECT
 if gcloud secrets describe FRED_API_KEY --project "$PROJECT" >/dev/null 2>&1; then

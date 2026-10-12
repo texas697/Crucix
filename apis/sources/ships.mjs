@@ -12,7 +12,7 @@
 // With AISSTREAM_API_KEY set, lib/ais/stream.mjs keeps a WebSocket to aisstream.io open and live vessel counts
 // (last hour) are joined onto each chokepoint here.
 
-import { aisSnapshot, aisStats } from '../../lib/ais/stream.mjs';
+import { aisSnapshotAsync, aisEnabled } from '../../lib/ais/stream.mjs';
 
 const PORTWATCH = 'https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services';
 const UA = 'Crucix/2.0 (MFB Services Intelligence dashboard; +https://crucix-intel-41718.firebaseapp.com)';
@@ -190,13 +190,12 @@ export async function briefing() {
   }
   const result = analyze({ registry: registry.features, recent: recent.features, baseline: baseline.features || [], disruptions: disruptions.features || [] }, now);
   // Live AIS (last hour) joined onto each chokepoint when the stream is running in this process.
-  const stats = aisStats();
-  let ais = { enabled: false, hint: 'Set AISSTREAM_API_KEY for live per-vessel tracking (free at aisstream.io)' };
-  if (stats.enabled) {
-    const snap = aisSnapshot({ maxVessels: 0 });
-    ais = { enabled: true, connected: snap.connected, since: snap.since, lastMessageAt: snap.lastMessageAt, tracked: snap.tracked, liveVessels: snap.liveVessels, windowMinutes: snap.windowMinutes, lastError: snap.lastError, reconnects: snap.reconnects };
+  let ais = { enabled: false, hint: 'Set AISSTREAM_API_KEY (or AIS_RELAY_URL) for live per-vessel tracking (free at aisstream.io)' };
+  if (aisEnabled()) {
+    const snap = await aisSnapshotAsync({ maxVessels: 0 });
+    ais = { enabled: true, connected: !!snap.connected, since: snap.since || null, lastMessageAt: snap.lastMessageAt || null, tracked: snap.tracked || 0, liveVessels: snap.liveVessels || 0, windowMinutes: snap.windowMinutes || 60, lastError: snap.lastError || null, reconnects: snap.reconnects || 0, relay: snap.relayUrl ? 'droplet' : null, stale: !!snap.stale };
     for (const [id, cp] of Object.entries(result.chokepoints)) {
-      const b = snap.boxes[id];
+      const b = (snap.boxes || {})[id];
       if (b) cp.live = { vessels: b.vessels, moving: b.moving, anchored: b.anchored, tanker: b.tanker, cargo: b.cargo, passenger: b.passenger, military: b.military, other: b.other };
     }
     const hormuz = result.chokepoints.chokepoint6;

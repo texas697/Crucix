@@ -3,7 +3,7 @@
 // Serves the Jarvis dashboard, runs sweep cycle, pushes live updates via SSE
 
 import express from 'express';
-import { startAisStream, aisSnapshot, AIS_BOXES } from './lib/ais/stream.mjs';
+import { startAisStream, configureAisRelay, aisSnapshotAsync, aisEnabled, AIS_BOXES } from './lib/ais/stream.mjs';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -367,14 +367,20 @@ function startNeptunStream() {
 startNeptunStream();
 
 // ─── Live AIS vessel positions near chokepoints (aisstream.io WebSocket, see lib/ais/stream.mjs) ───────────
-if (process.env.AISSTREAM_API_KEY) {
+// Prefer a relay (deploy/ais-relay.py on an always-on host): Cloud Run throttles CPU between requests, which
+// starves a WebSocket held in this process. Without a relay, hold the stream here (fine on an always-on box).
+if (process.env.AIS_RELAY_URL) {
+  configureAisRelay(process.env.AIS_RELAY_URL, process.env.AIS_RELAY_TOKEN || process.env.OPENSKY_RELAY_TOKEN);
+  console.log('[Crucix] AIS via relay', process.env.AIS_RELAY_URL);
+} else if (process.env.AISSTREAM_API_KEY) {
   startAisStream(process.env.AISSTREAM_API_KEY);
   console.log('[Crucix] AIS stream enabled (aisstream.io) for', Object.keys(AIS_BOXES).length, 'chokepoint boxes');
 }
-app.get('/api/ais', (req, res) => {
+app.get('/api/ais', async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  if (!process.env.AISSTREAM_API_KEY) return res.json({ enabled: false, vessels: [], boxes: {} });
-  res.json(aisSnapshot({ maxVessels: Math.min(parseInt(req.query.max) || 1500, 4000) }));
+  if (!aisEnabled()) return res.json({ enabled: false, vessels: [], boxes: {} });
+  try { res.json(await aisSnapshotAsync({ maxVessels: Math.min(parseInt(req.query.max) || 1500, 4000) })); }
+  catch (err) { res.status(502).json({ enabled: true, connected: false, error: err.message, vessels: [], boxes: {} }); }
 });
 
 app.get('/api/tracks', (req, res) => {
