@@ -584,8 +584,22 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
 @media(max-width:640px){
   .map-search{display:none}
   .leg-time,.leg-search{display:none}
-  .map-region-bar{padding:8px 10px}
-  .region-btn{font-size:11px;padding:5px 9px}
+  /* Region tabs: one scrollable row instead of wrapped two-line labels with the last tab clipped */
+  .map-region-bar{padding:8px 10px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .map-region-bar::-webkit-scrollbar{display:none}
+  .region-btn{font-size:11px;padding:5px 9px;white-space:nowrap;flex:none}
+  /* Legend scrolls sideways; fade the right edge so it reads as scrollable */
+  .map-legend{scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 28px),transparent)}
+  .map-legend::-webkit-scrollbar{display:none}
+  /* Top bar: keep the status pill and the theme button on one row, drop the clock to save a row above the map */
+  .topbar{gap:10px 12px;padding:8px 10px}
+  .top-right{width:100%;justify-content:space-between;flex-wrap:nowrap}
+  .tb-status{flex-wrap:nowrap}
+  .tb-seg{padding:5px 9px;font-size:12px}
+  .tb-clock,.tb-seg.tb-time{display:none}
+  /* Only the theater totals stay readable at phone width; detail labels return once zoomed in */
+  .map-label:not(.agg){display:none}
+  .zoomed-in .map-label:not(.agg){display:block}
 }
 
 /* CONFLICT LAYER */
@@ -1726,6 +1740,9 @@ function initMap(){
   });
   const _bb=document.getElementById('basemapToggle'); if(_bb) _bb.textContent=BASEMAPS[currentBase].name;
   map.on('load', () => { mapReady = true; setupMapLayers(); plotMarkers(); setMapLoading(false); });
+  // Phones hide the per-feature labels (chokepoints, theaters) until zoomed in; see the max-width:640px CSS rule.
+  const zoomClass = () => map.getContainer().classList.toggle('zoomed-in', map.getZoom() >= 2);
+  map.on('zoomend', zoomClass); map.on('load', zoomClass);
   map.on('error', () => {});
   map.on('styledata', () => { if(mapReady && !mapStyleReloading) setupMapLayers(); });
   map.on('click', e => {
