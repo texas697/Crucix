@@ -97,7 +97,8 @@ app.get('/api/status', (req, res) => {
     check('risk', (d.fred || []).filter(f => f.value != null).length >= 5, `${(d.fred || []).filter(f => f.value != null).length} FRED indicators`);
     check('space', d.space?.iss?.lat != null && (d.space?.stations || []).length > 0, `ISS ${d.space?.iss?.lat != null ? 'tracked' : 'missing'}, ${(d.space?.stations || []).length} stations`);
     check('spaceWeather', d.spaceWeather?.kp?.time && ageMin(d.spaceWeather.kp.time) <= 480, `Kp ${d.spaceWeather?.kp?.now ?? 'n/a'} from ${ageMin(d.spaceWeather?.kp?.time)} min ago`);
-    check('sdr', (d.sdr?.online || 0) > 0, `${d.sdr?.online || 0} receivers online`);
+    // Soft: the receivers are hobbyist boxes probed live, and one bad probe round should not page anyone.
+    check('sdr', (d.sdr?.online || 0) > 0, `${d.sdr?.online || 0} of ${d.sdr?.probed || 0} probed receivers online`, true);
     check('maritime', (d.chokepoints || []).length >= 20 && d.maritimeMeta?.asOf && (now - new Date(d.maritimeMeta.asOf).getTime()) < 14 * 86400000, `${(d.chokepoints || []).length} chokepoints to ${d.maritimeMeta?.asOf || 'n/a'}`);
     check('ships', (d.shipsMeta?.liveVessels || 0) > 0 && !d.shipsMeta?.error, `${d.shipsMeta?.liveVessels || 0} live vessels${d.shipsMeta?.error ? ' · ' + d.shipsMeta.error : ''}`, true);
     check('health', ((d.healthWatch?.outbreaks || []).length + (d.healthWatch?.travel || []).length) > 0 && !d.healthWatch?.error, `${(d.healthWatch?.outbreaks || []).length} outbreaks, ${(d.healthWatch?.travel || []).length} CDC notices`);
