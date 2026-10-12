@@ -2543,7 +2543,7 @@ async function ensureTracks(){
 
 // === EARTHQUAKES (USGS) ===
 function magColor(m){ return m>=6?'#ff5f63':m>=5?'#ff8a5c':m>=4?'#ffa94d':'#f2c879'; }
-const DISASTER_ICON={EQ:'&#9650;',TC:'&#127744;',FL:'&#8776;',VO:'&#9651;',DR:'&#9788;',WF:'&#128293;'};
+const DISASTER_ICON={EQ:'\u25B2',TC:'\uD83C\uDF00',FL:'\u2248',VO:'\u25B3',DR:'\u2600',WF:'\uD83D\uDD25'}; // real characters: popup heads are set as text, not HTML
 function disasterRows(){
   const ev=(D.disasters?.events||[]).filter(e=>currentRegion==='world'||inRegionBox(e.lat,e.lon,currentRegion));
   if(!ev.length) return '';
