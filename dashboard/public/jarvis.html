@@ -162,6 +162,8 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 .ldot.incident{background:var(--orange)}
 .ldot.maritime{background:var(--violet)}
 .ldot.health{background:var(--green)}
+.ldot.disaster{background:#ff8a5c}
+.ldot.outage{background:#c084fc}
 .ldot.news{background:var(--sky)}
 .ldot.space{background:var(--violet)}
 .layer-name{font-size:13.5px;font-weight:400;color:var(--text)}
@@ -719,6 +721,7 @@ html.light .brand-mark .bm-dot{fill:#0f172a}
     <div class="col-card" id="pRisk" style="flex:1 1 240px"></div>
     <div class="col-card" id="pDelta" style="flex:1 1 240px"></div>
     <div class="col-card" id="pQuakes" style="flex:1 1 240px"></div>
+    <div class="col-card" id="pOutages" style="flex:1 1 240px"></div>
   </div>
   <div class="row row-c">
     <div class="col-card" id="pIdeas" style="flex:2 1 440px"></div>
@@ -989,7 +992,9 @@ const LAYER_DEFS = [
   {key:'space', label:'Space', color:'#e9ecf2'},
   {key:'gdelt', label:'GDELT', color:'#6aa8ff'},
   {key:'track', label:'Tracks', color:'#ff9e6b'},
-  {key:'quake', label:'Quakes', color:'#ffa94d'}
+  {key:'quake', label:'Quakes', color:'#ffa94d'},
+  {key:'disaster', label:'Disasters', color:'#ff8a5c'},
+  {key:'outage', label:'Outages', color:'#c084fc'}
 ];
 // Per-layer explainability cards ("what am I looking at")
 const LAYER_INFO = {
@@ -1000,6 +1005,8 @@ const LAYER_INFO = {
   nuke: {purpose:'Live gamma dose rate from fixed radiation sensors around nuclear plants and legacy sites, with the typical (median) reading per site and every sensor plotted.', source:'Safecast realtime sensor network (tt.safecast.org)', freshness:'Sensors report every few minutes; refreshed every sweep', confidence:'Good anomaly screen where sensors exist. Normal outdoor background is 0.05–0.3 µSv/h (roughly 15–100 CPM on an LND 7318 tube).', limitations:['No public sensors near Bushehr, Yongbyon or Dimona','Chernobyl exclusion zone reads permanently above background by design','Single hot sensors are flagged but do not flip a site; the site median does']},
   ships: {purpose:'Live ship positions from AIS transponders in the approaches to the major chokepoints, with class (tanker, cargo, passenger, military/law enforcement), speed, course, navigation status and declared destination.', source:'aisstream.io live AIS feed (terrestrial + satellite receivers), held open by the server', freshness:'Positions update continuously; the map refreshes about every minute and shows ships heard in the last hour', confidence:'Exact for ships transmitting AIS. Ships running dark are invisible by definition.', limitations:['Only the chokepoint boxes are subscribed, not the open ocean','Receiver coverage varies; some areas report mainly large ships','Class B (small craft) data is sparser']},
   sdr: {purpose:'Where the public can listen to HF radio (0–30 MHz) right now: every listed KiwiSDR receiver worldwide, with live status, listener load and signal-to-noise for the receivers inside the watched conflict regions.', source:'receiverbook.de directory + each receiver\'s own /status endpoint', freshness:'Directory and watched-region probes refreshed every sweep', confidence:'Live numbers are exact for probed receivers; the rest of the directory is listing only.', limitations:['Only watched-region receivers are probed for live state','Volunteer-run; receivers come and go','Listener load shows interest, not what is being heard']},
+  disaster: {purpose:'Natural-disaster events at GDACS Orange or Red alert: cyclones, earthquakes, floods, volcanoes, droughts and wildfires, scored by expected humanitarian impact.', source:'GDACS (UN OCHA / EU Joint Research Centre)', freshness:'Refreshed every sweep; GDACS updates episodes as forecasts and reports arrive', confidence:'Authoritative automated alerts; the level is a model of impact, not a damage report.', limitations:['A closed event stays listed for a few days after its end date','Drought alerts cover whole regions and are pinned to one point','Green-level events are not shown']},
+  outage: {purpose:'Countries and networks whose internet connectivity has dropped below their own baseline in the last 24 hours, from BGP reachability, active probing and darknet traffic.', source:'IODA (Georgia Tech Internet Intelligence Lab)', freshness:'Refreshed every sweep; IODA detects within minutes', confidence:'Strong for national shutdowns and cable cuts; single-network alerts are routine churn.', limitations:['A national flag needs a BGP or probing signal; Google-traffic-only alerts are shown as traffic dips','Small territories trip the detector on quiet days','Pins sit on the country centroid']},
   health: {purpose:'Active disease outbreaks with WHO\'s own risk assessment, CDC travel health notices (levels 1–4) and US multistate outbreak investigations, pinned to the countries they name.', source:'WHO Disease Outbreak News API; CDC Travel Health Notices and CDC outbreak RSS feeds', freshness:'Refreshed every sweep (~15 min); WHO publishes a follow-up notice every 2–4 weeks for an ongoing event', confidence:'Authoritative for officially declared events. Risk levels are WHO\'s words, parsed from the notice.', limitations:['WHO notices lag the event by days; many are country-level, so pins sit on the country centroid','An outbreak stays listed for 90 days after its last WHO notice','CDC levels are travel advice for US travellers, not outbreak severity','Only places the dashboard can locate are pinned']},
   news: {purpose:'Geolocated world-news headlines.', source:'Aggregated RSS / GDELT geocoding', freshness:'Minutes', confidence:'Broad coverage, variable quality.', limitations:['Geocoding can be approximate','Duplicate framing across outlets']},
   weather: {purpose:'Official severe-weather alerts.', source:'NOAA / NWS', freshness:'Minutes', confidence:'Authoritative for the US.', limitations:['US-centric coverage','Alert polygons are approximated as points']},
@@ -1020,7 +1027,9 @@ const LAYER_SYNONYMS = {
   weather:['storm','noaa','nws','alert','flood','hurricane'],
   radiation:['radnet','epa','radiation','nuclear','safecast'],
   space:['satellite','satellites','iss','orbit','orbital','space'],
-  gdelt:['event','events','geo','news volume']
+  gdelt:['event','events','geo','news volume'],
+  disaster:['disaster','disasters','gdacs','cyclone','typhoon','flood','volcano','drought','wildfire','earthquake'],
+  outage:['outage','outages','internet','ioda','shutdown','bgp','blackout']
 };
 const TIME_WINDOWS = { all:null, '1h':3600000, '24h':86400000, '7d':604800000 };
 let layerVisible = Object.fromEntries(LAYER_DEFS.map(l=>[l.key,true]));
@@ -1327,6 +1336,8 @@ function renderLeftRail(){
     {name:t('layers.maritimeWatch','Maritime Watch'),count:D.chokepoints.length,dot:'maritime',sub:D.maritimeMeta?.summary?`${D.maritimeMeta.summary.disrupted} ${t('layers.disrupted','disrupted')} · ${(D.maritimeMeta.summary.reduced||0)+(D.maritimeMeta.summary.elevated||0)+(D.maritimeMeta.summary.watch||0)} ${t('layers.abnormal','abnormal')}${D.maritimeMeta.asOf?' · '+relTime(D.maritimeMeta.asOf+'T12:00:00Z').replace(' ago','')+' lag':''}`:t('layers.chokepoints','chokepoints')},
     {name:t('layers.nuclearSites','Nuclear Sites'),count:D.nuke.reduce((a,s)=>a+(s.n||0),0),dot:'nuke',sub:`${D.nuke.filter(s=>s.coverage==='live').length}/${D.nuke.length} ${t('layers.sitesLive','sites live')}`},
     {name:t('layers.conflictEvents','Conflict Events'),count:conflictEvents.toLocaleString(),dot:'thermal',sub:conflictSub},
+    {name:'Disasters',count:(D.disasters?.events||[]).length,dot:'disaster',sub:`${D.disasters?.counts?.red||0} red · GDACS`},
+    {name:'Internet outages',count:(D.outages?.countries||[]).filter(c=>c.national).length,dot:'outage',sub:`${D.outages?.counts?.critical||0} alerts · 24h`},
     {name:t('layers.healthWatch','Health Watch'),count:(D.healthWatch?.outbreaks||[]).length,dot:'health',sub:`${t('layers.whoOutbreaks','WHO outbreaks')} · ${(D.healthWatch?.travel||[]).filter(n=>n.level>=2).length} CDC L2+`},
     {name:t('layers.worldNews','World News'),count:newsCount,dot:'news',sub:t('layers.rssGeolocated','RSS geolocated')},
     {name:t('layers.spaceActivity','Satellites'),count:D.space?.militarySats||0,dot:'space',sub:`${D.space?.totalNewObjects||0} ${t('space.newLast30d','new (30d)')}`}
@@ -2001,6 +2012,21 @@ function plotMarkers(){
       popHead:(name||'KiwiSDR receiver').replace(/\s*\|\s*/g,' · '), popMeta:`KiwiSDR · listed${country?' · '+esc(country):''}`, popText:'Public HF receiver, 0–30 MHz. Live status is only probed inside the watched regions.' });
   });
 
+  // === Disasters: GDACS Orange/Red events ===
+  (D.disasters?.events||[]).forEach(e=>{
+    if(e.lat==null||e.lon==null) return;
+    const col=e.level==='Red'?'rgba(255,107,116,0.85)':'rgba(255,138,92,0.8)';
+    points.push({ lat:e.lat, lng:e.lon, size:e.level==='Red'?0.35:0.25, _r:e.level==='Red'?5.4:4.2, color:col, _stroke:col.replace(/[\d.]+\)$/,'0.25)'), type:'disaster', priority:1, ts:e.to||e.from, url:e.url||undefined,
+      popHead:`${DISASTER_ICON[e.type]||''} ${e.name}`, popMeta:`GDACS ${e.level} · ${e.typeLabel}${e.current?' · ongoing':''}${e.countries.length>1?' · '+e.countries.length+' countries':''}`, popText:`${e.sev?esc(e.sev)+'. ':''}${e.from?'From '+esc(e.from.slice(0,10)):''}${e.to?' to '+esc(e.to.slice(0,10)):''}.` });
+  });
+  // === Internet outages: IODA country rows ===
+  (D.outages?.countries||[]).forEach(c=>{
+    if(c.lat==null||c.lon==null) return;
+    if(!c.national && !c.minor && c.regions<2 && c.asns<3) return; // skip single-network churn
+    const col=c.national?'rgba(192,132,252,0.9)':'rgba(192,132,252,0.45)';
+    points.push({ lat:c.lat, lng:c.lon, size:c.national?0.3:0.15, _r:c.national?5:3, color:col, _stroke:col.replace(/[\d.]+\)$/,'0.25)'), type:'outage', priority:c.national?1:3, ts:c.since||undefined,
+      popHead:`${c.name} internet`, popMeta:`IODA · ${c.national?'national disruption':c.minor?'minor dip':'sub-national alerts'}${c.drop!=null?' · '+c.drop+'% below baseline':''}`, popText:`${c.sources.length?'Signals: '+esc(c.sources.join(', '))+'. ':''}${c.regions?c.regions+' region alert'+(c.regions===1?'':'s')+'. ':''}${c.asns?c.asns+' network alert'+(c.asns===1?'':'s')+'. ':''}${c.since?'Since '+relTime(c.since)+'.':''}` });
+  });
   // === Health: WHO outbreaks (one pin per named place, colour by WHO risk) and CDC travel notices level 2+ ===
   const hw=D.healthWatch||{};
   const seenHealth=new Set();
@@ -2393,6 +2419,9 @@ function renderLower(){
     <div class="econ-row"><span class="elabel">OneWeb</span><span class="eval">${sp.constellations?.oneweb||0}</span></div>
     ${sp.iss?`<div class="econ-row" title="${esc('ISS (ZARYA) · '+(sp.iss.period?sp.iss.period.toFixed(1)+' min orbit · ':'')+(sp.iss.inclination!=null?sp.iss.inclination.toFixed(1)+'° inclination':'')+(sp.iss.epoch?' · elements '+relTime(sp.iss.epoch):''))}"><span class="elabel">ISS</span><span class="eval" id="issLive" style="color:var(--accent)">${sp.iss.altitude!=null?sp.iss.altitude+' km':'--'}${sp.iss.lat!=null?` · ${sp.iss.lat.toFixed(1)}°, ${sp.iss.lon.toFixed(1)}°`:''}</span></div>`:''}
     ${(sp.stations||[]).some(s=>s.noradId===48274)?(()=>{const c=sp.stations.find(s=>s.noradId===48274);return `<div class="econ-row" title="${esc('CSS (TIANHE) · Tiangong'+(c.period?' · '+c.period.toFixed(1)+' min orbit':''))}"><span class="elabel">Tiangong</span><span class="eval" id="cssLive">${c.alt!=null?c.alt+' km':'--'}${c.lat!=null?` · ${c.lat.toFixed(1)}°, ${c.lon.toFixed(1)}°`:''}</span></div>`;})():''}
+    ${(()=>{ const w=D.spaceWeather; if(!w||w.error||!w.kp) return ''; const g=w.scales?.now?.G||0, r=w.scales?.now?.R||0, s2=w.scales?.now?.S||0; const kc=w.kp.now>=5?'var(--danger)':w.kp.now>=4?'var(--warn)':'var(--mint)'; const fc=(w.scales?.forecast||[]).find(d=>(d.G||0)>=1||(d.R||0)>=1);
+      return `<div class="econ-row" title="${esc('NOAA planetary Kp, 3-hourly · 24h max '+w.kp.max24.toFixed(1)+' · 72h max '+w.kp.max72.toFixed(1)+(w.alerts?.[0]?' · '+w.alerts[0].title:''))}"><span class="elabel">Space weather</span><span class="eval"><span style="color:${kc}">Kp ${w.kp.now.toFixed(1)}</span> <span style="opacity:.7">${esc(w.kp.label)}</span>${(g||r||s2)?` · <span style="color:var(--danger)">${g?'G'+g:''}${r?' R'+r:''}${s2?' S'+s2:''}</span>`:fc?` · <span style="color:var(--warn)">${fc.G?'G'+fc.G:''}${fc.R?' R'+fc.R:''} watch</span>`:''}</span></div>
+      <div class="econ-row" title="${esc('GOES X-ray flux · latest flare peak '+(w.flare?.max||'n/a')+(w.flare?.maxTime?' at '+w.flare.maxTime.slice(11,16)+'Z':''))}"><span class="elabel">Solar X-ray</span><span class="eval">${esc(w.flare?.current||'--')}${w.flare?.max?` <span style="opacity:.6">peak ${esc(w.flare.max)}</span>`:''}</span></div>`; })()}
     ${(sp.signals||[]).length?`<p class="panel-note">${sp.signals.slice(0,2).map(esc).join(' ')}</p>`:''}
   ` : '<div class="panel-src">No space data.</div>');
 }
@@ -2514,16 +2543,36 @@ async function ensureTracks(){
 
 // === EARTHQUAKES (USGS) ===
 function magColor(m){ return m>=6?'#ff5f63':m>=5?'#ff8a5c':m>=4?'#ffa94d':'#f2c879'; }
+const DISASTER_ICON={EQ:'&#9650;',TC:'&#127744;',FL:'&#8776;',VO:'&#9651;',DR:'&#9788;',WF:'&#128293;'};
+function disasterRows(){
+  const ev=(D.disasters?.events||[]).filter(e=>currentRegion==='world'||inRegionBox(e.lat,e.lon,currentRegion));
+  if(!ev.length) return '';
+  return ev.slice(0,6).map(e=>`<a class="quake-row" ${e.url?`href="${esc(e.url)}" target="_blank" rel="noopener"`:''} title="${esc((e.sev||'')+(e.countries.length>1?' · '+e.countries.join(', '):''))}">
+      <span class="quake-mag" style="background:${e.level==='Red'?'rgba(255,107,116,0.14)':'rgba(255,138,92,0.14)'};color:${e.level==='Red'?'var(--danger)':'#ff8a5c'};border-color:${e.level==='Red'?'rgba(255,107,116,0.4)':'rgba(255,138,92,0.4)'}">${DISASTER_ICON[e.type]||e.type}</span>
+      <span class="quake-place">${esc(e.name.replace(/^Tropical Cyclone /,'TC '))}</span>
+      <span class="quake-meta">${e.current?'<span style="color:#ff8a5c">live</span>':relTime(e.to||e.from)}</span>
+    </a>`).join('');
+}
 function quakeHtml(){
-  if(QUAKES===null) return cardHtml('Earthquakes','USGS','<div class="panel-src">Loading…</div>');
+  const dz=disasterRows(); const dc=D.disasters?.counts||{};
+  const dHead=dz?`<div class="hw-sec" style="padding-top:2px">GDACS · ${dc.red||0} red · ${dc.orange||0} orange</div>${dz}<div class="hw-sec">Earthquakes · USGS</div>`:'';
+  if(QUAKES===null) return cardHtml('Disasters',`${(D.disasters?.events||[]).length} GDACS`,dHead+'<div class="panel-src">Loading quakes…</div>');
   const list=(QUAKES.items||[]);
-  if(!list.length) return cardHtml('Earthquakes','USGS','<div class="panel-src">No M2.5+ quakes in the last 24h.</div>');
-  return cardHtml('Earthquakes', `${list.length} · 24h`, list.slice(0,10).map(q=>
+  if(!list.length) return cardHtml('Disasters',`${(D.disasters?.events||[]).length} GDACS`,dHead+'<div class="panel-src">No M2.5+ quakes in the last 24h.</div>');
+  return cardHtml('Disasters', `${(D.disasters?.events||[]).length} GDACS · ${list.length} quakes`, dHead+list.slice(0,dz?5:10).map(q=>
     `<a class="quake-row" href="${esc(q.url||'#')}" target="_blank" rel="noopener">
       <span class="quake-mag" style="background:${magColor(q.mag)}22;color:${magColor(q.mag)};border-color:${magColor(q.mag)}66">${(+q.mag).toFixed(1)}</span>
       <span class="quake-place">${esc(q.place||'')}</span>
       <span class="quake-meta">${q.depth!=null?Math.round(q.depth)+' km':''}${q.tsunami?' <span style="color:#ff8a5c">tsunami</span>':''}</span>
-    </a>`).join('')+`<div class="panel-src">USGS &#183; M2.5+, past 24h</div>`);
+    </a>`).join('')+`<div class="panel-src">GDACS Orange/Red alerts &#183; USGS M2.5+, past 24h</div>`);
+}
+function outagesHtml(){
+  const o=D.outages||{}; const cs=(o.countries||[]).filter(c=>currentRegion==='world'||(c.lat!=null&&inRegionBox(c.lat,c.lon,currentRegion)));
+  const nat=cs.filter(c=>c.national), rest=cs.filter(c=>!c.national&&(c.minor||c.regions>=2||c.asns>=3)).sort((a,b)=>(b.regions*3+b.asns+(b.drop||0))-(a.regions*3+a.asns+(a.drop||0)));
+  const row=c=>`<div class="site-row" title="${esc(`${c.name}: ${c.national?'national-level alert on '+c.sources.join(', '):c.minor?'minor country-level dip':'sub-national alerts'}${c.regions?' · '+c.regions+' regions':''}${c.asns?' · '+c.asns+' networks':''}`)}"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.national?'<span style="color:#c084fc">&#9679;</span> ':c.minor?'<span style="color:#c084fc;opacity:.5">&#9675;</span> ':'<span style="opacity:.4">&#9675;</span> '}${esc(c.name)}</span><span class="site-val" style="white-space:nowrap">${c.drop!=null?`<span style="color:${c.drop>=50?'var(--danger)':c.drop>=25?'var(--warn)':'var(--text-2)'}">&#8722;${c.drop}%</span>`:''}${!c.national&&(c.regions||c.asns)?`<span style="opacity:.6;margin-left:${c.drop!=null?8:0}px">${c.regions?c.regions+' reg':''}${c.regions&&c.asns?' · ':''}${c.asns?c.asns+' net':''}</span>`:''}${c.since?`<span style="opacity:.6;margin-left:8px">${relTime(c.since)}</span>`:''}</span></div>`;
+  const body=o.error?`<div class="panel-src">${esc(o.error)}</div>`:(nat.length||rest.length)?nat.map(row).join('')+rest.slice(0,8-Math.min(nat.length,8)).map(row).join(''):`<div class="panel-src">No internet disruptions detected${currentRegion!=='world'?' in this region':''} in the last ${o.windowHours||24}h.</div>`;
+  const banner=nat.length?`<div class="nuke-ok anom" style="color:#c084fc;background:rgba(192,132,252,0.08)">&#9888; ${esc(nat[0].name)} ${nat[0].drop!=null?'&#8722;'+nat[0].drop+'% connectivity':'national alert'}${nat.length>1?` +${nat.length-1} more`:''}</div>`:`<div class="nuke-ok ok">&#9679; No national-scale outages${currentRegion!=='world'?' here':''}</div>`;
+  return cardHtml('Internet outages', `${o.counts?.critical||0} alerts · ${o.windowHours||24}h`, banner+body+`<div class="panel-src">IODA &#183; BGP, active probing, darknet &#183; below each country&#39;s own baseline</div>`);
 }
 async function ensureQuakes(){
   if(QUAKES && Date.now()-QUAKES_TS<60000) return;
@@ -2539,6 +2588,7 @@ async function ensureQuakes(){
     QUAKES={updated:new Date().toISOString(), items};
   }catch{ if(!QUAKES) QUAKES={items:[],updated:null}; }
   const el=document.getElementById('pQuakes'); if(el) el.innerHTML=quakeHtml();
+  const oel=document.getElementById('pOutages'); if(oel) oel.innerHTML=outagesHtml();
   refreshMap();
 }
 
@@ -2590,6 +2640,7 @@ function renderRight(){
   setCard('pThreat', threatHtml());
   setCard('pTracks', trackerHtml());
   setCard('pQuakes', quakeHtml());
+  setCard('pOutages', outagesHtml());
   setCard('pPoly', polyHtml());
   setCard('pMarkets', cardHtml('Macro + markets', MACRO_LIVE?'Live':'Delayed', MACRO_INNER));
   ensureAlerts();
@@ -2613,7 +2664,7 @@ function runBoot(){
     {text:t('boot.connecting','CONNECTING {count} OSINT SOURCES...').replace('{count}',D.meta.sourcesQueried),delay:400},
     {text:'&#9500;&#9472; '+t('boot.sourceGroup1','OPENSKY · FIRMS · KIWISDR · MARITIME'),delay:700},
     {text:'&#9500;&#9472; '+t('boot.sourceGroup2','FRED · BLS · EIA · TREASURY · GSCPI'),delay:900},
-    {text:'&#9500;&#9472; '+t('boot.sourceGroup3','KIWISDR · SAFECAST · EPA · WHO · OFAC'),delay:1100},
+    {text:'&#9500;&#9472; '+t('boot.sourceGroup3','GDACS · IODA · SWPC · SAFECAST · WHO'),delay:1100},
     {text:'&#9492;&#9472; '+t('boot.sourceGroup4','GDELT · NOAA · PATENTS · BLUESKY · REDDIT'),delay:1300},
     {text:t('boot.sweepComplete','SWEEP COMPLETE — {ok}/{total} SOURCES').replace('{ok}',`<span class="count">${D.meta.sourcesOk}</span>`).replace('{total}',D.meta.sourcesQueried)+' <span class="ok">'+t('boot.ok','OK')+'</span>',delay:1700},
     {text:'CONFLICT LAYER: '+conflictStatus,delay:1900},

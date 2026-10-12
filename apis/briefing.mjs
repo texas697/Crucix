@@ -17,6 +17,8 @@ import { briefing as who } from './sources/who.mjs';
 import { briefing as ofac } from './sources/ofac.mjs';
 import { briefing as opensanctions } from './sources/opensanctions.mjs';
 import { briefing as adsb } from './sources/adsb.mjs';
+import { briefing as gdacs } from './sources/gdacs.mjs';
+import { briefing as ioda } from './sources/ioda.mjs';
 
 // === Tier 2: Economic & Financial ===
 import { briefing as fred } from './sources/fred.mjs';
@@ -37,6 +39,7 @@ import { briefing as kiwisdr } from './sources/kiwisdr.mjs';
 
 // === Tier 4: Space & Satellites ===
 import { briefing as space } from './sources/space.mjs';
+import { briefing as swpc } from './sources/swpc.mjs';
 
 // === Tier 5: Live Market Data ===
 import { briefing as yfinance } from './sources/yfinance.mjs';
@@ -77,6 +80,8 @@ export async function fullBriefing() {
     runSource('Safecast', safecast),
     runSource('ReliefWeb', reliefweb),
     runSource('WHO', who),
+    runSource('GDACS', gdacs),
+    runSource('IODA', ioda),
     runSource('OFAC', ofac),
     runSource('OpenSanctions', opensanctions),
     runSource('ADS-B', adsb),
@@ -100,6 +105,7 @@ export async function fullBriefing() {
 
     // Tier 4: Space & Satellites
     runSource('Space', space),
+    runSource('SWPC', swpc),
 
     // Tier 5: Live Market Data
     runSource('YFinance', yfinance),

@@ -512,6 +512,32 @@ export async function synthesize(data) {
     error: whoSrc.outbreakError || null, travelError: whoSrc.cdc?.travelError || null,
     asOf: whoSrc.timestamp || null,
   };
+  // Disasters (GDACS), internet outages (IODA) and space weather (SWPC)
+  const gdacsSrc = data.sources.GDACS || {};
+  const disasters = {
+    events: (gdacsSrc.events || []).slice(0, 60).map(e => ({
+      id: e.id, type: e.type, typeLabel: e.typeLabel, level: e.level, score: e.score, name: (e.name || '').substring(0, 100),
+      country: e.country, countries: (e.countries || []).slice(0, 8).map(c => c.name), lat: e.lat, lon: e.lon,
+      from: e.from, to: e.to, current: !!e.current, sev: e.severity?.text ? e.severity.text.substring(0, 90) : null,
+      url: sanitizeExternalUrl(e.report),
+    })),
+    counts: gdacsSrc.counts || null, signals: (gdacsSrc.signals || []).slice(0, 4), error: gdacsSrc.error || null, asOf: gdacsSrc.timestamp || null,
+  };
+  const iodaSrc = data.sources.IODA || {};
+  const outages = {
+    countries: (iodaSrc.countries || []).slice(0, 40).map(c => ({
+      cc: c.cc, name: (c.name || '').substring(0, 50), lat: c.lat, lon: c.lon, score: c.score, events: c.events, national: !!c.national, minor: !!c.minor,
+      drop: c.worstDrop, regions: c.regionAlerts, asns: c.asnAlerts, sources: (c.countryAlerts || []).map(a => a.datasource).filter((v, i, a) => a.indexOf(v) === i),
+      since: (c.countryAlerts || []).map(a => a.time).sort()[0] || null,
+    })),
+    alerts: (iodaSrc.alerts || []).slice(0, 20).map(a => ({ type: a.type, name: (a.name || '').substring(0, 60), cc: a.cc, drop: a.drop, ds: a.datasource, time: a.time, org: a.org ? a.org.substring(0, 40) : null })),
+    counts: iodaSrc.counts || null, windowHours: iodaSrc.windowHours || 24, signals: (iodaSrc.signals || []).slice(0, 4), error: iodaSrc.error || null, asOf: iodaSrc.timestamp || null,
+  };
+  const swpcSrc = data.sources.SWPC || {};
+  const spaceWeather = swpcSrc.error ? { error: swpcSrc.error } : {
+    kp: swpcSrc.kp || null, flare: swpcSrc.flare || null, scales: swpcSrc.scales || null,
+    alerts: (swpcSrc.alerts || []).slice(0, 4), signals: (swpcSrc.signals || []).slice(0, 3), asOf: swpcSrc.timestamp || null,
+  };
   const fred = (data.sources.FRED?.indicators || []).map(f => ({
     id: f.id, label: f.label, value: f.value, date: f.date,
     recent: f.recent || [],
@@ -691,7 +717,7 @@ export async function synthesize(data) {
     sdr: { total: sdrNet.totalReceivers || 0, probed: sdrNet.probed || 0, online: sdrNet.online || 0, private: sdrNet.private || 0, unreachable: sdrNet.unreachable || 0,
       users: sdrNet.totalUsers || 0, capacity: sdrNet.totalCapacity || 0, directory: sdrData.directory || null, error: sdrData.status === 'error' ? (sdrData.message || 'KiwiSDR directory unavailable') : null,
       zones: sdrZones, all: sdrAll },
-    who, healthWatch, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, gdelt, space, health, news,
+    who, healthWatch, disasters, outages, spaceWeather, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, gdelt, space, health, news,
     markets, // Live Yahoo Finance market data
     ideas: [], ideasSource: 'disabled',
     // newsFeed for ticker (merged RSS + GDELT)

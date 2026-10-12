@@ -30,7 +30,7 @@
     "connecting": "CONNECTING {count} OSINT SOURCES...",
     "sourceGroup1": "OPENSKY · FIRMS · KIWISDR · MARITIME",
     "sourceGroup2": "FRED · BLS · EIA · TREASURY · GSCPI",
-    "sourceGroup3": "KIWISDR · SAFECAST · EPA · WHO · OFAC",
+    "sourceGroup3": "GDACS · IODA · SWPC · SAFECAST · WHO",
     "sourceGroup4": "GDELT · NOAA · PATENTS · BLUESKY · REDDIT",
     "sourceGroup5": "USGS · ECB · CVE · COPERNICUS · CELESTRAK",
     "sweepComplete": "SWEEP COMPLETE — {ok}/{total} SOURCES",
