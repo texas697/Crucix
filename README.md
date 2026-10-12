@@ -83,6 +83,7 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
   for VIX, high-yield spread and supply-chain pressure.
 - **Sweep delta:** what changed since the last refresh (new signals, escalations, de-escalations).
 - **Cross-source signals:** correlations across satellite, economic, conflict and social data.
+- **Maritime watch:** ships per day through the major chokepoints against the one-year average, with PortWatch disruption events (e.g. Hormuz, Red Sea) flagged on the map and in the Maritime watch card.
 - **Deep links / history:** the address bar carries the view. Dashboard: `/?region=middleEast&hide=news,sdr&time=24h&pin=<lat>,<lng>&shape=c:<lat>,<lng>,<km>&info=<layer>&guide=1&settings=1&read=<articleId>`; Readers Digest: `/digest/<articleId>?filter=thinktank&topic=<topic>&q=<text>`; Live media: `/media/<channelId>?grid=1`. Refresh restores the view, the browser back button closes what you opened, and the login page returns you to the same link.
 - **Nuclear watch:** live gamma dose rate from Safecast's fixed-sensor network around 11 nuclear sites (median per site, every sensor on the map), plus EPA RadNet.
 - **Space watch:** ISS position, recent launches, and Starlink/OneWeb and military constellation counts, with open
@@ -255,7 +256,7 @@ crucix/
 | **GDELT** | Global news events, conflict mapping (100+ languages) | None |
 | **OpenSky** | One global ADS-B snapshot per sweep sliced into 10 theaters; adsb.lol military feed + rotating theater samples as fallback | None (free OpenSky API client raises the quota) |
 | **NASA FIRMS** | Thermal anomalies in 6 watched regions from the public 24 h Suomi NPP + NOAA-20 VIIRS feeds | None (optional MAP_KEY uses the 48 h area API) |
-| **Maritime/AIS** | Vessel tracking, dark ships, sanctions evasion | Free key |
+| **Maritime (PortWatch)** | Daily transit counts for 28 chokepoints vs 1-year baseline, plus open disruption events (IMF PortWatch open data) | None (optional AISSTREAM_API_KEY for per-vessel AIS) |
 | **Safecast** | Live radiation sensors (tt.safecast.org realtime feed) near 11 nuclear sites; Bushehr, Yongbyon and Dimona have no public coverage | None |
 | **ACLED** | Armed conflict events: battles, explosions, protests | Free (OAuth2) |
 | **ReliefWeb** | UN humanitarian crisis tracking | None |

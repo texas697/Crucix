@@ -428,9 +428,20 @@ export async function synthesize(data) {
     lastModified: firmsData.lastModified || null, globalDetections: firmsData.globalDetections || 0,
     error: firmsData.error || (firmsData.status === 'no_key' ? firmsData.message : null) || null,
   };
-  const chokepoints = Object.values(data.sources.Maritime?.chokepoints || {}).map(c => ({
-    label: c.label || c.name, note: c.note || '', lat: c.lat || 0, lon: c.lon || 0
+  const maritimeData = data.sources.Maritime || {};
+  const chokepoints = Object.values(maritimeData.chokepoints || {}).map(c => ({
+    id: c.id || null, label: c.label || c.name, note: c.note || '', lat: c.lat || 0, lon: c.lon || 0, major: c.major !== false,
+    status: c.status || null,
+    perDay: c.transits?.perDay7 ?? null, prior: c.transits?.perDayPrior7 ?? null, base: c.transits?.baseline365 ?? null,
+    pct: c.transits?.pctVsBaseline ?? null, trend: c.transits?.trend7Pct ?? null, tanker: c.transits?.tankerShare7 ?? null,
+    asOf: c.transits?.latestDate || null, daily: (c.transits?.daily || []).map(x => x.n),
+    events: (c.events || []).map(e => ({ name: e.name, type: e.type, from: e.from, ongoing: !!e.ongoing })),
   }));
+  const maritimeMeta = {
+    access: maritimeData.access || null, provider: maritimeData.provider || null, asOf: maritimeData.latestDate || null, lagDays: maritimeData.lagDays ?? null,
+    summary: maritimeData.summary || null, error: maritimeData.error || null, signals: maritimeData.signals || [],
+    disruptions: (maritimeData.disruptions || []).filter(e => e.ongoing).slice(0, 8).map(e => ({ name: e.name, type: e.type, from: e.from, lat: e.lat, lon: e.lon, affected: e.affected.length })),
+  };
   const safecast = data.sources.Safecast || {};
   const nuke = (safecast.sites || []).map(s => ({
     site: s.site, key: s.key, lat: s.lat, lon: s.lon, radiusKm: s.radiusKm, coverage: s.coverage || (s.recentReadings > 0 ? 'live' : 'stale'),
@@ -638,7 +649,7 @@ export async function synthesize(data) {
   const news = await fetchAllNews();
 
   const V2 = {
-    meta: data.crucix, air, milAir, thermal, tSignals, thermalMeta, chokepoints, nuke, nukeSignals, nukeMeta,
+    meta: data.crucix, air, milAir, thermal, tSignals, thermalMeta, chokepoints, maritimeMeta, nuke, nukeSignals, nukeMeta,
     airMeta: {
       ...airLive,
       fallback: Boolean(airFallback),
