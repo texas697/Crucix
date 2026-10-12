@@ -86,7 +86,7 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
 - **Maritime watch:** ships per day through the major chokepoints against the one-year average, with PortWatch disruption events (e.g. Hormuz, Red Sea) flagged on the map and in the Maritime watch card.
 - **Deep links / history:** the address bar carries the view. Dashboard: `/?region=middleEast&hide=news,sdr&time=24h&pin=<lat>,<lng>&shape=c:<lat>,<lng>,<km>&info=<layer>&guide=1&settings=1&read=<articleId>`; Readers Digest: `/digest/<articleId>?filter=thinktank&topic=<topic>&q=<text>`; Live media: `/media/<channelId>?grid=1`. Refresh restores the view, the browser back button closes what you opened, and the login page returns you to the same link.
 - **Disasters:** GDACS Orange/Red alerts (cyclones, earthquakes, floods, volcanoes, droughts, wildfires) with severity and affected countries, alongside USGS quakes, on the map and the Disasters card.
-- **Internet outages:** IODA (Georgia Tech) outage alerts from BGP, active probing and darknet traffic, rolled up per country with national disruptions flagged and the drop against each country's own baseline.
+- **Internet outages:** IODA (Georgia Tech) outage alerts from BGP, active probing and darknet traffic, rolled up per country with national disruptions flagged and the drop against each country's own baseline; Cloudflare Radar adds curated outage annotations with the cause (shutdowns, cable cuts, power), verified traffic anomalies and DDoS target shares when a token is configured.
 - **Space weather:** NOAA SWPC planetary Kp, GOES X-ray flare class and the R/S/G scales with the three-day storm watch, on the Space watch card.
 - **Health watch:** WHO Disease Outbreak News grouped into active outbreaks (updates, first/last notice, WHO's own national/regional/global risk level parsed from the notice), CDC Travel Health Notices (levels 1–4) and CDC multistate outbreak investigations, all pinned to the countries they name.
 - **Nuclear watch:** live gamma dose rate from Safecast's fixed-sensor network around 11 nuclear sites (median per site, every sensor on the map), plus EPA RadNet.
@@ -264,6 +264,7 @@ crucix/
 | **ReliefWeb** | UN humanitarian crisis tracking | None |
 | **GDACS** | Orange/Red natural-disaster alerts with affected countries, severity and report links | None |
 | **IODA** | Internet outage alerts (country/region/network) from BGP, ping and darknet baselines | None |
+| **Cloudflare Radar** | Outage annotations with cause, verified traffic anomalies, DDoS target/origin shares | Free token, Account → Radar → Read |
 | **NOAA SWPC** | Planetary Kp, GOES X-ray flares, R/S/G space-weather scales and alerts | None |
 | **WHO / CDC** | WHO Disease Outbreak News (JSON API) grouped into active outbreaks with WHO risk levels; CDC Travel Health Notices and CDC outbreak investigation RSS feeds | None |
 | **OFAC** | US Treasury sanctions (SDN list) | None |

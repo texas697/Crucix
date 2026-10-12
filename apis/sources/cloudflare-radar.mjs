@@ -10,6 +10,8 @@ import { safeFetch } from '../utils/fetch.mjs';
 import '../utils/env.mjs';
 
 const RADAR_BASE = 'https://api.cloudflare.com/client/v4/radar';
+const REGION_NAMES = new Intl.DisplayNames(['en'], { type: 'region' });
+export const countryName = cc => { try { return cc && cc.length === 2 ? REGION_NAMES.of(cc.toUpperCase()) : cc; } catch { return cc; } };
 
 // Countries of intelligence interest for internet monitoring
 const WATCHLIST_COUNTRIES = [
@@ -28,7 +30,7 @@ async function fetchAnnotations() {
   if (!headers) return { error: 'no_credentials' };
 
   // Cloudflare Radar Annotations — internet outages and government shutdowns
-  const url = `${RADAR_BASE}/annotations/outages?dateRange=30d&format=json`;
+  const url = `${RADAR_BASE}/annotations/outages?dateRange=30d&limit=50&format=json`;
   const data = await safeFetch(url, { timeout: 15000, headers });
 
   if (data.error) return { error: data.error };
@@ -43,7 +45,12 @@ async function fetchAnnotations() {
     scope: a.scope || null,
     asns: a.asns || [],
     locations: a.locations || [],
+    locationNames: (a.locationsDetails || []).map(l => l.name).filter(Boolean),
+    asnNames: (a.asnsDetails || []).map(x => x.name).filter(Boolean).slice(0, 5),
     eventType: a.eventType || 'outage',
+    cause: a.outage?.outageCause || null,
+    outageType: a.outage?.outageType || null,
+    tags: a.tags || [],
   }));
 }
 
@@ -51,26 +58,17 @@ async function fetchAttackSummary() {
   const headers = getAuthHeaders();
   if (!headers) return { error: 'no_credentials' };
 
-  // Layer 3 DDoS attack summaries by protocol and vector
-  // API requires a dimension: /summary/{dimension}
-  const [byProtocol, byVector] = await Promise.all([
-    safeFetch(`${RADAR_BASE}/attacks/layer3/summary/protocol?dateRange=7d&format=json`, { timeout: 15000, headers }),
+  // DDoS over the last day: which countries are being hit (L3 and L7) and where L3 traffic originates, as shares
+  // of all attack traffic Cloudflare mitigated, plus the L3 vector mix.
+  const top = (r, key) => (r?.result?.top_0 || []).map(x => ({ cc: x[`${key}CountryAlpha2`], name: x[`${key}CountryName`], pct: Math.round(parseFloat(x.value) * 10) / 10 })).filter(x => x.cc);
+  const [l3t, l3o, l7t, vec] = await Promise.all([
+    safeFetch(`${RADAR_BASE}/attacks/layer3/top/locations/target?dateRange=1d&limit=8&format=json`, { timeout: 15000, headers }),
+    safeFetch(`${RADAR_BASE}/attacks/layer3/top/locations/origin?dateRange=1d&limit=8&format=json`, { timeout: 15000, headers }),
+    safeFetch(`${RADAR_BASE}/attacks/layer7/top/locations/target?dateRange=1d&limit=8&format=json`, { timeout: 15000, headers }),
     safeFetch(`${RADAR_BASE}/attacks/layer3/summary/vector?dateRange=7d&format=json`, { timeout: 15000, headers }),
   ]);
-
-  const result = {};
-
-  if (!byProtocol.error && byProtocol.result) {
-    result.byProtocol = byProtocol.result.summary_0 || byProtocol.result;
-  }
-  if (!byVector.error && byVector.result) {
-    result.byVector = byVector.result.summary_0 || byVector.result;
-  }
-
-  if (!result.byProtocol && !result.byVector) {
-    return { error: byProtocol.error || byVector.error || 'No attack data returned' };
-  }
-
+  const result = { l3Targets: top(l3t, 'target'), l3Origins: top(l3o, 'origin'), l7Targets: top(l7t, 'target'), byVector: vec?.result?.summary_0 || null };
+  if (!result.l3Targets.length && !result.l7Targets.length) return { error: l3t.error || l7t.error || 'No attack data returned' };
   return result;
 }
 
@@ -90,8 +88,10 @@ async function fetchTrafficAnomalies() {
     endDate: a.endDate,
     type: a.type || 'unknown',
     status: a.status,
-    asnDetails: a.asnDetails || null,
-    locationDetails: a.locationDetails || null,
+    verified: a.status === 'VERIFIED',
+    cc: a.locationDetails?.code || null,
+    country: a.locationDetails?.name || countryName(a.locationDetails?.code) || null,
+    asn: a.asnDetails ? { asn: a.asnDetails.asn, name: a.asnDetails.name, cc: a.asnDetails.locations?.code || null } : null,
     visibleInAllDataSources: a.visibleInAllDataSources || false,
   }));
 }

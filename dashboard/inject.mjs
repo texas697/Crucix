@@ -5,6 +5,7 @@
 //
 // Exports synthesize(), generateIdeas(), fetchAllNews() for use by server.mjs
 
+import { CENTROID as IODA_CENTROID } from '../apis/sources/ioda.mjs';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -532,7 +533,33 @@ export async function synthesize(data) {
     })),
     alerts: (iodaSrc.alerts || []).slice(0, 20).map(a => ({ type: a.type, name: (a.name || '').substring(0, 60), cc: a.cc, drop: a.drop, ds: a.datasource, time: a.time, org: a.org ? a.org.substring(0, 40) : null })),
     counts: iodaSrc.counts || null, windowHours: iodaSrc.windowHours || 24, signals: (iodaSrc.signals || []).slice(0, 4), error: iodaSrc.error || null, asOf: iodaSrc.timestamp || null,
+    // Cloudflare Radar: curated outage annotations with a cause, verified traffic anomalies, DDoS shares by country
+    radar: (() => {
+      const r = data.sources['Cloudflare-Radar'] || {};
+      if (r.status === 'no_credentials') return { enabled: false };
+      if (r.error) return { enabled: true, error: r.error };
+      const centroid = cc => IODA_CENTROID[cc] || null;
+      const ann = [...(r.outages?.activeEvents || []).map(o => ({ ...o, active: true })), ...(r.outages?.recentResolved || [])].slice(0, 14).map(o => {
+        const cc = (o.locations || [])[0] || null; const c = centroid(cc);
+        return { id: o.id, desc: (o.description || '').substring(0, 180), start: o.startDate, end: o.endDate || null, active: !!o.active,
+          cc: o.locations || [], names: o.locationNames || [], asns: o.asnNames || [], type: o.eventType, cause: o.cause || null, kind: o.outageType || null,
+          url: sanitizeExternalUrl(o.linkedUrl), lat: c?.[0] ?? null, lon: c?.[1] ?? null };
+      });
+      const dayAgo = Date.now() - 86400000;
+      const anomalies = (r.anomalies?.events || []).filter(a => a.verified && new Date(a.startDate).getTime() >= dayAgo).slice(0, 10)
+        .map(a => ({ start: a.startDate, end: a.endDate || null, type: a.type, cc: a.cc || a.asn?.cc || null, country: a.country || null, asn: a.asn?.name || null }));
+      const at = r.attacks || {};
+      return { enabled: true, annotations: ann, anomalies, attacks: at.error ? null : { l3Targets: (at.l3Targets || []).slice(0, 5), l3Origins: (at.l3Origins || []).slice(0, 5), l7Targets: (at.l7Targets || []).slice(0, 5) },
+        signals: (r.signals || []).map(s => s.signal || s).slice(0, 3), asOf: r.timestamp || null };
+    })(),
   };
+  // Attach Cloudflare's stated cause to the IODA country rows it explains
+  if (outages.radar?.annotations?.length) {
+    for (const c of outages.countries) {
+      const a = outages.radar.annotations.find(a => a.cc.includes(c.cc));
+      if (a) c.cause = `${a.desc}${a.cause ? ` (${a.cause.toLowerCase().replace(/_/g, ' ')})` : ''}`.substring(0, 200);
+    }
+  }
   const swpcSrc = data.sources.SWPC || {};
   const spaceWeather = swpcSrc.error ? { error: swpcSrc.error } : {
     kp: swpcSrc.kp || null, flare: swpcSrc.flare || null, scales: swpcSrc.scales || null,
