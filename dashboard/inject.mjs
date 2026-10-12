@@ -636,6 +636,7 @@ export async function synthesize(data) {
     totalEvents: gdeltData.events?.totalEvents || 0,
     conflictEvents: gdeltData.events?.conflictEvents || 0,
     byType: gdeltData.events?.byType || {},
+    byRegion: gdeltData.events?.byRegion || {},
     topCountries: (gdeltData.events?.topCountries || []).slice(0, 8),
     geoPoints: (gdeltData.geoPoints || []).slice(0, 60).map(p => ({
       lat: p.lat, lon: p.lon, name: (p.name || '').substring(0, 80), country: p.country || '',

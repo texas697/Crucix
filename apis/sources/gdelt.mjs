@@ -9,6 +9,7 @@
 
 import { inflateRawSync } from 'node:zlib';
 import { safeFetch } from '../utils/fetch.mjs';
+import { theaterOf } from '../utils/regions.mjs';
 
 const DOC = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const EXPORT = 'https://data.gdeltproject.org/gdeltv2';
@@ -172,6 +173,7 @@ export function clusterEvents(files) {
   let total = 0, geo = 0, conflict = 0;
   const byType = {};
   const byCountry = {};
+  const byRegion = {}; // every geocoded conflict event by theater, not just the clustered top places
 
   for (const f of files) {
     if (!f.text) continue;
@@ -193,6 +195,11 @@ export function clusterEvents(files) {
       const place = cleanPlace(c[C.place]) || `${lat.toFixed(2)},${lon.toFixed(2)}`;
       const country = countryOf(place);
       byCountry[country] = (byCountry[country] || 0) + 1;
+      const theater = theaterOf(lat, lon);
+      if (theater) {
+        const r = byRegion[theater] || (byRegion[theater] = { events: 0, types: {}, articles: 0 });
+        r.events++; r.types[label] = (r.types[label] || 0) + 1; r.articles += +c[C.articles] || 0;
+      }
 
       let k = clusters.get(place);
       if (!k) {
@@ -233,7 +240,7 @@ export function clusterEvents(files) {
 
   return {
     points: points.slice(0, MAX_CLUSTERS),
-    totalEvents: total, geoEvents: geo, conflictEvents: conflict, byType,
+    totalEvents: total, geoEvents: geo, conflictEvents: conflict, byType, byRegion,
     topCountries: Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([country, events]) => ({ country, events })),
   };
 }
@@ -298,7 +305,7 @@ export async function briefing() {
     events: {
       windowHours: ev.windowHours, filesFetched: ev.filesFetched, filesMissing: ev.filesMissing,
       newest: ev.newest, oldest: ev.oldest,
-      totalEvents: ev.totalEvents || 0, geoEvents: ev.geoEvents || 0, conflictEvents: ev.conflictEvents || 0,
+      totalEvents: ev.totalEvents || 0, geoEvents: ev.geoEvents || 0, conflictEvents: ev.conflictEvents || 0, byRegion: ev.byRegion || {},
       byType: ev.byType || {}, topCountries: ev.topCountries || [],
       error: ev.error || null,
     },

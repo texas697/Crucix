@@ -2428,24 +2428,39 @@ function renderLower(){
 
 // === RIGHT RAIL ===
 // === REGIONAL THREAT (derived) ===
+// Theater priority for scoring: the Middle East box overlaps Africa, Europe and Asia, so a point belongs to the
+// first box that contains it (same rule as apis/utils/regions.mjs on the server).
+const THEATER_ORDER=['middleEast','europe','africa','asiaPacific','americas'];
+function theaterOf(lat,lon){ for(const r of THEATER_ORDER){ if(inRegionBox(lat,lon,r)) return r; } return null; }
+// Composite 0–100: conflict reporting (GDELT, log-scaled, max 60) plus hard disruption signals already on the
+// dashboard (chokepoints, national internet outages, GDACS red events, radiation anomalies, WHO very-high outbreaks).
 function threatByRegion(){
   const regions=['middleEast','europe','asiaPacific','americas','africa'];
+  const by=D.gdelt?.byRegion||{};
   return regions.map(r=>{
-    const box=REGION_BOX[r];
-    const inBox=(lat,lng)=> lat>=box[0][1]&&lat<=box[1][1]&&lng>=box[0][0]&&lng<=box[1][0];
-    // Weight each GDELT cluster's distinct sources by the worst event type seen there
-    const g=(D.gdelt?.geoPoints||[]).filter(p=>inBox(p.lat,p.lon));
-    const w=g.reduce((s,p)=>s+p.count*(gdeltSeverity(p.worst)>=5?3:gdeltSeverity(p.worst)>=3?1.5:1),0);
-    const score=Math.min(100, Math.round(w/8)); const events=g.reduce((s,p)=>s+(p.events||0),0); const meta=`${g.length} hotspots`;
-    const lvl = score>=70?['Critical','#ff6b74']:score>=45?['High','#f59a5e']:score>=20?['Elevated','#f2c879']:['Guarded','#7fe0c0'];
-    return {r, label:REGION_LABEL[r], score, level:lvl[0], color:lvl[1], events, meta};
+    const g=by[r]||{events:0,types:{}}; const t=g.types||{};
+    const severe=(t['Armed clash']||0)+(t['Mass violence']||0)+(t['Assault']||0);
+    const sev=(t['Armed clash']||0)+3*(t['Mass violence']||0)+0.5*(t['Assault']||0);
+    const conflict=Math.min(60, Math.round(20*Math.log10(1+sev/10)));
+    const parts=[];
+    const cps=(D.chokepoints||[]).filter(c=>c.status==='disrupted'&&theaterOf(c.lat,c.lon)===r); if(cps.length) parts.push({k:'chokepoints',n:cps.length,pts:Math.min(20,12*cps.length),txt:cps.map(c=>c.label).join(', ')});
+    const outs=(D.outages?.countries||[]).filter(c=>c.national&&c.lat!=null&&theaterOf(c.lat,c.lon)===r); if(outs.length) parts.push({k:'internet outages',n:outs.length,pts:Math.min(16,8*outs.length),txt:outs.map(c=>c.name).join(', ')});
+    const reds=(D.disasters?.events||[]).filter(e=>e.level==='Red'&&theaterOf(e.lat,e.lon)===r); if(reds.length) parts.push({k:'GDACS red',n:reds.length,pts:Math.min(12,6*reds.length),txt:reds.map(e=>e.name).join(', ')});
+    const nukes=(D.nuke||[]).filter(n=>n.anom&&theaterOf(n.lat,n.lon)===r); if(nukes.length) parts.push({k:'radiation',n:nukes.length,pts:15,txt:nukes.map(n=>n.site).join(', ')});
+    const who=(D.healthWatch?.outbreaks||[]).filter(o=>o.risk?.max==='very high'&&(o.pins||[]).some(([la,lo])=>theaterOf(la,lo)===r)); if(who.length) parts.push({k:'WHO very high',n:who.length,pts:8,txt:who.map(o=>o.disease).join(', ')});
+    const disruption=Math.min(40, parts.reduce((s,p)=>s+p.pts,0));
+    const score=Math.min(100, conflict+disruption);
+    const lvl = score>=60?['Critical','#ff6b74']:score>=40?['High','#f59a5e']:score>=20?['Elevated','#f2c879']:['Guarded','#7fe0c0'];
+    const meta=`${severe.toLocaleString()} severe${parts.length?' · '+parts.reduce((s,p)=>s+p.n,0)+' disruption'+(parts.reduce((s,p)=>s+p.n,0)===1?'':'s'):''}`;
+    const tip=`${REGION_LABEL[r]} · score ${score}: conflict ${conflict} (${severe} armed clash / mass violence / assault events of ${g.events} conflict events in the last ${D.gdelt?.window?.hours||6}h)`+(parts.length?'; '+parts.map(p=>`${p.k} +${p.pts} (${p.txt})`).join('; '):'; no disruption signals');
+    return {r, label:REGION_LABEL[r], score, level:lvl[0], color:lvl[1], events:g.events||0, severe, meta, tip, parts};
   }).sort((a,b)=>b.score-a.score);
 }
 function threatHtml(){
   const rows=threatByRegion();
   return cardHtml('Regional threat', currentRegion==='world'?'All theaters':REGION_LABEL[currentRegion],
-    rows.map(x=>`<div class="threat-row" onclick="setRegion('${x.r}')" title="Focus ${x.label}"><span class="tdot" style="background:${x.color}"></span><span class="tname">${x.label}</span><span class="tmeta">${x.events} ev &#183; ${x.meta}</span><span class="tlevel" style="color:${x.color}">${x.level}</span></div>`).join('')
-    +`<div class="panel-src">Derived from GDELT conflict events (last ${D.gdelt?.window?.hours||6}h) in each theater &#183; click to focus</div>`);
+    rows.map(x=>`<div class="threat-row" onclick="setRegion('${x.r}')" title="${esc(x.tip)} · click to focus"><span class="tdot" style="background:${x.color}"></span><span class="tname">${x.label}</span><span class="tmeta">${x.meta}</span><span class="tlevel" style="color:${x.color}">${x.level} <span style="opacity:.55;font-weight:400">${x.score}</span></span></div>`).join('')
+    +`<div class="panel-src">GDELT severe conflict events (last ${D.gdelt?.window?.hours||6}h, log-scaled) plus disrupted chokepoints, national internet outages, GDACS red alerts, radiation anomalies and WHO very-high outbreaks &#183; hover for the breakdown &#183; click to focus</div>`);
 }
 
 // === PREDICTION MARKETS (Polymarket) ===
