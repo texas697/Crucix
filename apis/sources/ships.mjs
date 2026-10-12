@@ -9,7 +9,10 @@
 // and turns them into a per-chokepoint status: 7-day transits per day vs the yearly baseline, trend vs the prior
 // week, tanker share, and any active disruption event naming the chokepoint.
 //
-// AISSTREAM_API_KEY (aisstream.io) is still the path to live per-vessel tracking; it needs a persistent WebSocket.
+// With AISSTREAM_API_KEY set, lib/ais/stream.mjs keeps a WebSocket to aisstream.io open and live vessel counts
+// (last hour) are joined onto each chokepoint here.
+
+import { aisSnapshot, aisStats } from '../../lib/ais/stream.mjs';
 
 const PORTWATCH = 'https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services';
 const UA = 'Crucix/2.0 (MFB Services Intelligence dashboard; +https://crucix-intel-41718.firebaseapp.com)';
@@ -182,10 +185,25 @@ export async function briefing() {
     return {
       source: 'Maritime/PortWatch', timestamp: now.toISOString(), status: 'error', access: 'portwatch',
       error: errors.join('; '), chokepoints: {}, signals: [`PortWatch chokepoint data unavailable: ${errors.join('; ')}`],
-      ais: hasKey ? 'AISSTREAM_API_KEY set (WebSocket listener not wired)' : 'Set AISSTREAM_API_KEY for live per-vessel tracking (free at aisstream.io)',
+      ais: { enabled: hasKey },
     };
   }
   const result = analyze({ registry: registry.features, recent: recent.features, baseline: baseline.features || [], disruptions: disruptions.features || [] }, now);
+  // Live AIS (last hour) joined onto each chokepoint when the stream is running in this process.
+  const stats = aisStats();
+  let ais = { enabled: false, hint: 'Set AISSTREAM_API_KEY for live per-vessel tracking (free at aisstream.io)' };
+  if (stats.enabled) {
+    const snap = aisSnapshot({ maxVessels: 0 });
+    ais = { enabled: true, connected: snap.connected, since: snap.since, lastMessageAt: snap.lastMessageAt, tracked: snap.tracked, liveVessels: snap.liveVessels, windowMinutes: snap.windowMinutes, lastError: snap.lastError, reconnects: snap.reconnects };
+    for (const [id, cp] of Object.entries(result.chokepoints)) {
+      const b = snap.boxes[id];
+      if (b) cp.live = { vessels: b.vessels, moving: b.moving, anchored: b.anchored, tanker: b.tanker, cargo: b.cargo, passenger: b.passenger, military: b.military, other: b.other };
+    }
+    const hormuz = result.chokepoints.chokepoint6;
+    if (hormuz?.live && hormuz.live.vessels > 0 && hormuz.live.anchored / hormuz.live.vessels >= 0.6 && hormuz.live.vessels >= 20) {
+      result.signals.push(`HORMUZ HOLDING PATTERN: ${hormuz.live.anchored} of ${hormuz.live.vessels} ships in the approaches are at anchor or stopped (AIS, last hour)`);
+    }
+  }
   return {
     source: 'Maritime/PortWatch',
     timestamp: now.toISOString(),
@@ -195,7 +213,7 @@ export async function briefing() {
     window: { recentDays: RECENT_DAYS, baselineDays: BASELINE_DAYS },
     ...result,
     ...(errors.length ? { warnings: errors } : {}),
-    ais: hasKey ? 'AISSTREAM_API_KEY set (WebSocket listener not wired)' : 'Set AISSTREAM_API_KEY for live per-vessel tracking (free at aisstream.io)',
+    ais,
     durationMs: Date.now() - started,
   };
 }

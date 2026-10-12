@@ -82,6 +82,14 @@ if gcloud secrets describe FIRMS_MAP_KEY --project "$PROJECT" >/dev/null 2>&1; t
 else
   echo "▶ No FIRMS_MAP_KEY secret — FIRMS via public 24 h downloads"
 fi
+# aisstream.io (optional): live AIS vessel positions near chokepoints over a persistent WebSocket. Create with:
+#   printf '%s' "key" | gcloud secrets create AISSTREAM_API_KEY --data-file=- --project $PROJECT
+if gcloud secrets describe AISSTREAM_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
+  SECRETS="$SECRETS,AISSTREAM_API_KEY=AISSTREAM_API_KEY:latest"
+  echo "▶ AIS: aisstream.io key from Secret Manager"
+else
+  echo "▶ No AISSTREAM_API_KEY secret — chokepoint statistics only (PortWatch)"
+fi
 # FRED (optional): without a key the source reads the public graph CSV, which carries the same observations. Create with:
 #   printf '%s' "key" | gcloud secrets create FRED_API_KEY --data-file=- --project $PROJECT
 if gcloud secrets describe FRED_API_KEY --project "$PROJECT" >/dev/null 2>&1; then

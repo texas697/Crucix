@@ -968,6 +968,7 @@ const LAYER_DEFS = [
   {key:'thermal', label:'Thermal', color:'#ff6b74'},
   {key:'conflict', label:'Conflict', color:'#f59a5e'},
   {key:'maritime', label:'Chokepoints', color:'#b48cff'},
+  {key:'ships', label:'Ships', color:'#7fc8ff'},
   {key:'nuke', label:'Nuclear', color:'#f2c879'},
   {key:'sdr', label:'SDR', color:'#6aa8ff'},
   {key:'health', label:'Health', color:'#7fe0c0'},
@@ -986,6 +987,7 @@ const LAYER_INFO = {
   conflict: {purpose:'Deadly armed-conflict events, plotted by fatality size.', source:'ACLED (Armed Conflict Location & Event Data)', freshness:'Refreshed every sweep; upstream lags days–weeks', confidence:'Editorially consistent, research-grade.', limitations:['Reports lag real time','Fatality counts are best-estimates, not exact']},
   maritime: {purpose:'Traffic through the world\'s maritime chokepoints: ships per day over the last 7 days against the one-year average, the week-on-week trend, tanker share, and any disruption event PortWatch has open for that passage.', source:'IMF PortWatch open data (satellite AIS-derived daily transit counts, 28 chokepoints)', freshness:'PortWatch publishes with roughly a week of lag; refreshed every sweep', confidence:'Transit counts are robust for trend and disruption detection.', limitations:['About 7 days behind real time','Counts ships, not cargo value','No per-vessel tracking without an AIS stream key']},
   nuke: {purpose:'Live gamma dose rate from fixed radiation sensors around nuclear plants and legacy sites, with the typical (median) reading per site and every sensor plotted.', source:'Safecast realtime sensor network (tt.safecast.org)', freshness:'Sensors report every few minutes; refreshed every sweep', confidence:'Good anomaly screen where sensors exist. Normal outdoor background is 0.05–0.3 µSv/h (roughly 15–100 CPM on an LND 7318 tube).', limitations:['No public sensors near Bushehr, Yongbyon or Dimona','Chernobyl exclusion zone reads permanently above background by design','Single hot sensors are flagged but do not flip a site; the site median does']},
+  ships: {purpose:'Live ship positions from AIS transponders in the approaches to the major chokepoints, with class (tanker, cargo, passenger, military/law enforcement), speed, course, navigation status and declared destination.', source:'aisstream.io live AIS feed (terrestrial + satellite receivers), held open by the server', freshness:'Positions update continuously; the map refreshes about every minute and shows ships heard in the last hour', confidence:'Exact for ships transmitting AIS. Ships running dark are invisible by definition.', limitations:['Only the chokepoint boxes are subscribed, not the open ocean','Receiver coverage varies; some areas report mainly large ships','Class B (small craft) data is sparser']},
   sdr: {purpose:'Where the public can listen to HF radio (0–30 MHz) right now: every listed KiwiSDR receiver worldwide, with live status, listener load and signal-to-noise for the receivers inside the watched conflict regions.', source:'receiverbook.de directory + each receiver\'s own /status endpoint', freshness:'Directory and watched-region probes refreshed every sweep', confidence:'Live numbers are exact for probed receivers; the rest of the directory is listing only.', limitations:['Only watched-region receivers are probed for live state','Volunteer-run; receivers come and go','Listener load shows interest, not what is being heard']},
   health: {purpose:'WHO outbreak and public-health alerts.', source:'WHO', freshness:'Refreshed every sweep', confidence:'Authoritative for officially declared events.', limitations:['Reporting lags; many alerts are country-level']},
   news: {purpose:'Geolocated world-news headlines.', source:'Aggregated RSS / GDELT geocoding', freshness:'Minutes', confidence:'Broad coverage, variable quality.', limitations:['Geocoding can be approximate','Duplicate framing across outlets']},
@@ -998,7 +1000,8 @@ const LAYER_SYNONYMS = {
   air:['flight','flights','plane','aviation','opensky','aircraft','adsb'],
   thermal:['fire','fires','wildfire','firms','heat','flare'],
   conflict:['war','battle','acled','fatality','fatalities','violence'],
-  maritime:['ship','ships','sea','chokepoint','chokepoints','strait','shipping','tanker'],
+  maritime:['sea','chokepoint','chokepoints','strait','shipping'],
+  ships:['ship','ships','vessel','vessels','ais','tanker','tankers','cargo','freighter'],
   nuke:['nuclear','radiation','radnet','safecast','reactor'],
   sdr:['radio','kiwisdr','receiver','antenna','signals'],
   health:['who','outbreak','disease','epidemic','health'],
@@ -1526,13 +1529,17 @@ function setDrawTool(tool){
   setMapHint(drawTool ? 'Draw mode — the markers inside your shape become the selection' : 'Scroll to zoom · drag to pan');
   if(!drawTool){ drawGeo=null; drawPreview(); }
 }
-function runSelection(feature){
+// Recompute which markers fall inside the drawn shape (after a re-plot) without touching the area brief.
+function reselect(feature){
   drawGeo=feature;
   drawPreview();
   selectedItems = currentMapPoints.filter(p => insideShape(feature, p.lat, p.lng));
   const selSrc=map && map.getSource('src-selected');
   if(selSrc) selSrc.setData({ type:'FeatureCollection', features: selectedItems.map(p=>({ type:'Feature', properties:{ color:p.color||'#8fa7ff' }, geometry:{ type:'Point', coordinates:[p.lng,p.lat] } })) });
   renderSelection();
+}
+function runSelection(feature){
+  reselect(feature);
   loadAreaBrief(feature);
   syncUrl(true, 'shape');
 }
@@ -1809,7 +1816,7 @@ function applyMapData(points, arcs, rings, trails){
   map.getSource('src-trails').setData({ type:'FeatureCollection', features: trailFeats });
 
   currentMapPoints = points;
-  if(drawGeo) runSelection(drawGeo); else renderSelection();
+  if(drawGeo) reselect(drawGeo); else renderSelection();
 }
 
 function renderLabels(labels){
@@ -1921,7 +1928,7 @@ function plotMarkers(){
     const trend=cp.trend!=null?` · week ${cp.trend>0?'+':''}${cp.trend}%`:'';
     const ev=cp.events.find(e=>e.ongoing);
     const text=cp.perDay!=null
-      ? `<b>${cp.perDay} ships/day</b> (7-day) · 1-yr avg ${cp.base??'--'}${pct?'<br>'+pct:''}${trend}${cp.tanker!=null?`<br>Tankers ${cp.tanker}% of transits`:''}${ev?`<br><span style="color:var(--danger)">&#9888; ${esc(ev.name)} since ${esc(ev.from||'')}</span>`:''}${cp.note?`<br><span style="opacity:.7">${esc(cp.note)}</span>`:''}${cp.asOf?`<br><span style="opacity:.6">Data to ${esc(cp.asOf)} · IMF PortWatch</span>`:''}`
+      ? `<b>${cp.perDay} ships/day</b> (7-day) · 1-yr avg ${cp.base??'--'}${pct?'<br>'+pct:''}${trend}${cp.tanker!=null?`<br>Tankers ${cp.tanker}% of transits`:''}${(()=>{ const lb=SHIPS?.boxes?.[cp.id]||(cp.live?{...cp.live}:null); return lb&&lb.vessels?`<br><span style="color:var(--sky)">Live now: ${lb.vessels} ships</span> · ${lb.tanker} tankers · ${lb.anchored} stopped/at anchor${lb.military?` · <span style="color:var(--danger)">${lb.military} military/law</span>`:''}`:''; })()}${ev?`<br><span style="color:var(--danger)">&#9888; ${esc(ev.name)} since ${esc(ev.from||'')}</span>`:''}${cp.note?`<br><span style="opacity:.7">${esc(cp.note)}</span>`:''}${cp.asOf?`<br><span style="opacity:.6">Data to ${esc(cp.asOf)} · IMF PortWatch</span>`:''}`
       : esc(cp.note||'No transit data');
     const statusLabel={disrupted:'DISRUPTED',reduced:'Reduced traffic',watch:'Event open · traffic normal',elevated:'Elevated traffic',normal:'Normal traffic'}[cp.status]||'Chokepoint';
     points.push({ lat:cp.lat, lng:cp.lon, size:cp.major?0.35:0.22, _r:cp.major?5:3.2, color:col, _stroke:'rgba(180,140,255,0.3)', type:'maritime', priority:cp.status==='disrupted'?1:cp.major?1:3, ts:cp.asOf?cp.asOf+'T12:00:00Z':undefined,
@@ -1949,6 +1956,20 @@ function plotMarkers(){
         popHead:esc(r.name||'Radiation sensor'), popMeta:`Safecast sensor · ${r.km} km from ${esc(n.site.replace(/ \(.*\)$/,''))}`,
         popText:`${Math.round(r.cpm)} CPM · ${fmtUsvh(r.usvh)}${hot?' · <b>above '+n.alertUsvh+' µSv/h</b>':''}<br>${esc(r.tube||'')}${r.at?` · ${relTime(r.at)}`:''}` });
     });
+  });
+
+  // === Live ships (AIS) around the chokepoints ===
+  const SHIP_COL={tanker:'rgba(245,190,90,0.9)',cargo:'rgba(127,200,255,0.85)',passenger:'rgba(200,160,255,0.9)',military:'rgba(255,107,116,0.95)',law:'rgba(255,107,116,0.95)',fishing:'rgba(127,224,192,0.75)',tug:'rgba(180,180,190,0.7)',service:'rgba(180,180,190,0.7)',pleasure:'rgba(180,180,190,0.55)',highspeed:'rgba(200,160,255,0.7)',other:'rgba(160,170,190,0.6)',unknown:'rgba(140,150,170,0.5)'};
+  const SHIP_LABEL={tanker:'Tanker',cargo:'Cargo ship',passenger:'Passenger ship',military:'Military vessel',law:'Law enforcement',fishing:'Fishing vessel',tug:'Tug / towing',service:'Service vessel',pleasure:'Pleasure craft',highspeed:'High-speed craft',other:'Vessel',unknown:'Vessel (type unknown)'};
+  const NAV_LABEL={0:'under way',1:'at anchor',2:'not under command',3:'restricted manoeuvrability',4:'constrained by draught',5:'moored',6:'aground',7:'fishing',8:'sailing'};
+  (SHIPS?.vessels||[]).forEach(v=>{
+    if(v.lat==null||v.lon==null) return;
+    const cls=v.cls||'unknown'; const big=cls==='tanker'||cls==='military'||cls==='law'||cls==='passenger';
+    const boxLabel=SHIPS.boxes?.[v.box]?.label||'';
+    const stopped=v.nav===1||v.nav===5||(v.sog!=null&&v.sog<0.5);
+    points.push({ lat:v.lat, lng:v.lon, size:big?0.16:0.11, _r:big?2.6:2, color:SHIP_COL[cls]||SHIP_COL.unknown, _stroke:'rgba(127,200,255,0.2)', type:'ships', priority:cls==='military'||cls==='law'?2:3, ts:v.ts,
+      popHead:v.name||('MMSI '+v.mmsi), popMeta:`${SHIP_LABEL[cls]||'Vessel'}${boxLabel?' · '+esc(boxLabel):''}${v.ts?' · '+relTime(v.ts):''}`,
+      popText:`${v.sog!=null?`${v.sog.toFixed(1)} kn`:'speed --'}${v.cog!=null?` · course ${v.cog}°`:''}${v.nav!=null&&NAV_LABEL[v.nav]?` · ${NAV_LABEL[v.nav]}`:(stopped?' · stopped':'')}${v.dest?`<br>Bound for ${esc(v.dest)}`:''}${v.len?`<br>Length ${v.len} m`:''}<br><span style="opacity:.65">MMSI ${v.mmsi} · AIS via aisstream.io</span>` });
   });
 
   // === SDR receivers: whole directory as faint dots, watched-zone receivers with live status ===
@@ -2341,9 +2362,10 @@ function renderLower(){
     const rows=(D.chokepoints||[]).filter(c=>c.major||c.status==='disrupted').sort((a,b)=>(ORD[a.status]??5)-(ORD[b.status]??5)||(a.pct??0)-(b.pct??0));
     const fmtPct=v=>v==null?'':`<span style="color:${v<=-40?'var(--danger)':v<=-20?'var(--warn)':v>=30?'var(--mint)':'var(--text-2)'}">${v>0?'+':''}${v}%</span>`;
     const spark=arr=>{ if(!arr||arr.length<2) return ''; const w=56,h=14,mx=Math.max(...arr,1); const pts=arr.map((v,i)=>`${(i/(arr.length-1)*w).toFixed(1)},${(h-(v/mx)*h).toFixed(1)}`).join(' '); return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="vertical-align:middle;margin-right:8px;opacity:.8"><polyline fill="none" stroke="currentColor" stroke-width="1.2" points="${pts}"/></svg>`; };
-    const body=rows.length?rows.map(c=>`<div class="site-row" title="${esc(`${c.label}: ${c.perDay??'--'} ships/day over the last 7 days vs ${c.base??'--'} one-year average${c.trend!=null?` · week ${c.trend>0?'+':''}${c.trend}%`:''}${c.tanker!=null?` · tankers ${c.tanker}%`:''}${c.events.find(e=>e.ongoing)?' · '+c.events.find(e=>e.ongoing).name:''}`)}"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.status==='disrupted'?'<span style="color:var(--danger)">&#9679;</span> ':c.status==='reduced'?'<span style="color:var(--warn)">&#9679;</span> ':c.status==='watch'?'<span style="color:var(--warn);opacity:.7">&#9675;</span> ':''}${esc(c.label.replace(' Strait','').replace('Strait of ','').replace(' Canal',''))}</span><span class="site-val" style="white-space:nowrap">${spark(c.daily)}${c.perDay!=null?Math.round(c.perDay):'--'}<span style="opacity:.6">/d</span> ${fmtPct(c.pct)}</span></div>`).join('')
+    const body=rows.length?rows.map(c=>`<div class="site-row" title="${esc(`${c.label}: ${c.perDay??'--'} ships/day over the last 7 days vs ${c.base??'--'} one-year average${c.trend!=null?` · week ${c.trend>0?'+':''}${c.trend}%`:''}${c.tanker!=null?` · tankers ${c.tanker}%`:''}${c.events.find(e=>e.ongoing)?' · '+c.events.find(e=>e.ongoing).name:''}`)}"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.status==='disrupted'?'<span style="color:var(--danger)">&#9679;</span> ':c.status==='reduced'?'<span style="color:var(--warn)">&#9679;</span> ':c.status==='watch'?'<span style="color:var(--warn);opacity:.7">&#9675;</span> ':''}${esc(c.label.replace(' Strait','').replace('Strait of ','').replace(' Canal',''))}</span><span class="site-val" style="white-space:nowrap">${(()=>{ const lb=SHIPS?.boxes?.[c.id]||c.live; return lb&&lb.vessels?`<span style="color:var(--sky);font-size:11px;margin-right:10px" title="${lb.vessels} ships on AIS in the last hour">&#9679; ${lb.vessels} <span style="opacity:.6">now</span></span>`:''; })()}${spark(c.daily)}${c.perDay!=null?Math.round(c.perDay):'--'}<span style="opacity:.6">/d</span> ${fmtPct(c.pct)}</span></div>`).join('')
       :`<div class="panel-src">${esc(mm.error||'No chokepoint data')}</div>`;
-    const head=mm.summary?`${mm.summary.disrupted} disrupted${mm.asOf?' &#183; to '+esc(mm.asOf.slice(5).replace('-','/')):''}`:'';
+    const liveN=SHIPS?.liveVessels??D.shipsMeta?.liveVessels??0;
+    const head=mm.summary?`${mm.summary.disrupted} disrupted${liveN?` &#183; <span style="color:var(--sky)">${liveN} ships live</span>`:''}${mm.asOf?' &#183; to '+esc(mm.asOf.slice(5).replace('-','/')):''}`:'';
     maritimeEl.innerHTML=cardHtml(t('panels.maritimeWatch','Maritime watch'), head, `<div class="nuke-ok ${mm.summary&&mm.summary.disrupted?'anom':'ok'}" style="margin-bottom:6px">${mm.summary?(mm.summary.disrupted?'&#9888; '+(mm.signals||[]).find(x=>/DISRUPTED/.test(x))?.replace(/^CHOKEPOINT DISRUPTED: /,'').split(' — ')[0]:'&#9679; All chokepoints near normal'):'IMF PortWatch'}<span style="margin-left:auto;font-size:11px;opacity:0.75">ships/day · vs 1-yr</span></div>${body}`);
   }
   const sp=D.space;
@@ -2461,6 +2483,15 @@ function trackerHtml(){
       <span class="track-meta">${esc(x.confidence||'')} &#183; ${x.sourceCount||1} src &#183; ${age}</span>
     </div>`;
   }).join('')+`<div class="panel-src">Live from <a href="https://neptun.in.ua/karta-shahediv" target="_blank" rel="noopener">Neptun &#8599;</a>${TRACKS.updated?' &#183; updated '+getAge(TRACKS.updated):''}</div>`);
+}
+// === LIVE SHIPS (AIS via /api/ais) ===
+let SHIPS=null, SHIPS_TS=0;
+async function ensureShips(){
+  if(!(D.shipsMeta&&D.shipsMeta.enabled)) return;
+  if(SHIPS && Date.now()-SHIPS_TS<50000) return;
+  SHIPS_TS=Date.now();
+  try{ const r=await fetch('/api/ais',{credentials:'same-origin'}); const d=await r.json(); if(d&&d.enabled!==false){ SHIPS=d; try{ renderLower(); }catch{} refreshMap(); } }
+  catch{}
 }
 async function ensureTracks(){
   if(TRACKS && Date.now()-TRACKS_TS<12000) return;
@@ -2861,7 +2892,8 @@ function init(){
   setInterval(()=>{ TRACKS_TS=0; ensureTracks(); }, 15000);
   setInterval(()=>{ ALERTS_TS=0; ensureAlerts(); }, 45000);
   setInterval(()=>{ QUAKES_TS=0; ensureQuakes(); }, 60000);
-  ensureTracks(); ensureAlerts(); ensureQuakes();
+  setInterval(()=>{ SHIPS_TS=0; ensureShips(); }, 60000);
+  ensureTracks(); ensureAlerts(); ensureQuakes(); ensureShips();
   syncResponsiveLayout(true);
 }
 

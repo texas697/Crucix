@@ -155,7 +155,7 @@ These three unlock the most valuable economic and satellite data. Each takes abo
 | Key | Source | How to Get |
 |-----|--------|------------|
 | `ACLED_EMAIL` + `ACLED_PASSWORD` | Armed conflict event data | [acleddata.com/register](https://acleddata.com/register/) — free, OAuth2 |
-| `AISSTREAM_API_KEY` | Maritime AIS vessel tracking | [aisstream.io](https://aisstream.io/) — free |
+| `AISSTREAM_API_KEY` | Live AIS vessel positions around the chokepoints (Ships map layer, live counts on the Maritime watch) | [aisstream.io](https://aisstream.io/) — free |
 | `ADSB_API_KEY` | Unfiltered flight tracking | [RapidAPI](https://rapidapi.com/adsbexchange/api/adsbexchange-com1) — ~$10/mo |
 
 ### LLM Provider (optional, for AI-enhanced ideas)
@@ -256,7 +256,7 @@ crucix/
 | **GDELT** | Global news events, conflict mapping (100+ languages) | None |
 | **OpenSky** | One global ADS-B snapshot per sweep sliced into 10 theaters; adsb.lol military feed + rotating theater samples as fallback | None (free OpenSky API client raises the quota) |
 | **NASA FIRMS** | Thermal anomalies in 6 watched regions from the public 24 h Suomi NPP + NOAA-20 VIIRS feeds | None (optional MAP_KEY uses the 48 h area API) |
-| **Maritime (PortWatch)** | Daily transit counts for 28 chokepoints vs 1-year baseline, plus open disruption events (IMF PortWatch open data) | None (optional AISSTREAM_API_KEY for per-vessel AIS) |
+| **Maritime (PortWatch)** | Daily transit counts for 28 chokepoints vs 1-year baseline, plus open disruption events (IMF PortWatch open data) | None (AISSTREAM_API_KEY adds live per-vessel AIS) |
 | **Safecast** | Live radiation sensors (tt.safecast.org realtime feed) near 11 nuclear sites; Bushehr, Yongbyon and Dimona have no public coverage | None |
 | **ACLED** | Armed conflict events: battles, explosions, protests | Free (OAuth2) |
 | **ReliefWeb** | UN humanitarian crisis tracking | None |

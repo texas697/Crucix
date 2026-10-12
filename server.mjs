@@ -3,6 +3,7 @@
 // Serves the Jarvis dashboard, runs sweep cycle, pushes live updates via SSE
 
 import express from 'express';
+import { startAisStream, aisSnapshot, AIS_BOXES } from './lib/ais/stream.mjs';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -364,6 +365,17 @@ function startNeptunStream() {
   } catch { setTimeout(startNeptunStream, 30000); }
 }
 startNeptunStream();
+
+// ─── Live AIS vessel positions near chokepoints (aisstream.io WebSocket, see lib/ais/stream.mjs) ───────────
+if (process.env.AISSTREAM_API_KEY) {
+  startAisStream(process.env.AISSTREAM_API_KEY);
+  console.log('[Crucix] AIS stream enabled (aisstream.io) for', Object.keys(AIS_BOXES).length, 'chokepoint boxes');
+}
+app.get('/api/ais', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!process.env.AISSTREAM_API_KEY) return res.json({ enabled: false, vessels: [], boxes: {} });
+  res.json(aisSnapshot({ maxVessels: Math.min(parseInt(req.query.max) || 1500, 4000) }));
+});
 
 app.get('/api/tracks', (req, res) => {
   const tracks = [...neptun.tracks.values()]

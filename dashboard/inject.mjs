@@ -436,7 +436,11 @@ export async function synthesize(data) {
     pct: c.transits?.pctVsBaseline ?? null, trend: c.transits?.trend7Pct ?? null, tanker: c.transits?.tankerShare7 ?? null,
     asOf: c.transits?.latestDate || null, daily: (c.transits?.daily || []).map(x => x.n),
     events: (c.events || []).map(e => ({ name: e.name, type: e.type, from: e.from, ongoing: !!e.ongoing })),
+    live: c.live || null,
   }));
+  const aisInfo = maritimeData.ais || {};
+  const shipsMeta = { enabled: !!aisInfo.enabled, connected: !!aisInfo.connected, liveVessels: aisInfo.liveVessels || 0, since: aisInfo.since || null, lastMessageAt: aisInfo.lastMessageAt || null, windowMinutes: aisInfo.windowMinutes || 60, error: aisInfo.lastError || null };
+  // Live vessel positions are fetched by the dashboard from /api/ais; the sweep carries only the per-chokepoint counts.
   const maritimeMeta = {
     access: maritimeData.access || null, provider: maritimeData.provider || null, asOf: maritimeData.latestDate || null, lagDays: maritimeData.lagDays ?? null,
     summary: maritimeData.summary || null, error: maritimeData.error || null, signals: maritimeData.signals || [],
@@ -649,7 +653,7 @@ export async function synthesize(data) {
   const news = await fetchAllNews();
 
   const V2 = {
-    meta: data.crucix, air, milAir, thermal, tSignals, thermalMeta, chokepoints, maritimeMeta, nuke, nukeSignals, nukeMeta,
+    meta: data.crucix, air, milAir, thermal, tSignals, thermalMeta, chokepoints, maritimeMeta, shipsMeta, nuke, nukeSignals, nukeMeta,
     airMeta: {
       ...airLive,
       fallback: Boolean(airFallback),
