@@ -701,7 +701,13 @@ export async function synthesize(data) {
   if (yfWti?.history?.length) energy.wtiRecent = yfWti.history.map(h => h.close);
 
   // Fetch RSS
-  const news = await fetchAllNews();
+  // Fetch RSS. A fresh Cloud Run instance synthesizes the stored run at startup with the CPU throttled, so the
+  // 19 feeds can all time out; fall back to the news saved with the run rather than render an empty ticker.
+  let news = await fetchAllNews();
+  if (!news.length && Array.isArray(data.news) && data.news.length) {
+    console.log(`[Crucix] RSS returned nothing — reusing ${data.news.length} stored news items from the last sweep`);
+    news = data.news;
+  }
 
   const V2 = {
     meta: data.crucix, air, milAir, thermal, tSignals, thermalMeta, chokepoints, maritimeMeta, shipsMeta, nuke, nukeSignals, nukeMeta,

@@ -588,13 +588,14 @@ async function runSweepCycle() {
     // 1. Run the full briefing sweep
     const rawData = await fullBriefing();
 
-    // 2. Save to runs/latest.json
-    writeFileSync(join(RUNS_DIR, 'latest.json'), JSON.stringify(rawData, null, 2));
-    lastSweepTime = new Date().toISOString();
-
-    // 3. Synthesize into dashboard format
+    // 2. Synthesize into dashboard format
     console.log('[Crucix] Synthesizing dashboard data...');
     const synthesized = await synthesize(rawData);
+
+    // 3. Save to runs/latest.json, with the geo-tagged news so a cold-started instance can reuse it
+    rawData.news = synthesized.news || [];
+    writeFileSync(join(RUNS_DIR, 'latest.json'), JSON.stringify(rawData, null, 2));
+    lastSweepTime = new Date().toISOString();
 
     // 4. Delta computation + memory
     const delta = memory.addRun(synthesized);
