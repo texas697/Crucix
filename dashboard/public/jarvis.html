@@ -869,19 +869,20 @@ function maybePromptForKey() {
   byokPromptShown = true;
   if (localStorage.getItem('crucix_byok_prompted')) return;
   localStorage.setItem('crucix_byok_prompted', '1');
-  setTimeout(() => { if (!ME.llm) openSettings(); }, 1500);
+  setTimeout(() => { if (!ME.llm) openSettings({ auto: true }); }, 1500);
 }
 
 // --- Settings modal ---
-function openSettings() {
+// opts.auto: opened by the first-visit key prompt, not by the user — stays out of the address bar and history.
+function openSettings(opts) {
   const o = document.getElementById('settingsOverlay'); if (!o || !ME) return;
   fillSettingsForm(); o.classList.add('show'); document.body.style.overflow = 'hidden';
-  urlOverlay.settings = true; syncUrl(true, 'settings');
+  if (!(opts && opts.auto)) { urlOverlay.settings = true; syncUrl(true, 'settings'); }
 }
 function closeSettings() {
   const o = document.getElementById('settingsOverlay'); if (!o || !o.classList.contains('show')) return;
   o.classList.remove('show'); document.body.style.overflow = '';
-  urlOverlay.settings = false; urlAfterClose('settings');
+  if (urlOverlay.settings) { urlOverlay.settings = false; urlAfterClose('settings'); }
 }
 function setMsg(text, cls) { const m = document.getElementById('llmMsg'); if (m) { m.textContent = text || ''; m.className = 'set-msg ' + (cls||''); } }
 function providerMeta(id) { return (ME?.providers || []).find(p => p.id === id); }
