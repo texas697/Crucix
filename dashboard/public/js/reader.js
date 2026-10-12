@@ -64,7 +64,12 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('show')) close(); });
     return overlay;
   }
-  function close() { if (!overlay) return; overlay.classList.remove('show'); document.body.style.overflow = ''; clearTimeout(pollTimer); current = null; }
+  function close() {
+    if (!overlay || !overlay.classList.contains('show')) return;
+    const was = current;
+    overlay.classList.remove('show'); document.body.style.overflow = ''; clearTimeout(pollTimer); current = null;
+    document.dispatchEvent(new CustomEvent('reader:close', { detail: { id: was?.id || null, url: was?.url || null } }));
+  }
 
   function setThumbs(rating) {
     $('#rdUp', overlay).classList.toggle('on', rating > 0);
@@ -159,15 +164,18 @@
     ensure();
     overlay.classList.add('show'); document.body.style.overflow = 'hidden';
     current = { id: ref.id || null, title: ref.title, source: ref.source, url: ref.url, vote: 0 };
+    document.dispatchEvent(new CustomEvent('reader:open', { detail: { id: ref.id || null, url: ref.url || null, title: ref.title || null, source: ref.source || null } }));
     renderHeader(current);
     $('#rdBody', overlay).innerHTML = `<div class="rd-loading">${ref.id ? 'LOADING…' : 'FETCHING ARTICLE…'}</div>`;
     try {
       const a = ref.id ? await _api(`/api/digest/article/${ref.id}`) : await _api('/api/digest/open', { method: 'POST', body: JSON.stringify({ url: ref.url, title: ref.title, source: ref.source }) });
       if (!current) return;
       current = a; renderHeader(a); renderBody(a);
+      // An article opened by URL now has a library id: let the host page put the stable id in the address bar.
+      if (!ref.id && a.id) document.dispatchEvent(new CustomEvent('reader:resolved', { detail: { id: a.id, url: ref.url || a.url || null } }));
     } catch (e) {
       $('#rdBody', overlay).innerHTML = `<div class="rd-note err" style="padding:20px">${_esc(e.message)}</div><div style="padding:0 20px"><a class="rd-btn" target="_blank" rel="noopener" href="${_esc(ref.url || '#')}">Open original &#8599;</a></div>`;
     }
   }
-  window.MFBReader = { open, close, mdToHtml };
+  window.MFBReader = { open, close, mdToHtml, isOpen: () => !!(overlay && overlay.classList.contains('show')), currentId: () => current?.id || null };
 })();

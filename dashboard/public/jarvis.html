@@ -16,6 +16,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/6.0.1/satellite.min.js"></script>
+<script src="/js/urlstate.js"></script>
+<script src="/js/reader.js"></script>
 <script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -820,7 +822,7 @@ let authRequired = false;
 
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
-  if (r.status === 401) { location.replace('/login?reason=expired&next=' + encodeURIComponent(location.pathname)); throw new Error('unauthenticated'); }
+  if (r.status === 401) { location.replace('/login?reason=expired&next=' + encodeURIComponent(location.pathname + location.search)); throw new Error('unauthenticated'); }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(body.error || `HTTP ${r.status}`);
   return body;
@@ -829,7 +831,7 @@ async function api(path, opts = {}) {
 async function loadMe() {
   try {
     const r = await fetch('/api/me', { credentials: 'same-origin' });
-    if (r.status === 401) { location.replace('/login?next=' + encodeURIComponent(location.pathname)); return; }
+    if (r.status === 401) { location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search)); return; }
     if (r.status === 404) { ME = null; return; }     // AUTH_MODE=off: no accounts, no BYOK
     ME = await r.json();
     authRequired = true;
@@ -874,10 +876,12 @@ function maybePromptForKey() {
 function openSettings() {
   const o = document.getElementById('settingsOverlay'); if (!o || !ME) return;
   fillSettingsForm(); o.classList.add('show'); document.body.style.overflow = 'hidden';
+  urlOverlay.settings = true; syncUrl(true, 'settings');
 }
 function closeSettings() {
-  const o = document.getElementById('settingsOverlay'); if (!o) return;
+  const o = document.getElementById('settingsOverlay'); if (!o || !o.classList.contains('show')) return;
   o.classList.remove('show'); document.body.style.overflow = '';
+  urlOverlay.settings = false; urlAfterClose('settings');
 }
 function setMsg(text, cls) { const m = document.getElementById('llmMsg'); if (m) { m.textContent = text || ''; m.className = 'set-msg ' + (cls||''); } }
 function providerMeta(id) { return (ME?.providers || []).find(p => p.id === id); }
@@ -1410,13 +1414,14 @@ function openLayerInfo(key){
       <div class="glossary-line"><span class="glossary-label">Limitations</span>${info.limitations.map(esc).join(' &middot; ')}</div>
     </div>`;
   ov.classList.add('show'); document.body.style.overflow='hidden';
+  urlOverlay.info = key; syncUrl(true, 'info');
 }
-function closeLayerInfo(){ const ov=document.getElementById('layerOverlay'); if(ov) ov.classList.remove('show'); document.body.style.overflow=''; }
+function closeLayerInfo(){ const ov=document.getElementById('layerOverlay'); if(!ov||!ov.classList.contains('show')) return; ov.classList.remove('show'); document.body.style.overflow=''; urlOverlay.info=null; urlAfterClose('info'); }
 
 function refreshMap(){ plotMarkers(); }
-function toggleLayer(key){ layerVisible[key]=!layerVisible[key]; renderMapLegend(); refreshMap(); }
-function setAllLayers(v){ LAYER_DEFS.forEach(l=>layerVisible[l.key]=v); renderMapLegend(); refreshMap(); }
-function setTimeWindow(w){ timeWindow=w; renderMapLegend(); refreshMap(); }
+function toggleLayer(key){ layerVisible[key]=!layerVisible[key]; renderMapLegend(); refreshMap(); syncUrl(false); }
+function setAllLayers(v){ LAYER_DEFS.forEach(l=>layerVisible[l.key]=v); renderMapLegend(); refreshMap(); syncUrl(false); }
+function setTimeWindow(w){ timeWindow=w; renderMapLegend(); refreshMap(); syncUrl(false); }
 function cycleBasemap(){
   if(!map) return;
   currentBase=(currentBase+1)%BASEMAPS.length;
@@ -1527,10 +1532,13 @@ function runSelection(feature){
   if(selSrc) selSrc.setData({ type:'FeatureCollection', features: selectedItems.map(p=>({ type:'Feature', properties:{ color:p.color||'#8fa7ff' }, geometry:{ type:'Point', coordinates:[p.lng,p.lat] } })) });
   renderSelection();
   loadAreaBrief(feature);
+  syncUrl(true, 'shape');
 }
 function clearSelection(){
+  const had=!!drawGeo;
   drawGeo=null; drawing=false; drawStart=null; drawPoly=[]; selectedItems=[];
   resetAreaBrief();
+  if(had) urlAfterClose('shape');
   drawPreview();
   if(map && map.getSource('src-selected')) map.getSource('src-selected').setData({ type:'FeatureCollection', features: [] });
   renderSelection();
@@ -2118,8 +2126,9 @@ function showPopup(event,head,text,meta,lat,lng,alt,pt){
   foot.style.display=parts.length?'flex':'none';
   popup.classList.add('show');
   popupGuard = Date.now();
+  if(lat!=null && lng!=null){ currentPin={ lat:+lat, lng:+lng, head:head||'' }; syncUrl(true, 'pin'); }
 }
-function closePopup(){document.getElementById('mapPopup').classList.remove('show')}
+function closePopup(){ document.getElementById('mapPopup').classList.remove('show'); if(currentPin){ currentPin=null; syncUrl(false); } }
 let popupGuard = 0;
 
 const flatRegionBounds = {
@@ -2138,6 +2147,7 @@ function setRegion(r){
   }
   refreshMap();
   renderLower();
+  syncUrl(true, 'region');
   renderRight();
 }
 
@@ -2617,13 +2627,15 @@ function openGlossary(){
   if(!overlay) return;
   overlay.classList.add('show');
   document.body.style.overflow = 'hidden';
+  urlOverlay.guide = true; syncUrl(true, 'guide');
 }
 
 function closeGlossary(){
   const overlay = document.getElementById('glossaryOverlay');
-  if(!overlay) return;
+  if(!overlay || !overlay.classList.contains('show')) return;
   overlay.classList.remove('show');
   document.body.style.overflow = '';
+  urlOverlay.guide = false; urlAfterClose('guide');
 }
 
 function refreshMapViewport(forceGlobeReflow=false){
@@ -2705,6 +2717,96 @@ async function refreshMyIdeasFromServer() {
 
 // === INIT ===
 let booted = false;
+// ---- URL routing for the dashboard ----------------------------------------------------------------------------
+// The address bar carries every piece of view state that is not a default: region, hidden layers, time window,
+// the open map popup (pin), the drawn selection (shape), the open overlay (info / guide / settings) and the open
+// article (read). Opening something pushes a history entry so the back button closes it; adjusting filters
+// replaces the entry in place. A refresh or a shared link rebuilds the same view.
+const urlOverlay = { info:null, guide:false, settings:false };
+let currentPin = null, currentRead = null, urlApplying = false;
+const URL_REGIONS = ['world','americas','europe','middleEast','asiaPacific','africa'];
+function shapeToUrl(f){
+  if(!f) return '';
+  const n3 = v => (+v).toFixed(3);
+  if(f._circle) return `c:${n3(f._circle.center.lat)},${n3(f._circle.center.lng)},${Math.round(f._circle.radiusKm)}`;
+  const ring=(f.geometry?.coordinates?.[0]||[]);
+  if(f.properties?.shape==='rect' && ring.length>=4){ const lngs=ring.map(p=>p[0]), lats=ring.map(p=>p[1]); return `r:${n3(Math.min(...lats))},${n3(Math.min(...lngs))},${n3(Math.max(...lats))},${n3(Math.max(...lngs))}`; }
+  return 'p:'+ring.slice(0, ring.length>1 && ring[0][0]===ring[ring.length-1][0] && ring[0][1]===ring[ring.length-1][1] ? -1 : undefined).map(p=>`${n3(p[1])},${n3(p[0])}`).join(';');
+}
+function shapeFromUrl(str){
+  try{
+    const [kind, body]=String(str||'').split(':'); if(!body) return null;
+    if(kind==='c'){ const [lat,lng,r]=body.split(',').map(Number); if([lat,lng,r].every(Number.isFinite)) return circleFeature({lat,lng}, r); }
+    if(kind==='r'){ const [s,w,n,e]=body.split(',').map(Number); if([s,w,n,e].every(Number.isFinite)) return rectFeature({lat:s,lng:w},{lat:n,lng:e}); }
+    if(kind==='p'){ const pts=body.split(';').map(x=>x.split(',').map(Number)).filter(a=>a.length===2&&a.every(Number.isFinite)).map(([lat,lng])=>[lng,lat]); if(pts.length>=3) return polyFeature(pts); }
+  }catch(e){}
+  return null;
+}
+function dashUrlParams(){
+  const q={};
+  if(currentRegion && currentRegion!=='world') q.region=currentRegion;
+  const off=LAYER_DEFS.filter(l=>!layerVisible[l.key]).map(l=>l.key); if(off.length) q.hide=off.join(',');
+  if(timeWindow && timeWindow!=='all') q.time=timeWindow;
+  if(currentPin) q.pin=`${currentPin.lat.toFixed(3)},${currentPin.lng.toFixed(3)}`;
+  if(drawGeo) q.shape=shapeToUrl(drawGeo);
+  if(urlOverlay.info) q.info=urlOverlay.info;
+  if(urlOverlay.guide) q.guide=1;
+  if(urlOverlay.settings) q.settings=1;
+  if(currentRead) q.read=currentRead;
+  return q;
+}
+function syncUrl(push, kind){
+  if(urlApplying || !window.UrlState) return;
+  UrlState.set('/', dashUrlParams(), { push, state: kind ? { k:kind } : null });
+}
+// Closing something the user opened: if that opening pushed the current history entry, step back so the back
+// button sequence stays sensible; otherwise just rewrite the address.
+function urlAfterClose(kind){
+  if(urlApplying || !window.UrlState) return;
+  if(history.state && history.state.k===kind && history.length>1){ history.back(); return; }
+  syncUrl(false);
+}
+function nearestMapPoint(lat,lng){
+  let best=null, bd=0.25; // degrees; the nearest marker within ~25 km wins
+  for(const p of currentMapPoints){ const d=Math.hypot(p.lat-lat, p.lng-lng); if(d<bd){ bd=d; best=p; } }
+  return best;
+}
+let urlApplyTries=0;
+function applyUrlState(initial){
+  if(!window.UrlState) return;
+  if(!mapReady || !currentMapPoints.length){ if(urlApplyTries++<100) setTimeout(()=>applyUrlState(initial), 300); return; }
+  urlApplyTries=0;
+  const { q } = UrlState.parse();
+  urlApplying=true;
+  try{
+    const r = URL_REGIONS.includes(q.region) ? q.region : (initial ? currentRegion : 'world');
+    if(r!==currentRegion) setRegion(r);
+    const hide=new Set((q.hide||'').split(',').filter(Boolean));
+    let vis=false;
+    LAYER_DEFS.forEach(l=>{ const want=!hide.has(l.key); if(layerVisible[l.key]!==want){ layerVisible[l.key]=want; vis=true; } });
+    const tw=['all','1h','24h','7d'].includes(q.time)?q.time:'all';
+    if(tw!==timeWindow){ timeWindow=tw; vis=true; }
+    if(vis){ renderMapLegend(); refreshMap(); }
+    const shapeNow=shapeToUrl(drawGeo), shapeWant=q.shape||'';
+    if(shapeWant!==shapeNow){ const f=shapeWant?shapeFromUrl(shapeWant):null; if(f) runSelection(f); else if(drawGeo) clearSelection(); }
+    if(q.pin){ const [lat,lng]=q.pin.split(',').map(Number); const p=Number.isFinite(lat)&&Number.isFinite(lng)?nearestMapPoint(lat,lng):null;
+      if(p){ if(!currentPin||currentPin.lat!==p.lat||currentPin.lng!==p.lng){ map.flyTo({center:[p.lng,p.lat], duration:0}); showPopup(null,p.popHead,p.popText,p.popMeta,p.lat,p.lng,0,p); } }
+      else closePopup(); }
+    else if(currentPin) closePopup();
+    if(q.info && LAYER_INFO[q.info]){ if(urlOverlay.info!==q.info) openLayerInfo(q.info); } else if(urlOverlay.info) closeLayerInfo();
+    if(q.guide==='1'){ if(!urlOverlay.guide) openGlossary(); } else if(urlOverlay.guide) closeGlossary();
+    if(q.settings==='1'){ if(!urlOverlay.settings && ME) openSettings(); } else if(urlOverlay.settings) closeSettings();
+    const read=q.read||'';
+    if(read && read!==currentRead && window.MFBReader){ currentRead=read; MFBReader.open(/^https?:\/\//i.test(read)?{url:read}:{id:read}); }
+    else if(!read && currentRead && window.MFBReader){ currentRead=null; MFBReader.close(); }
+  } finally { urlApplying=false; }
+  if(initial) syncUrl(false); // normalise the address to the canonical form
+}
+document.addEventListener('reader:open', e => { if(urlApplying) return; currentRead=e.detail.id||e.detail.url||null; if(currentRead) syncUrl(true, 'read'); });
+document.addEventListener('reader:resolved', e => { if(urlApplying||!e.detail.id) return; currentRead=e.detail.id; syncUrl(false); });
+document.addEventListener('reader:close', () => { if(urlApplying||!currentRead) return; currentRead=null; urlAfterClose('read'); });
+window.addEventListener('popstate', () => applyUrlState(false));
+
 function init(){
   applyTheme();
   renderTopbar();renderLeftRail();renderLower();renderRight();
@@ -2733,7 +2835,6 @@ function init(){
     const n=parseInt(e.key,10);
     if(n>=1 && n<=regions.length) setRegion(regions[n-1]);
   });
-  if(new URLSearchParams(location.search).get('guide') === '1') openGlossary();
   // periodic live feeds
   setInterval(()=>{ TRACKS_TS=0; ensureTracks(); }, 15000);
   setInterval(()=>{ ALERTS_TS=0; ensureAlerts(); }, 45000);
@@ -2749,8 +2850,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (canProbeApi) {
     // Server mode: always fetch live data from API (ignore any stale inline D)
     loadMe().then(() => fetch('/api/data', { credentials: 'same-origin' }))
-      .then(r => { if (r.status === 401) { location.replace('/login?next=/'); throw new Error('unauthenticated'); } return r.json(); })
-      .then(data => { if (!data || !data.meta) throw new Error(data?.error || 'no data'); D = applyUserIdeas(data); init(); connectSSE(); maybePromptForKey(); if (new URLSearchParams(location.search).get('settings') === '1' && ME) setTimeout(openSettings, 1200); })
+      .then(r => { if (r.status === 401) { location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search)); throw new Error('unauthenticated'); } return r.json(); })
+      .then(data => { if (!data || !data.meta) throw new Error(data?.error || 'no data'); D = applyUserIdeas(data); init(); connectSSE(); maybePromptForKey(); applyUrlState(true); })
       .catch((e) => {
         if (String(e.message).includes('unauthenticated')) return;
         // Server returns 503 before the first sweep finishes — go back to the loading page
@@ -2763,6 +2864,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
-<script src="/js/reader.js"></script>
+
 </body>
 </html>

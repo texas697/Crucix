@@ -83,6 +83,7 @@ Dashboard at `http://localhost:3117`. Sweep data persists in `./runs/`.
   for VIX, high-yield spread and supply-chain pressure.
 - **Sweep delta:** what changed since the last refresh (new signals, escalations, de-escalations).
 - **Cross-source signals:** correlations across satellite, economic, conflict and social data.
+- **Deep links / history:** the address bar carries the view. Dashboard: `/?region=middleEast&hide=news,sdr&time=24h&pin=<lat>,<lng>&shape=c:<lat>,<lng>,<km>&info=<layer>&guide=1&settings=1&read=<articleId>`; Readers Digest: `/digest/<articleId>?filter=thinktank&topic=<topic>&q=<text>`; Live media: `/media/<channelId>?grid=1`. Refresh restores the view, the browser back button closes what you opened, and the login page returns you to the same link.
 - **Nuclear watch:** live gamma dose rate from Safecast's fixed-sensor network around 11 nuclear sites (median per site, every sensor on the map), plus EPA RadNet.
 - **Space watch:** ISS position, recent launches, and Starlink/OneWeb and military constellation counts, with open
   fallbacks when CelesTrak is unreachable.

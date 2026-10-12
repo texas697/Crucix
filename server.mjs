@@ -325,13 +325,13 @@ if (AUTH_ENABLED) {
 
 // ─── Readers Digest ───────────────────────────────────────────────────────
 const digestHtml = readFileSync(join(ROOT, 'dashboard/public/digest.html'), 'utf-8');
-app.get('/digest', (req, res) => {
+app.get(['/digest', '/digest/:id'], (req, res) => {
   res.type('html').send(digestHtml.replace('</head>', `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>\n</head>`));
 });
 
 // ─── Live media (broadcaster HLS channels) ─────────────────────────────────
 const mediaHtml = readFileSync(join(ROOT, 'dashboard/public/media.html'), 'utf-8');
-app.get('/media', (req, res) => {
+app.get(['/media', '/media/:id'], (req, res) => {
   res.type('html').send(mediaHtml);
 });
 

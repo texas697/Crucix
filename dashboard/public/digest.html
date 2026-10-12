@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/reader.css">
+<script src="/js/urlstate.js"></script>
+<script src="/js/reader.js"></script>
 <script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -97,7 +99,7 @@ const $ = (s) => document.querySelector(s);
 function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
-  if (r.status === 401) { location.replace('/login?next=' + encodeURIComponent(location.pathname)); throw new Error('unauthenticated'); }
+  if (r.status === 401) { location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search)); throw new Error('unauthenticated'); }
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(body.error || `HTTP ${r.status}`);
   return body;
@@ -105,7 +107,7 @@ async function api(path, opts = {}) {
 function openSettings(){ location.href = '/?settings=1'; }
 function ago(d){const ms=Date.now()-new Date(d).getTime();const h=Math.floor(ms/3600000);if(h<1)return 'just now';if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago'}
 
-async function loadMe(){ try { const r = await fetch('/api/me', { credentials:'same-origin' }); if (r.status===401) return location.replace('/login?next=/digest'); if (r.ok) ME = await r.json(); } catch {} renderNav(); }
+async function loadMe(){ try { const r = await fetch('/api/me', { credentials:'same-origin' }); if (r.status===401) return location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search)); if (r.ok) ME = await r.json(); } catch {} renderNav(); }
 function renderNav(){
   if (!ME) return;
   const nav = $('#nav');
@@ -166,12 +168,44 @@ function applyVote(id, rating){
   el.querySelector('.rd-thumb.up').classList.toggle('on', rating>0); el.querySelector('.rd-thumb.down').classList.toggle('on', rating<0);
 }
 document.addEventListener('digest:vote', e => applyVote(e.detail.id, e.detail.rating));
-document.addEventListener('digest:topic', e => { MFBReader.close(); state.topic = e.detail; load(); });
-document.querySelectorAll('.pill[data-filter]').forEach(p => p.onclick = () => { document.querySelectorAll('.pill[data-filter]').forEach(x=>x.classList.remove('active')); p.classList.add('active'); state.filter = p.dataset.filter; load(); });
-let qT; $('#q').oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim(); load(); }, 250); };
-loadMe().then(load);
-const openId = new URLSearchParams(location.search).get('open'); if (openId) setTimeout(() => MFBReader.open({ id: openId }), 300);
+document.addEventListener('digest:topic', e => { MFBReader.close(); state.topic = e.detail; syncUrl(true); load(); });
+document.querySelectorAll('.pill[data-filter]').forEach(p => p.onclick = () => { setFilterUI(p.dataset.filter); state.filter = p.dataset.filter; syncUrl(true); load(); });
+let qT; $('#q').oninput = (e) => { clearTimeout(qT); qT = setTimeout(() => { state.q = e.target.value.trim(); syncUrl(false); load(); }, 250); };
+function setFilterUI(f){ document.querySelectorAll('.pill[data-filter]').forEach(x=>x.classList.toggle('active', x.dataset.filter===f)); }
+
+// ---- URL routing: /digest[/<articleId>]?filter=&topic=&q= -------------------------------------------------------
+// The address bar holds the open article and the list filters, so a refresh restores the view and the back button
+// closes the article / undoes a filter change.
+let openArticleId = null, applyingRoute = false;
+function routeFromUrl(){
+  const { path, q } = UrlState.parse();
+  return { id: path[1] || q.open || '', filter: ['all','foryou','thinktank','news'].includes(q.filter) ? q.filter : 'all', topic: q.topic || '', q: q.q || '' };
+}
+function syncUrl(push){
+  if (applyingRoute) return;
+  UrlState.set(['digest', openArticleId || ''], { filter: state.filter !== 'all' ? state.filter : '', topic: state.topic, q: state.q }, { push, state: { k: openArticleId ? 'read' : 'list' } });
+}
+function applyRoute(initial){
+  const r = routeFromUrl();
+  applyingRoute = true;
+  try {
+    const listChanged = r.filter !== state.filter || r.topic !== state.topic || r.q !== state.q;
+    state.filter = r.filter; state.topic = r.topic; state.q = r.q;
+    setFilterUI(state.filter); if ($('#q').value !== state.q) $('#q').value = state.q;
+    if (listChanged || initial) load();
+    if (r.id && r.id !== openArticleId) { openArticleId = r.id; MFBReader.open({ id: r.id }); }
+    else if (!r.id && openArticleId) { openArticleId = null; MFBReader.close(); }
+  } finally { applyingRoute = false; }
+  if (initial) syncUrl(false); // normalise legacy ?open=<id> into the path form
+}
+document.addEventListener('reader:open', e => { if (applyingRoute) return; openArticleId = e.detail.id || null; if (openArticleId) syncUrl(true); });
+document.addEventListener('reader:close', () => {
+  if (applyingRoute || !openArticleId) return;
+  openArticleId = null;
+  if (history.state && history.state.k === 'read') history.back(); else syncUrl(false);
+});
+window.addEventListener('popstate', () => applyRoute(false));
+loadMe().then(() => applyRoute(true));
 </script>
-<script src="/js/reader.js"></script>
 </body>
 </html>

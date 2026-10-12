@@ -122,6 +122,7 @@ html.light .mark .bm-dot{fill:#0f172a}
   </div>
 </div>
 
+<script src="/js/urlstate.js"></script>
 <script>
 const CHANNELS = [
   {id:'aljazeera', name:'Al Jazeera English', region:'Qatar', color:'#f5c542',
@@ -145,13 +146,34 @@ const $ = s => document.querySelector(s);
 const player = $('#player');
 let hls = null, current = 0, muted = false, gridOn = false;
 
+// ---- URL routing: /media/<channelId>?grid=1 --------------------------------------------------------------------
+let applyingRoute = false;
+function syncUrl(push){
+  if (applyingRoute || !window.UrlState) return;
+  UrlState.set(['media', CHANNELS[current].id], { grid: gridOn ? 1 : '' }, { push, state: { k: 'channel' } });
+}
+function applyRoute(initial){
+  const { path, q } = UrlState.parse();
+  const idx = CHANNELS.findIndex(c => c.id === path[1]);
+  const wantGrid = q.grid === '1';
+  applyingRoute = true;
+  try {
+    const changed = idx >= 0 && idx !== current;
+    if (idx >= 0) current = idx;
+    if (wantGrid !== gridOn) { gridOn = wantGrid; $('#btnGrid').classList.toggle('on', gridOn); if (!gridOn) clearGrid(); }
+    if (initial || changed) load(); else if (wantGrid) buildGrid(); else buildGrid();
+  } finally { applyingRoute = false; }
+  if (initial) syncUrl(false);
+}
+window.addEventListener('popstate', () => applyRoute(false));
+
 function renderChannels(){
   $('#channels').innerHTML = CHANNELS.map((c,i)=>`
     <button class="chan ${i===current?'active':''}" data-i="${i}">
       <span class="dot" style="background:${c.color}"></span>
       <span><span class="cname">${c.name}</span><br><span class="cregion">${c.region}</span></span>
     </button>`).join('');
-  document.querySelectorAll('.chan').forEach(b=>b.onclick=()=>{ current=+b.dataset.i; load(); });
+  document.querySelectorAll('.chan').forEach(b=>b.onclick=()=>{ current=+b.dataset.i; load(); syncUrl(true); });
 }
 
 function showOverlay(show, title, text, actions){
@@ -224,17 +246,17 @@ $('#btnMute').onclick=()=>{ muted=!muted; player.muted=muted; $('#btnMute').clas
 $('#vol').oninput=e=>{ player.volume=+e.target.value; player.muted=(+e.target.value===0); };
 $('#btnFs').onclick=()=>{ const el=$('#stage'); if(document.fullscreenElement) document.exitFullscreen(); else (el.requestFullscreen||el.webkitRequestFullscreen).call(el); };
 $('#btnPip').onclick=async()=>{ try{ if(document.pictureInPictureElement) await document.exitPictureInPicture(); else if(player.requestPictureInPicture) await player.requestPictureInPicture(); }catch{} };
-$('#btnGrid').onclick=()=>{ gridOn=!gridOn; $('#btnGrid').classList.toggle('on',gridOn); if(gridOn) buildGrid(); else clearGrid(); };
+$('#btnGrid').onclick=()=>{ gridOn=!gridOn; $('#btnGrid').classList.toggle('on',gridOn); if(gridOn) buildGrid(); else { clearGrid(); buildGrid(); } syncUrl(false); };
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT') return;
-  if(e.key==='ArrowRight'){ current=(current+1)%CHANNELS.length; load(); }
-  else if(e.key==='ArrowLeft'){ current=(current-1+CHANNELS.length)%CHANNELS.length; load(); }
+  if(e.key==='ArrowRight'){ current=(current+1)%CHANNELS.length; load(); syncUrl(true); }
+  else if(e.key==='ArrowLeft'){ current=(current-1+CHANNELS.length)%CHANNELS.length; load(); syncUrl(true); }
   else if(e.key==='m'){ $('#btnMute').click(); }
   else if(e.key==='f'){ $('#btnFs').click(); }
 });
 function tick(){ $('#clock').textContent = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}); }
 setInterval(tick,1000); tick();
-renderChannels(); load();
+applyRoute(true);
 </script>
 </body>
 </html>
