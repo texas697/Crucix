@@ -1,5 +1,5 @@
 // FRED — Federal Reserve Economic Data
-// 840,000+ time series. Free API key required.
+// 840,000+ time series. Works without a key via the public graph CSV; a free API key uses the JSON API instead.
 // Key indicators: yield curve, CPI, unemployment, money supply, GDP, fed funds rate
 
 import { safeFetch, today, daysAgo } from '../utils/fetch.mjs';
@@ -32,14 +32,14 @@ const KEY_SERIES = {
   BAMLH0A0HYM2: 'High Yield Spread (Credit Stress)',
   // Commodities via FRED
   DCOILWTICO: 'WTI Crude Oil',
-  GOLDAMGBD228NLBM: 'Gold Price (London Fix)',
+  // GOLDAMGBD228NLBM (London gold fix) was discontinued on FRED; metals come from Yahoo Finance instead.
   // Housing
   MORTGAGE30US: '30-Year Mortgage Rate',
   // Global
   DTWEXBGS: 'USD Trade Weighted Index',
 };
 
-// Get latest value for a series
+// Get latest value for a series through the keyed JSON API
 async function getSeriesLatest(seriesId, apiKey) {
   const params = new URLSearchParams({
     series_id: seriesId,
@@ -52,31 +52,46 @@ async function getSeriesLatest(seriesId, apiKey) {
   return safeFetch(`${BASE}/series/observations?${params}`);
 }
 
+// Keyless fallback: the public graph CSV behind every FRED chart (date,value per line, "." for missing days).
+// It carries the same observations as the API, so the dashboard works without a FRED_API_KEY.
+const GRAPH_CSV = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
+const CSV_HEADERS = { 'User-Agent': 'Crucix/2.0 (MFB Services Intelligence dashboard; +https://crucix-intel-41718.firebaseapp.com)' };
+
+async function getSeriesCsv(seriesId) {
+  const data = await safeFetch(`${GRAPH_CSV}?id=${seriesId}&cosd=${daysAgo(120)}`, { headers: CSV_HEADERS, timeout: 12000, maxText: 20000 });
+  const text = typeof data?.rawText === 'string' ? data.rawText : null;
+  if (!text) return { error: data?.error || 'no csv' };
+  const rows = text.trim().split('\n').slice(1)
+    .map(line => line.split(','))
+    .filter(([date, value]) => date && value && value.trim() !== '.' && Number.isFinite(parseFloat(value)))
+    .map(([date, value]) => ({ date: date.trim(), value: value.trim() }))
+    .reverse(); // newest first, matching sort_order=desc
+  return { observations: rows.slice(0, 5) };
+}
+
+function toIndicator(id, label, data) {
+  const obs = data?.observations;
+  if (!obs?.length) return { id, label, value: null, date: null, recent: [] };
+  const latest = obs.find(o => o.value !== '.');
+  const validObs = obs.filter(o => o.value !== '.');
+  return {
+    id,
+    label,
+    value: latest ? parseFloat(latest.value) : null,
+    date: latest?.date || null,
+    recent: validObs.slice(0, 5).map(o => parseFloat(o.value)),
+  };
+}
+
 // Briefing — pull all key indicators
 export async function briefing(apiKey) {
-  if (!apiKey) {
-    return {
-      source: 'FRED',
-      error: 'No FRED API key. Get one free at https://fred.stlouisfed.org/docs/api/api_key.html',
-      hint: 'Set FRED_API_KEY environment variable',
-    };
-  }
-
   const entries = Object.entries(KEY_SERIES);
+  const access = apiKey ? 'api' : 'graph-csv';
   const results = await Promise.all(
     entries.map(async ([id, label]) => {
-      const data = await getSeriesLatest(id, apiKey);
-      const obs = data?.observations;
-      if (!obs?.length) return { id, label, value: null, date: null, recent: [] };
-      const latest = obs.find(o => o.value !== '.');
-      const validObs = obs.filter(o => o.value !== '.');
-      return {
-        id,
-        label,
-        value: latest ? parseFloat(latest.value) : null,
-        date: latest?.date || null,
-        recent: validObs.slice(0, 5).map(o => parseFloat(o.value)),
-      };
+      let data = apiKey ? await getSeriesLatest(id, apiKey) : null;
+      if (!data?.observations?.length) data = await getSeriesCsv(id);
+      return toIndicator(id, label, data);
     })
   );
 
@@ -94,10 +109,15 @@ export async function briefing(apiKey) {
   if (vix !== null && vix > 40) signals.push(`VIX EXTREME at ${vix} — crisis-level fear`);
   if (hySpread !== null && hySpread > 5) signals.push(`HIGH YIELD SPREAD WIDE at ${hySpread}% — credit stress`);
 
+  const indicators = results.filter(r => r.value !== null);
   return {
     source: 'FRED',
     timestamp: new Date().toISOString(),
-    indicators: results.filter(r => r.value !== null),
+    access,
+    ...(apiKey ? {} : { note: 'No FRED_API_KEY set; observations read from the public graph CSV endpoint.' }),
+    indicators,
+    missing: results.filter(r => r.value === null).map(r => r.id),
+    ...(indicators.length === 0 ? { error: 'FRED returned no observations' } : {}),
     signals,
   };
 }

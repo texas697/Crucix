@@ -74,6 +74,14 @@ if gcloud secrets describe OPENSKY_CLIENT_ID --project "$PROJECT" >/dev/null 2>&
 else
   echo "▶ No OPENSKY_CLIENT_ID/SECRET secrets — anonymous OpenSky with adsb.lol fallback"
 fi
+# FRED (optional): without a key the source reads the public graph CSV, which carries the same observations. Create with:
+#   printf '%s' "key" | gcloud secrets create FRED_API_KEY --data-file=- --project $PROJECT
+if gcloud secrets describe FRED_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
+  SECRETS="$SECRETS,FRED_API_KEY=FRED_API_KEY:latest"
+  echo "▶ FRED: API key from Secret Manager"
+else
+  echo "▶ No FRED_API_KEY secret — FRED via public graph CSV"
+fi
 # OpenSky relay (deploy/opensky-relay.py on a non-Google host; OpenSky blocks Google Cloud IPs). Create once with:
 #   printf '%s' "shared-token" | gcloud secrets create OPENSKY_RELAY_TOKEN --data-file=- --project $PROJECT
 # and set OPENSKY_RELAY_URL below (or in deploy/extra-env.yaml).

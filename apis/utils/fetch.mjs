@@ -42,10 +42,11 @@ function delay(ms) {
  * @param {object} [opts.headers={}]     - Extra request headers
  * @param {string} [opts.method='GET']   - HTTP method
  * @param {*}      [opts.body]           - Request body (for POST/PUT)
+ * @param {number} [opts.maxText=500]    - How much of a non-JSON body to keep in `rawText`
  * @returns {Promise<object>} Parsed JSON, or `{ error, source }` on failure
  */
 export async function safeFetch(url, opts = {}) {
-  const { timeout = 15000, retries = 1, headers = {}, method = 'GET', body } = opts;
+  const { timeout = 15000, retries = 1, headers = {}, method = 'GET', body, maxText = 500 } = opts;
   let lastError;
   let totalBackoff = 0;
 
@@ -69,7 +70,7 @@ export async function safeFetch(url, opts = {}) {
 
       if (res.ok) {
         const text = await res.text();
-        try { return JSON.parse(text); } catch { return { rawText: text.slice(0, 500) }; }
+        try { return JSON.parse(text); } catch { return { rawText: text.slice(0, maxText) }; }
       }
 
       // Non-retryable client error — bail immediately

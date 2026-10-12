@@ -142,7 +142,7 @@ cp .env.example .env
 
 | Key | Source | How to Get |
 |-----|--------|------------|
-| `FRED_API_KEY` | Federal Reserve Economic Data | [fred.stlouisfed.org](https://fred.stlouisfed.org/docs/api/api_key.html) — instant, free |
+| `FRED_API_KEY` | Federal Reserve Economic Data (optional: without it the source reads FRED's public graph CSV) | [fred.stlouisfed.org](https://fred.stlouisfed.org/docs/api/api_key.html) — instant, free |
 | `FIRMS_MAP_KEY` | NASA FIRMS (satellite fire data) | [firms.modaps.eosdis.nasa.gov](https://firms.modaps.eosdis.nasa.gov/api/area/) — instant, free |
 | `EIA_API_KEY` | US Energy Information Administration | [api.eia.gov](https://www.eia.gov/opendata/register.php) — instant, free |
 
@@ -267,7 +267,7 @@ crucix/
 
 | Source | What It Tracks | Auth |
 |--------|---------------|------|
-| **FRED** | 22 key indicators: yield curve, CPI, VIX, fed funds, M2 | Free key |
+| **FRED** | 21 key indicators: yield curve, CPI, VIX, HY spread, fed funds, M2 | None (public graph CSV); optional free key uses the JSON API |
 | **US Treasury** | National debt, yields, fiscal data | None |
 | **BLS** | CPI, unemployment, nonfarm payrolls, PPI | None |
 | **EIA** | WTI/Brent crude, natural gas, inventories | Free key |

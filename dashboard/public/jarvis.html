@@ -1335,9 +1335,10 @@ function renderLeftRail(){
   const vix=D.fred.find(f=>f.id==='VIXCLS'), hy=D.fred.find(f=>f.id==='BAMLH0A0HYM2'), usd=D.fred.find(f=>f.id==='DTWEXBGS');
   const m2=D.fred.find(f=>f.id==='M2SL'), mort=D.fred.find(f=>f.id==='MORTGAGE30US'), claims=D.fred.find(f=>f.id==='ICSA');
   const riskEl=document.getElementById('pRisk');
-  if(riskEl) riskEl.innerHTML = cardHtml(t('panels.riskGauges','Risk gauges'), 'Stress', `
-    <div class="econ-row"><span class="elabel">${t('metrics.vix','VIX')}</span><span class="eval" style="color:${vix?.value>20?'var(--warn)':'var(--accent)'}">${vix?.value||'--'}</span></div>
-    <div class="econ-row"><span class="elabel">${t('metrics.hySpread','HY spread')}</span><span class="eval">${hy?.value||'--'}</span></div>
+  const fredAsOf=[vix,hy,usd,claims,mort].map(f=>f?.date).filter(Boolean).sort().pop();
+  if(riskEl) riskEl.innerHTML = cardHtml(t('panels.riskGauges','Risk gauges'), fredAsOf?`FRED &#183; ${fredAsOf.slice(5).replace('-','/')}`:'Stress', `
+    <div class="econ-row" title="${vix?.date?'CBOE VIX close '+vix.date:''}"><span class="elabel">${t('metrics.vix','VIX')}</span><span class="eval" style="color:${vix?.value>20?'var(--warn)':'var(--accent)'}">${vix?.value||'--'}</span></div>
+    <div class="econ-row" title="${hy?.date?'ICE BofA US High Yield option-adjusted spread '+hy.date:''}"><span class="elabel">${t('metrics.hySpread','HY spread')}</span><span class="eval" style="color:${hy?.value>5?'var(--warn)':'inherit'}">${hy?.value!=null?hy.value.toFixed(2)+'%':'--'}</span></div>
     <div class="econ-row"><span class="elabel">${t('metrics.usdIndex','USD index')}</span><span class="eval">${usd?.value?.toFixed(1)||'--'}</span></div>
     <div class="econ-row"><span class="elabel">${t('metrics.joblessClaims','Jobless claims')}</span><span class="eval">${claims?.value?.toLocaleString()||'--'}</span></div>
     <div class="econ-row"><span class="elabel">${t('metrics.mortgage30y','30Y mortgage')}</span><span class="eval">${mort?.value||'--'}%</span></div>
