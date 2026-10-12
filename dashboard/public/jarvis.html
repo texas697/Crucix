@@ -484,9 +484,10 @@ html.light .ab-watch{background:rgba(70,100,220,0.06)}
 .threat-row{display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
 .threat-row:hover{background:var(--raised);border-radius:5px}
 .threat-row .tdot{width:8px;height:8px;border-radius:50%;flex:none}
-.threat-row .tname{flex:1;color:var(--text-2)}
-.threat-row .tmeta{font-family:var(--mono);font-size:10.5px;color:var(--dim-3)}
-.threat-row .tlevel{font-size:11.5px;font-weight:600;min-width:62px;text-align:right}
+.threat-row .tname{flex:1;color:var(--text-2);white-space:nowrap}
+.threat-row .tmeta{font-family:var(--mono);font-size:10.5px;color:var(--dim-3);white-space:nowrap}
+.threat-row .tmeta .tdisr{margin-left:6px;padding:1px 5px;border-radius:4px;background:rgba(245,154,94,0.14);color:#f59a5e}
+.threat-row .tlevel{font-size:11.5px;font-weight:600;min-width:84px;text-align:right;white-space:nowrap}
 .alerts-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .alerts-snd{width:28px;height:26px;border:1px solid var(--border);border-radius:5px;background:var(--raised);color:var(--text-2);cursor:pointer}
 .alerts-snd.on{background:var(--accent);border-color:var(--accent);color:#0a0f1f}
@@ -2451,7 +2452,8 @@ function threatByRegion(){
     const disruption=Math.min(40, parts.reduce((s,p)=>s+p.pts,0));
     const score=Math.min(100, conflict+disruption);
     const lvl = score>=60?['Critical','#ff6b74']:score>=40?['High','#f59a5e']:score>=20?['Elevated','#f2c879']:['Guarded','#7fe0c0'];
-    const meta=`${severe.toLocaleString()} severe${parts.length?' · '+parts.reduce((s,p)=>s+p.n,0)+' disruption'+(parts.reduce((s,p)=>s+p.n,0)===1?'':'s'):''}`;
+    const nd=parts.reduce((s,p)=>s+p.n,0);
+    const meta=`${severe.toLocaleString()} severe${nd?`<span class="tdisr" title="${nd} disruption signal${nd===1?'':'s'}">&#9888; ${nd}</span>`:''}`;
     const tip=`${REGION_LABEL[r]} · score ${score}: conflict ${conflict} (${severe} armed clash / mass violence / assault events of ${g.events} conflict events in the last ${D.gdelt?.window?.hours||6}h)`+(parts.length?'; '+parts.map(p=>`${p.k} +${p.pts} (${p.txt})`).join('; '):'; no disruption signals');
     return {r, label:REGION_LABEL[r], score, level:lvl[0], color:lvl[1], events:g.events||0, severe, meta, tip, parts};
   }).sort((a,b)=>b.score-a.score);
