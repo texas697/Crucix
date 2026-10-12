@@ -377,6 +377,17 @@ html.light .ab-watch{background:rgba(70,100,220,0.06)}
 .osint-src{color:#a2abbd}
 .osint-tag{margin-left:auto;padding:2px 7px;border-radius:5px;background:rgba(240,90,80,0.10);color:var(--danger)}
 .osint-text{font-size:13px;line-height:1.5;color:var(--text-2)}
+.hw-list{display:flex;flex-direction:column}
+.hw-sec{font-family:var(--sans);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim-2);padding:10px 10px 4px}
+.hw-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;text-decoration:none;color:inherit;transition:background .15s}
+.hw-row:hover{background:var(--raised)}
+.hw-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.hw-title{font-size:13px;line-height:1.35;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hw-sub{font-size:11.5px;color:var(--dim-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hw-risk{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.hw-lvl{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;background:rgba(127,224,192,0.12);color:var(--mint);white-space:nowrap}
+.hw-lvl.l3{background:rgba(245,154,94,0.14);color:#f59a5e}
+.hw-lvl.l4{background:rgba(255,107,116,0.14);color:var(--danger)}
 .metrics-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
 .mc{padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--panel-2)}
 .mc .ml{font-family:var(--sans);font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--dim)}
@@ -989,7 +1000,7 @@ const LAYER_INFO = {
   nuke: {purpose:'Live gamma dose rate from fixed radiation sensors around nuclear plants and legacy sites, with the typical (median) reading per site and every sensor plotted.', source:'Safecast realtime sensor network (tt.safecast.org)', freshness:'Sensors report every few minutes; refreshed every sweep', confidence:'Good anomaly screen where sensors exist. Normal outdoor background is 0.05–0.3 µSv/h (roughly 15–100 CPM on an LND 7318 tube).', limitations:['No public sensors near Bushehr, Yongbyon or Dimona','Chernobyl exclusion zone reads permanently above background by design','Single hot sensors are flagged but do not flip a site; the site median does']},
   ships: {purpose:'Live ship positions from AIS transponders in the approaches to the major chokepoints, with class (tanker, cargo, passenger, military/law enforcement), speed, course, navigation status and declared destination.', source:'aisstream.io live AIS feed (terrestrial + satellite receivers), held open by the server', freshness:'Positions update continuously; the map refreshes about every minute and shows ships heard in the last hour', confidence:'Exact for ships transmitting AIS. Ships running dark are invisible by definition.', limitations:['Only the chokepoint boxes are subscribed, not the open ocean','Receiver coverage varies; some areas report mainly large ships','Class B (small craft) data is sparser']},
   sdr: {purpose:'Where the public can listen to HF radio (0–30 MHz) right now: every listed KiwiSDR receiver worldwide, with live status, listener load and signal-to-noise for the receivers inside the watched conflict regions.', source:'receiverbook.de directory + each receiver\'s own /status endpoint', freshness:'Directory and watched-region probes refreshed every sweep', confidence:'Live numbers are exact for probed receivers; the rest of the directory is listing only.', limitations:['Only watched-region receivers are probed for live state','Volunteer-run; receivers come and go','Listener load shows interest, not what is being heard']},
-  health: {purpose:'WHO outbreak and public-health alerts.', source:'WHO', freshness:'Refreshed every sweep', confidence:'Authoritative for officially declared events.', limitations:['Reporting lags; many alerts are country-level']},
+  health: {purpose:'Active disease outbreaks with WHO\'s own risk assessment, CDC travel health notices (levels 1–4) and US multistate outbreak investigations, pinned to the countries they name.', source:'WHO Disease Outbreak News API; CDC Travel Health Notices and CDC outbreak RSS feeds', freshness:'Refreshed every sweep (~15 min); WHO publishes a follow-up notice every 2–4 weeks for an ongoing event', confidence:'Authoritative for officially declared events. Risk levels are WHO\'s words, parsed from the notice.', limitations:['WHO notices lag the event by days; many are country-level, so pins sit on the country centroid','An outbreak stays listed for 90 days after its last WHO notice','CDC levels are travel advice for US travellers, not outbreak severity','Only places the dashboard can locate are pinned']},
   news: {purpose:'Geolocated world-news headlines.', source:'Aggregated RSS / GDELT geocoding', freshness:'Minutes', confidence:'Broad coverage, variable quality.', limitations:['Geocoding can be approximate','Duplicate framing across outlets']},
   weather: {purpose:'Official severe-weather alerts.', source:'NOAA / NWS', freshness:'Minutes', confidence:'Authoritative for the US.', limitations:['US-centric coverage','Alert polygons are approximated as points']},
   radiation: {purpose:'EPA RadNet environmental radiation stations.', source:'EPA RadNet', freshness:'Refreshed every sweep', confidence:'Reference-grade background readings.', limitations:['US stations only','Sparse sampling cadence']},
@@ -1317,7 +1328,7 @@ function renderLeftRail(){
     {name:t('layers.maritimeWatch','Maritime Watch'),count:D.chokepoints.length,dot:'maritime',sub:D.maritimeMeta?.summary?`${D.maritimeMeta.summary.disrupted} ${t('layers.disrupted','disrupted')} · ${(D.maritimeMeta.summary.reduced||0)+(D.maritimeMeta.summary.elevated||0)+(D.maritimeMeta.summary.watch||0)} ${t('layers.abnormal','abnormal')}${D.maritimeMeta.asOf?' · '+relTime(D.maritimeMeta.asOf+'T12:00:00Z').replace(' ago','')+' lag':''}`:t('layers.chokepoints','chokepoints')},
     {name:t('layers.nuclearSites','Nuclear Sites'),count:D.nuke.reduce((a,s)=>a+(s.n||0),0),dot:'nuke',sub:`${D.nuke.filter(s=>s.coverage==='live').length}/${D.nuke.length} ${t('layers.sitesLive','sites live')}`},
     {name:t('layers.conflictEvents','Conflict Events'),count:conflictEvents.toLocaleString(),dot:'thermal',sub:conflictSub},
-    {name:t('layers.healthWatch','Health Watch'),count:D.who.length,dot:'health',sub:t('layers.whoAlerts','WHO alerts')},
+    {name:t('layers.healthWatch','Health Watch'),count:(D.healthWatch?.outbreaks||[]).length,dot:'health',sub:`${t('layers.whoOutbreaks','WHO outbreaks')} · ${(D.healthWatch?.travel||[]).filter(n=>n.level>=2).length} CDC L2+`},
     {name:t('layers.worldNews','World News'),count:newsCount,dot:'news',sub:t('layers.rssGeolocated','RSS geolocated')},
     {name:t('layers.spaceActivity','Satellites'),count:D.space?.militarySats||0,dot:'space',sub:`${D.space?.totalNewObjects||0} ${t('space.newLast30d','new (30d)')}`}
   ];
@@ -1991,11 +2002,25 @@ function plotMarkers(){
       popHead:(name||'KiwiSDR receiver').replace(/\s*\|\s*/g,' · '), popMeta:`KiwiSDR · listed${country?' · '+esc(country):''}`, popText:'Public HF receiver, 0–30 MHz. Live status is only probed inside the watched regions.' });
   });
 
-  // === WHO alerts (only notices whose title names a place we can locate) ===
-  (D.who||[]).forEach(w=>{
-    if(w.lat==null || w.lon==null) return;
-    points.push({ lat:w.lat, lng:w.lon, size:0.25, _r:3.8, color:'rgba(127,224,192,0.7)', _stroke:'rgba(127,224,192,0.25)', type:'health', priority:2, ts:w.date,
-      popHead:w.title, popMeta:`WHO Outbreak · keyword: ${esc(w.region||'')}`, popText:esc(w.summary||'') });
+  // === Health: WHO outbreaks (one pin per named place, colour by WHO risk) and CDC travel notices level 2+ ===
+  const hw=D.healthWatch||{};
+  const seenHealth=new Set();
+  (hw.outbreaks||[]).forEach(o=>{
+    const col=HEALTH_RISK_COL[o.risk?.max]||'rgba(127,224,192,0.7)';
+    const r=o.risk?`WHO risk ${o.risk.max}${o.risk.national?` · national ${o.risk.national}`:''}${o.risk.regional?` · regional ${o.risk.regional}`:''}${o.risk.global?` · global ${o.risk.global}`:''}`:'WHO has not published a risk level';
+    (o.pins||[]).forEach(([lat,lon,place])=>{
+      seenHealth.add(`${lat},${lon}`);
+      points.push({ lat, lng:lon, size:0.3, _r:o.risk?.max==='very high'?5.2:o.risk?.max==='high'?4.6:3.8, color:col, _stroke:col.replace(/[\d.]+\)$/,'0.25)'), type:'health', priority:2, ts:o.last, url:o.url||undefined,
+        popHead:`${o.disease} · ${place}`, popMeta:`WHO outbreak · ${o.updates} notice${o.updates===1?'':'s'} since ${(o.first||'').slice(0,10)} · latest ${relTime(o.last)}`, popText:`${esc(r)}.${o.summary?' '+esc(o.summary):''}` });
+    });
+  });
+  (hw.travel||[]).filter(n=>n.level>=2).forEach(n=>{
+    (n.pins||[]).forEach(([lat,lon,place])=>{
+      const k=`${lat},${lon}`; if(seenHealth.has(k)) return; seenHealth.add(k);
+      const col=n.level>=4?'rgba(255,107,116,0.75)':n.level===3?'rgba(245,154,94,0.75)':'rgba(127,224,192,0.55)';
+      points.push({ lat, lng:lon, size:0.15, _r:n.level>=3?3.6:2.6, color:col, _stroke:col.replace(/[\d.]+\)$/,'0.2)'), type:'health', priority:3, ts:n.date, url:n.url||undefined,
+        popHead:`${n.name} · ${place}`, popMeta:`CDC travel notice · Level ${n.level} · ${CDC_LEVEL_LABEL[n.level]||''}`, popText:n.n>1?`${n.n} destinations under this notice.`:'' });
+    });
   });
 
   // === News ===
@@ -2567,7 +2592,7 @@ function renderRight(){
     {l:'Thermal spikes',v:D.thermal.reduce((s,t)=>s+t.hc,0),p:80},
     {l:'SDR nodes',v:D.sdr.total,p:92},
     {l:'Chokepoints',v:D.chokepoints.length,p:50},
-    {l:'WHO alerts',v:D.who.length,p:40}
+    {l:'Outbreaks',v:(D.healthWatch?.outbreaks||[]).length,p:40}
   ];
   const setCard=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
   setCard('pOsint', buildOsintPanel());
@@ -2644,18 +2669,34 @@ function runBoot(){
 
 function isMobileLayout(){ return window.innerWidth <= 1100; }
 
-function buildOsintPanel(panelClass='', maxHeight=420){
-  // WHO Disease Outbreak News, filtered to the focused region. No social-media scraping here.
-  const items=(D.who||[]).filter(w=>textInRegion(w.title||'')).slice(0,12);
-  const cards=items.map(w=>{
-    const age=w.date?getAge(w.date):'';
-    return `<div class="osint-item">
-      <div class="osint-meta"><span class="osint-src" style="color:var(--mint)">WHO</span>${age?`<span>&#183;</span><span>${age}</span>`:''}${w.region?`<span class="osint-tag" style="color:var(--mint);background:rgba(127,224,192,0.10)">${esc(w.region)}</span>`:''}</div>
-      <span class="osint-text"><strong>${cleanText(w.title||'')}</strong>${w.summary?` &#183; ${cleanText(w.summary)}`:''}</span>
-    </div>`;
-  }).join('');
-  const empty=`<div style="padding:16px 10px;color:var(--dim);font-family:var(--sans);font-size:12px">No WHO Disease Outbreak News in the feed${currentRegion!=='world'?' for this region':''}.</div>`;
-  return cardHtml('Health watch', `${(D.who||[]).length} WHO`, `<div class="osint-list">${cards||empty}</div>`, '', 'pad-sm');
+const HEALTH_RISK_COL={'very high':'rgba(255,107,116,0.85)',high:'rgba(245,154,94,0.85)',moderate:'rgba(242,200,121,0.85)',low:'rgba(127,224,192,0.7)'};
+const HEALTH_RISK_CSS={'very high':'var(--danger)',high:'#f59a5e',moderate:'#f2c879',low:'var(--mint)'};
+const CDC_LEVEL_LABEL={1:'Usual precautions',2:'Enhanced precautions',3:'Reconsider travel',4:'Avoid travel'};
+function buildOsintPanel(){
+  // Health watch: WHO outbreaks with WHO's risk level, then CDC travel notices (level 2+), then US outbreak
+  // investigations. Filtered to the focused region by the places each item names.
+  const hw=D.healthWatch||{};
+  // Region filter: by the pinned coordinates when the item names places we can locate, by keywords otherwise.
+  const inReg=(pins,txt)=>currentRegion==='world'||((pins||[]).length?pins.some(([la,lo])=>inRegionBox(la,lo,currentRegion)):textInRegion(txt));
+  const outbreaks=(hw.outbreaks||[]).filter(o=>inReg(o.pins,`${o.disease} ${(o.places||[]).join(' ')}`));
+  const travel=(hw.travel||[]).filter(n=>n.level>=2&&inReg(n.pins,`${n.name} ${(n.countries||[]).join(' ')}`));
+  const us=currentRegion==='world'||currentRegion==='americas'?(hw.cdcOutbreaks||[]):[];
+  const riskTag=o=>o.risk?`<span class="hw-risk" style="color:${HEALTH_RISK_CSS[o.risk.max]||'var(--text-2)'}" title="${esc(['national','regional','global'].filter(k=>o.risk[k]).map(k=>`${k} ${o.risk[k]}`).join(' · ')||'WHO assessment')}">${esc(o.risk.max)}</span>`:`<span class="hw-risk" style="color:var(--dim)" title="WHO has not published a risk level for this event">unrated</span>`;
+  const obRows=outbreaks.map(o=>`<a class="hw-row" ${o.url?`href="${esc(o.url)}" target="_blank" rel="noopener"`:''} title="${esc(o.summary||'')}">
+      <span class="hw-main"><span class="hw-title">${esc(o.disease)}</span><span class="hw-sub">${esc((o.places||[]).join(', ')||'Multi-country')} &#183; ${o.updates} notice${o.updates===1?'':'s'} &#183; ${relTime(o.last)||esc((o.last||'').slice(0,10))}</span></span>${riskTag(o)}</a>`).join('');
+  const trRows=travel.slice(0,8).map(n=>`<a class="hw-row" ${n.url?`href="${esc(n.url)}" target="_blank" rel="noopener"`:''} title="${esc(`CDC Level ${n.level}: ${CDC_LEVEL_LABEL[n.level]||''}${n.countries?.length?' · '+n.countries.slice(0,12).join(', ')+(n.countries.length>12?' …':''):''}`)}">
+      <span class="hw-main"><span class="hw-title">${esc(n.name)}</span><span class="hw-sub">${n.n>1?`${n.n} destinations`:esc(n.countries?.[0]||'')} &#183; ${relTime(n.date)||''}</span></span><span class="hw-lvl l${n.level}">L${n.level}</span></a>`).join('');
+  const usRows=us.slice(0,3).map(n=>`<a class="hw-row" ${n.url?`href="${esc(n.url)}" target="_blank" rel="noopener"`:''}><span class="hw-main"><span class="hw-title">${esc(n.title)}</span><span class="hw-sub">US multistate &#183; ${relTime(n.date)||''}</span></span></a>`).join('');
+  const sec=(label,rows)=>rows?`<div class="hw-sec">${label}</div>${rows}`:'';
+  const worst=outbreaks.find(o=>o.risk?.max==='very high'||o.risk?.max==='high');
+  const banner=hw.error?`<div class="nuke-ok anom">&#9888; ${esc(hw.error)}</div>`
+    :worst?`<div class="nuke-ok anom" style="color:${HEALTH_RISK_CSS[worst.risk.max]}">&#9888; WHO risk ${esc(worst.risk.max)} &#183; ${esc(worst.disease.replace(/ disease caused by /i,' · '))}</div>`
+    :outbreaks.length?`<div class="nuke-ok ok">&#9679; No high-risk WHO assessment${currentRegion!=='world'?' in this region':''}</div>`:'';
+  const body=banner+sec('WHO outbreaks',obRows)+sec('CDC travel notices',trRows)+sec('CDC investigations',usRows);
+  const empty=`<div style="padding:16px 10px;color:var(--dim);font-family:var(--sans);font-size:12px">No WHO or CDC health notices${currentRegion!=='world'?' for this region':''} in the last ${hw.activeDays||90} days.</div>`;
+  const l34=(hw.travel||[]).filter(n=>n.level>=3).length;
+  const head=`${(hw.outbreaks||[]).length} outbreak${(hw.outbreaks||[]).length===1?'':'s'}${l34?` &#183; <span style="color:var(--warn)">${l34} CDC L3+</span>`:''}${hw.asOf?' &#183; '+relTime(hw.asOf):''}`;
+  return cardHtml('Health watch', head, `<div class="hw-list">${(obRows||trRows||usRows)?body:empty}</div>`, '', 'pad-sm');
 }
 
 function renderGlossary(){

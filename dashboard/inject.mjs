@@ -58,6 +58,8 @@ export const geoKeywords = {
   'Caracas':[10.5,-66.9],'Havana':[23.1,-82.4],'Panama':[9,-79.5],
   'Guatemala':[14.6,-90.5],'Honduras':[14.1,-87.2],'El Salvador':[13.7,-89.2],
   'Costa Rica':[10,-84],'Jamaica':[18.1,-77.3],'Haiti':[19,-72],
+  // Countries that appear in WHO / CDC health notices
+  'Nicaragua':[12.9,-85.2],'French Guiana':[4,-53],'Mayotte':[-12.8,45.2],'Niger':[17.6,8.1],'Guinea':[10.4,-11.2],'Cameroon':[5.7,12.4],'Benin':[9.3,2.3],'Maldives':[3.2,73.2],'Tanzania':[-6.4,34.9],'Zambia':[-13.1,27.8],'Angola':[-11.2,17.9],'Senegal':[14.5,-14.5],'Ghana':[7.9,-1],'Liberia':[6.4,-9.4],'Sierra Leone':[8.5,-11.8],'South Sudan':[7.9,30],'Rwanda':[-1.9,29.9],'Madagascar':[-18.8,46.9],'Laos':[19.9,102.5],'Brunei':[4.5,114.7],'Fiji':[-17.7,178],'Vanuatu':[-15.4,166.9],'Samoa':[-13.8,-172.1],'Tonga':[-21.2,-175.2],'Marshall Islands':[7.1,171.2],'Djibouti':[11.8,42.6],'Eritrea':[15.2,39.8],'Mauritania':[21,-10.9],'Burkina Faso':[12.2,-1.6],'Togo':[8.6,0.8],'Gambia':[13.4,-15.3],'Guyana':[4.9,-58.9],'Suriname':[3.9,-56],'Belize':[17.2,-88.5],'Paraguay':[-23.4,-58.4],'Uruguay':[-32.5,-55.8],'Trinidad':[10.7,-61.2],'Barbados':[13.2,-59.5],'Bahamas':[25,-77.4],'Belarus':[53.7,27.9],'Kazakhstan':[48,68],'Uzbekistan':[41.4,64.6],'Tajikistan':[38.9,71.3],'Kyrgyzstan':[41.2,74.8],'Mongolia':[46.9,103.8],'Bhutan':[27.5,90.4],'Timor':[-8.9,125.7],'Armenia':[40.1,45],'Azerbaijan':[40.1,47.6],'Jordan':[31.2,36.5],'Kuwait':[29.3,47.5],'Qatar':[25.3,51.2],'Bahrain':[26,50.6],'Emirates':[24,54],'Portugal':[39.4,-8.2],'Austria':[47.5,14.6],'Switzerland':[46.8,8.2],'Belgium':[50.5,4.5],'Ireland':[53.4,-8.2],'Norway':[60.5,8.5],'Denmark':[56.3,9.5],'Czech':[49.8,15.5],'Slovakia':[48.7,19.7],'Hungary':[47.2,19.5],'Bulgaria':[42.7,25.5],'Serbia':[44,21],'Croatia':[45.1,15.2],'Bosnia':[43.9,17.7],'Albania':[41.2,20.2],'Moldova':[47.4,28.4],'Lithuania':[55.2,23.9],'Latvia':[56.9,24.6],'Estonia':[58.6,25],'Cyprus':[35.1,33.4],'Malta':[35.9,14.4],'Iceland':[64.9,-19],'New Zealand':[-41,174],'Mauritius':[-20.3,57.6],'Seychelles':[-4.7,55.5],'Comoros':[-11.6,43.3],'Cabo Verde':[16,-24],'Equatorial Guinea':[1.6,10.3],'Central African':[6.6,20.9],'Lesotho':[-29.6,28.2],'Eswatini':[-26.5,31.5],'Namibia':[-22.9,18.5],'Botswana':[-22.3,24.7],'Guinea-Bissau':[11.8,-15.2],'Côte d\'Ivoire':[7.5,-5.5],'Ivory Coast':[7.5,-5.5],
   'Dominican':[18.5,-70],'Puerto Rico':[18.2,-66.5],
   // More Asia-Pacific
   'Sri Lanka':[7,80],'Hong Kong':[22.3,114.2],'Taipei':[25,121.5],
@@ -475,6 +477,41 @@ export async function synthesize(data) {
     return { title: w.title?.substring(0, 120), date: w.date, summary: w.summary?.substring(0, 150),
       ...(geo ? { lat: geo.lat, lon: geo.lon, region: geo.region } : {}) };
   });
+  // Health watch: WHO outbreaks grouped by event with WHO's risk assessment, CDC travel notices and US outbreak
+  // investigations. Each entry carries `pins` (one per locatable place) for the map layer.
+  const whoSrc = data.sources.WHO || {};
+  // Short country names too ambiguous for free-text geo-tagging (a person called Chad, the US state of Georgia) but
+  // unambiguous when they arrive as a country field from WHO / CDC.
+  const HEALTH_PLACES = { 'Chad': [15.5, 18.7], 'Mali': [17.6, -4], 'Georgia': [42.3, 43.4], 'Niger': [17.6, 8.1], 'Guinea': [10.4, -11.2], 'Papua New Guinea': [-6.3, 147], 'Equatorial Guinea': [1.6, 10.3], 'Guinea-Bissau': [11.8, -15.2], 'Dominican Republic': [18.7, -70.2], 'Democratic Republic of the Congo': [-4, 22], 'Republic of the Congo': [-1, 15.5], 'United States': [38, -97], 'United Kingdom': [54, -2], 'Russian Federation': [56, 38], 'Türkiye': [39, 35], 'Viet Nam': [16, 108], 'South Korea': [36.5, 127.8], 'Republic of Korea': [36.5, 127.8], 'North Korea': [40, 127], 'Saudi Arabia': [24, 45], 'United Arab Emirates': [24, 54], 'Hong Kong SAR': [22.3, 114.2], 'Taiwan': [23.7, 121] };
+  const pinsFor = places => {
+    const seen = new Set(); const out = [];
+    for (const raw of places || []) {
+      const p = String(raw || '').trim(); if (!p) continue;
+      const exact = HEALTH_PLACES[p] || geoKeywords[p];
+      const g = exact ? { lat: exact[0], lon: exact[1], region: p } : geoTagText(p);
+      if (g && !seen.has(g.region)) { seen.add(g.region); out.push([g.lat, g.lon, p.substring(0, 40)]); }
+    }
+    return out;
+  };
+  const healthWatch = {
+    outbreaks: (whoSrc.outbreaks || []).slice(0, 8).map(o => ({
+      disease: (o.disease || '').substring(0, 90), places: (o.places || []).slice(0, 5), updates: o.updates || 1,
+      first: o.firstDate, last: o.lastDate, don: o.latestDonId || null, url: sanitizeExternalUrl(o.url),
+      summary: o.summary?.substring(0, 220) || null, risk: o.risk || null, pins: pinsFor(o.places),
+    })),
+    travel: (whoSrc.cdc?.travelNotices || []).slice(0, 20).map(n => ({
+      level: n.level, name: (n.name || '').substring(0, 100), countries: (n.countries || []).slice(0, 60), n: (n.countries || []).length,
+      url: sanitizeExternalUrl(n.url), date: n.date, pins: pinsFor(n.countries).slice(0, 60),
+    })),
+    cdcOutbreaks: (whoSrc.cdc?.outbreaks || []).slice(0, 6).map(n => ({
+      title: (n.title || '').substring(0, 100), date: n.date, url: sanitizeExternalUrl(n.url), cats: (n.categories || []).slice(0, 2),
+    })),
+    notices: whoSrc.noticesInFeed || 0, recent: (whoSrc.diseaseOutbreakNews || []).length,
+    recentDays: whoSrc.recentDays || 30, activeDays: whoSrc.activeDays || 90,
+    signals: (whoSrc.signals || []).slice(0, 4),
+    error: whoSrc.outbreakError || null, travelError: whoSrc.cdc?.travelError || null,
+    asOf: whoSrc.timestamp || null,
+  };
   const fred = (data.sources.FRED?.indicators || []).map(f => ({
     id: f.id, label: f.label, value: f.value, date: f.date,
     recent: f.recent || [],
@@ -667,7 +704,7 @@ export async function synthesize(data) {
     sdr: { total: sdrNet.totalReceivers || 0, probed: sdrNet.probed || 0, online: sdrNet.online || 0, private: sdrNet.private || 0, unreachable: sdrNet.unreachable || 0,
       users: sdrNet.totalUsers || 0, capacity: sdrNet.totalCapacity || 0, directory: sdrData.directory || null, error: sdrData.status === 'error' ? (sdrData.message || 'KiwiSDR directory unavailable') : null,
       zones: sdrZones, all: sdrAll },
-    who, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, acled, gdelt, space, health, news,
+    who, healthWatch, fred, energy, metals, bls, treasury, gscpi, defense, noaa, epa, acled, gdelt, space, health, news,
     markets, // Live Yahoo Finance market data
     ideas: [], ideasSource: 'disabled',
     // newsFeed for ticker (merged RSS + GDELT)
