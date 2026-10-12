@@ -73,6 +73,14 @@ if gcloud secrets describe FIRMS_MAP_KEY --project "$PROJECT" >/dev/null 2>&1; t
 else
   echo "▶ No FIRMS_MAP_KEY secret — FIRMS via public 24 h downloads"
 fi
+# Cloudflare Radar (optional): outage annotations, traffic anomalies and DDoS summaries. Token needs Account → Radar → Read:
+#   printf '%s' "token" | gcloud secrets create CLOUDFLARE_API_TOKEN --data-file=- --project $PROJECT
+if gcloud secrets describe CLOUDFLARE_API_TOKEN --project "$PROJECT" >/dev/null 2>&1; then
+  SECRETS="$SECRETS,CLOUDFLARE_API_TOKEN=CLOUDFLARE_API_TOKEN:latest"
+  echo "▶ Radar: Cloudflare token from Secret Manager"
+else
+  echo "▶ No CLOUDFLARE_API_TOKEN secret — Radar source idle"
+fi
 # aisstream.io (optional): live AIS vessel positions near chokepoints over a persistent WebSocket. Create with:
 #   printf '%s' "key" | gcloud secrets create AISSTREAM_API_KEY --data-file=- --project $PROJECT
 if gcloud secrets describe AISSTREAM_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
