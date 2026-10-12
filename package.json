@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "firebase-admin": "^13.10.0"
+    "firebase-admin": "^13.10.0",
+    "satellite.js": "^6.0.1"
   },
   "overrides": {
     "undici": "^7.24.4"

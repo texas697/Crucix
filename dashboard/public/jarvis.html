@@ -15,6 +15,7 @@
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/6.0.1/satellite.min.js"></script>
 <script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -984,7 +985,7 @@ const LAYER_INFO = {
   news: {purpose:'Geolocated world-news headlines.', source:'Aggregated RSS / GDELT geocoding', freshness:'Minutes', confidence:'Broad coverage, variable quality.', limitations:['Geocoding can be approximate','Duplicate framing across outlets']},
   weather: {purpose:'Official severe-weather alerts.', source:'NOAA / NWS', freshness:'Minutes', confidence:'Authoritative for the US.', limitations:['US-centric coverage','Alert polygons are approximated as points']},
   radiation: {purpose:'EPA RadNet environmental radiation stations.', source:'EPA RadNet', freshness:'Refreshed every sweep', confidence:'Reference-grade background readings.', limitations:['US stations only','Sparse sampling cadence']},
-  space: {purpose:'Orbital positions for the ISS and tracked stations.', source:'Celestrak (TLE-derived)', freshness:'Refreshed every sweep', confidence:'Approximate position estimate.', limitations:['Estimated, not live tracking','No payload/identity detail']},
+  space: {purpose:'Live positions of the ISS, China\'s Tiangong and the vehicles docked to or flying near them, propagated in the browser from their current orbital elements (SGP4), with the next and last half-orbit ground track for the crewed stations.', source:'CelesTrak element sets (TLE mirror / wheretheiss.at fallback)', freshness:'Elements refreshed every sweep; positions recomputed every few seconds', confidence:'Accurate to a few km while the element set is under a day or two old.', limitations:['Only the "stations" catalogue group, not every satellite','Element sets age; after days the position drifts by tens of km']},
   gdelt: {purpose:'Geocoded conflict events — protests, coercion, assaults, armed clashes, mass violence — clustered by place and sized by how many outlets report them.', source:'GDELT 2.0 event export (raw 15-minute files)', freshness:'Every 15 min upstream · rolling 6-hour window', confidence:'Good for salience and where attention is right now.', limitations:['Machine-coded from news text; one story can yield several events','Geocoding resolves to the place named in the article, which may be a capital rather than the scene','No fatality counts — use ACLED for verified casualty data']}
 };
 const LAYER_SYNONYMS = {
@@ -1737,7 +1738,9 @@ function ensureSource(id){
 function setupMapLayers(){
   if(!map) return;
   mapStyleReloading = true;
-  ['src-corridors','src-trails','src-draw','src-selected','src-rings','src-points','src-conflict'].forEach(ensureSource);
+  ['src-corridors','src-trails','src-draw','src-selected','src-rings','src-points','src-conflict','src-space-track'].forEach(ensureSource);
+  if(!map.getLayer('lyr-space-track')) map.addLayer({ id:'lyr-space-track', type:'line', source:'src-space-track',
+    paint:{ 'line-color':'rgba(255,255,255,0.45)', 'line-width':1.1, 'line-dasharray':[2,3] } });
   if(!map.getLayer('lyr-draw-fill')) map.addLayer({ id:'lyr-draw-fill', type:'fill', source:'src-draw',
     paint:{ 'fill-color':'rgba(120,150,255,0.16)' } });
   if(!map.getLayer('lyr-draw-line')) map.addLayer({ id:'lyr-draw-line', type:'line', source:'src-draw',
@@ -1761,13 +1764,13 @@ function setupMapLayers(){
   mapStyleReloading = false;
 }
 
-function applyMapData(points, arcs, rings, trails){
-  if(!mapReady) return;
-  const ptFeat = p => ({ type:'Feature', properties:{
+function ptFeat(p){ return { type:'Feature', properties:{
     head: p.popHead||'', text: p.popText||'', meta: p.popMeta||'', url: p.url||'', isNew: p._new?'1':'0',
     color: p.color||'#8fa7ff', stroke: p._stroke||'rgba(0,0,0,0.4)',
     r: Math.max(2.5, Math.min(16, (p._r!=null? p._r : (p.size||0.3)*12)))
-  }, geometry:{ type:'Point', coordinates:[p.lng, p.lat] } });
+  }, geometry:{ type:'Point', coordinates:[p.lng, p.lat] } }; }
+function applyMapData(points, arcs, rings, trails){
+  if(!mapReady) return;
   map.getSource('src-points').setData({ type:'FeatureCollection', features: points.map(ptFeat) });
 
   // build arcs with a slight curve for legibility
@@ -1808,9 +1811,69 @@ function renderLabels(labels){
     el.textContent = l.text;
     if(l.aggregate){ el.style.cursor='pointer'; el.onclick = () => setRegion(l.region); }
     const m = new maplibregl.Marker({ element: el, anchor: 'left' }).setLngLat([l.lng, l.lat]).addTo(map);
+    if(l.sat!=null) m._sat = l.sat;
     labelMarkers.push(m);
   });
 }
+
+// --- Live satellite propagation (satellite.js SGP4 from the sweep's element sets) ---
+const satrecCache = {};
+function satrecFor(st){
+  if(typeof satellite==='undefined' || !st) return null;
+  const key=st.noradId+'|'+(st.epoch||'');
+  if(satrecCache[key]!==undefined) return satrecCache[key];
+  let rec=null;
+  try{ if(st.omm) rec=satellite.json2satrec(st.omm); else if(st.tle) rec=satellite.twoline2satrec(st.tle[0], st.tle[1]); }catch(e){ rec=null; }
+  satrecCache[key]=rec; return rec;
+}
+function satPosition(st, when){
+  const rec=satrecFor(st); if(!rec) return null;
+  const t=when||new Date();
+  try{
+    const pv=satellite.propagate(rec,t); if(!pv||!pv.position||typeof pv.position!=='object') return null;
+    const geo=satellite.eciToGeodetic(pv.position, satellite.gstime(t));
+    const v=pv.velocity?Math.hypot(pv.velocity.x,pv.velocity.y,pv.velocity.z)*3600:null;
+    return { lat:+satellite.degreesLat(geo.latitude).toFixed(2), lon:+satellite.degreesLong(geo.longitude).toFixed(2), alt:Math.round(geo.height), vel:v?Math.round(v):null, live:true };
+  }catch(e){ return null; }
+}
+function spacePopup(pt, st, pos){
+  const live=pos.live?'live SGP4':(st.live||'position at sweep');
+  pt.lat=pos.lat; pt.lng=pos.lon;
+  pt.popMeta=`${st.primary?'Space station':st.attached?'Attached module':'Spacecraft'} · ${live}`;
+  pt.popText=`Lat ${pos.lat.toFixed(2)}° · Lon ${pos.lon.toFixed(2)}°<br>Altitude ${pos.alt!=null?pos.alt+' km':'--'}${pos.vel?` · ${pos.vel.toLocaleString()} km/h`:''}<br>${st.period?`Period ${st.period.toFixed(1)} min · `:''}${st.inclination!=null?`Incl ${st.inclination.toFixed(1)}°`:''}${st.apogee!=null?`<br>Apogee ${st.apogee} km · Perigee ${st.perigee} km`:''}${st.epoch?`<br><span style="opacity:.7">Elements ${relTime(st.epoch)} · NORAD ${st.noradId}</span>`:''}`;
+}
+function groundTrack(st, minutesBack, minutesFwd, stepSec){
+  const now=Date.now(), segs=[]; let seg=[], prev=null;
+  for(let dt=-minutesBack*60; dt<=minutesFwd*60; dt+=stepSec){
+    const p=satPosition(st, new Date(now+dt*1000)); if(!p) continue;
+    if(prev && Math.abs(p.lon-prev.lon)>180){ if(seg.length>1) segs.push(seg); seg=[]; }
+    seg.push([p.lon,p.lat]); prev=p;
+  }
+  if(seg.length>1) segs.push(seg);
+  return segs;
+}
+let spaceTimer=null;
+function spaceTick(){
+  if(!mapReady || typeof satellite==='undefined') return;
+  const stations=(D.space?.stations||[]);
+  let moved=false;
+  stations.forEach(st=>{
+    const pos=satPosition(st); if(!pos) return;
+    const pt=currentMapPoints.find(p=>p.type==='space'&&p._sat===st.noradId);
+    if(pt){ spacePopup(pt, st, pos); moved=true; }
+    labelMarkers.forEach(m=>{ if(m._sat===st.noradId) m.setLngLat([pos.lon,pos.lat]); });
+    if(st.noradId===25544){ const el=document.getElementById('issLive'); if(el) el.textContent=`${pos.alt} km · ${pos.lat.toFixed(1)}°, ${pos.lon.toFixed(1)}°`; }
+    if(st.noradId===48274){ const el=document.getElementById('cssLive'); if(el) el.textContent=`${pos.alt} km · ${pos.lat.toFixed(1)}°, ${pos.lon.toFixed(1)}°`; }
+  });
+  if(moved && map.getSource('src-points')) map.getSource('src-points').setData({ type:'FeatureCollection', features: currentMapPoints.map(ptFeat) });
+  const trackSrc=map.getSource('src-space-track');
+  if(trackSrc){
+    const feats=[];
+    if(layerVisible.space) stations.filter(st=>st.primary).forEach(st=>{ groundTrack(st, 46, 46, 60).forEach(c=>feats.push({ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:c } })); });
+    trackSrc.setData({ type:'FeatureCollection', features:feats });
+  }
+}
+function startSpaceLive(){ if(spaceTimer) clearInterval(spaceTimer); spaceTimer=setInterval(spaceTick, 5000); spaceTick(); }
 
 function plotMarkers(){
   if(!mapReady) return;
@@ -1902,11 +1965,15 @@ function plotMarkers(){
       popText:`${esc(s.analyte||'--')}: ${esc(s.result||'--')} ${esc(s.unit||'')}<br>State: ${esc(s.state)}` });
   });
 
-  // === Space stations ===
-  (D.space?.stationPositions||[]).forEach(s=>{
-    points.push({ lat:s.lat, lng:s.lon, size:0.4, _r:5, color:'rgba(255,255,255,0.95)', _stroke:'rgba(255,255,255,0.4)', type:'space', priority:1,
-      popHead:s.name, popMeta:'Space Station (approx.)', popText:`Orbital position estimate<br>Lat: ${s.lat}° Lon: ${s.lon}°` });
-    labels.push({ lat:s.lat, lng:s.lon, text:s.name.split('(')[0].trim(), color:'rgba(255,255,255,0.8)', type:'space' });
+  // === Space stations (live SGP4; see spaceTick) ===
+  (D.space?.stations||[]).forEach(st=>{
+    const pos=satPosition(st)||(st.lat!=null?{lat:st.lat,lon:st.lon,alt:st.alt,vel:st.vel}:null);
+    if(!pos) return;
+    const pt={ lat:pos.lat, lng:pos.lon, size:st.primary?0.4:0.22, _r:st.primary?5:3, color:st.primary?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.7)', _stroke:'rgba(255,255,255,0.4)', type:'space', priority:st.primary?1:3, _sat:st.noradId,
+      popHead:st.name, popMeta:'', popText:'' };
+    spacePopup(pt, st, pos);
+    points.push(pt);
+    if(st.primary) labels.push({ lat:pos.lat, lng:pos.lon, text:st.name.split('(')[0].trim(), color:'rgba(255,255,255,0.8)', type:'space', sat:st.noradId });
   });
 
   // === GDELT events ===
@@ -1999,6 +2066,7 @@ function plotMarkers(){
   applyMapData(plottingPoints, arcs, conflictRings, trails);
   renderLabels(shownLabels);
   renderMapLegend();
+  startSpaceLive();
 }
 
 
@@ -2240,7 +2308,8 @@ function renderLower(){
     <div class="econ-row"><span class="elabel">Military sats</span><span class="eval">${sp.militarySats||0}</span></div>
     <div class="econ-row"><span class="elabel">Starlink</span><span class="eval">${sp.constellations?.starlink||0}</span></div>
     <div class="econ-row"><span class="elabel">OneWeb</span><span class="eval">${sp.constellations?.oneweb||0}</span></div>
-    ${sp.iss?`<div class="econ-row"><span class="elabel">ISS</span><span class="eval" style="color:var(--accent)">ALT ${((sp.iss.apogee+sp.iss.perigee)/2).toFixed(0)} km</span></div>`:''}
+    ${sp.iss?`<div class="econ-row" title="${esc('ISS (ZARYA) · '+(sp.iss.period?sp.iss.period.toFixed(1)+' min orbit · ':'')+(sp.iss.inclination!=null?sp.iss.inclination.toFixed(1)+'° inclination':'')+(sp.iss.epoch?' · elements '+relTime(sp.iss.epoch):''))}"><span class="elabel">ISS</span><span class="eval" id="issLive" style="color:var(--accent)">${sp.iss.altitude!=null?sp.iss.altitude+' km':'--'}${sp.iss.lat!=null?` · ${sp.iss.lat.toFixed(1)}°, ${sp.iss.lon.toFixed(1)}°`:''}</span></div>`:''}
+    ${(sp.stations||[]).some(s=>s.noradId===48274)?(()=>{const c=sp.stations.find(s=>s.noradId===48274);return `<div class="econ-row" title="${esc('CSS (TIANHE) · Tiangong'+(c.period?' · '+c.period.toFixed(1)+' min orbit':''))}"><span class="elabel">Tiangong</span><span class="eval" id="cssLive">${c.alt!=null?c.alt+' km':'--'}${c.lat!=null?` · ${c.lat.toFixed(1)}°, ${c.lon.toFixed(1)}°`:''}</span></div>`;})():''}
     ${(sp.signals||[]).length?`<p class="panel-note">${sp.signals.slice(0,2).map(esc).join(' ')}</p>`:''}
   ` : '<div class="panel-src">No space data.</div>');
 }

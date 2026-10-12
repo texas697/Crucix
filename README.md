@@ -201,7 +201,7 @@ crucix/
 │   └── sources/               # 28 self-contained source modules
 │       ├── gdelt.mjs          # Each exports briefing() → structured data
 │       ├── fred.mjs           # Can run standalone: node apis/sources/fred.mjs
-│       ├── space.mjs          # CelesTrak satellite tracking
+│       ├── space.mjs          # CelesTrak element sets + SGP4 (satellite.js) station positions
 │       ├── yfinance.mjs       # Yahoo Finance — free live market data
 │       └── ...                # 23 more
 │

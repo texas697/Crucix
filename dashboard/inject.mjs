@@ -490,31 +490,32 @@ export async function synthesize(data) {
   // Space/CelesTrak satellite data
   const spaceData = data.sources.Space || {};
   // Approximate subsatellite position from TLE orbital elements
-  function estimateSatPosition(sat) {
-    if (sat?.lat != null && sat?.lon != null) return { lat: sat.lat, lon: sat.lon, name: sat.name };
-    if (!sat?.inclination || !sat?.epoch) return null;
-    const epoch = new Date(sat.epoch);
-    const now = new Date();
-    const elapsed = (now - epoch) / 1000;
-    const period = (sat.period || 92.7) * 60; // minutes to seconds
-    const orbits = elapsed / period;
-    const frac = orbits % 1;
-    const lat = sat.inclination * Math.sin(frac * 2 * Math.PI);
-    const lonShift = (elapsed / 86400) * 360;
-    const orbitLon = frac * 360;
-    const lon = ((orbitLon - lonShift) % 360 + 540) % 360 - 180;
-    return { lat: +lat.toFixed(2), lon: +lon.toFixed(2), name: sat.name };
-  }
-  const issPos = estimateSatPosition(spaceData.iss);
-  const spaceStations = (spaceData.spaceStations || []).map(s => estimateSatPosition(s)).filter(Boolean);
+  // Stations carry an SGP4 position computed at sweep time plus their mean elements (OMM or TLE) so the browser
+  // can propagate them live between sweeps.
+  const stations = (spaceData.spaceStations || [])
+    .filter(s => s && s.name && (s.position || s.omm || s.tle))
+    .map(s => ({
+      name: s.name, noradId: s.noradId, primary: Boolean(s.primary), attached: Boolean(s.attached),
+      inclination: s.inclination, period: s.period, apogee: s.apogee, perigee: s.perigee, epoch: s.epoch,
+      lat: s.position?.lat ?? null, lon: s.position?.lon ?? null, alt: s.position?.altitude ?? null,
+      vel: s.position?.velocity ?? null, at: s.position?.at ?? null,
+      omm: s.omm || null, tle: s.tle || null, live: s.live || null,
+    }));
+  const issRec = stations.find(s => s.noradId === 25544) || null;
   const space = {
     totalNewObjects: spaceData.totalNewObjects || 0,
     militarySats: spaceData.militarySatellites || 0,
     militaryByCountry: spaceData.militaryByCountry || {},
     constellations: spaceData.constellations || {},
-    iss: spaceData.iss || null,
-    issPosition: issPos,
-    stationPositions: spaceStations.slice(0, 5),
+    iss: issRec ? {
+      name: issRec.name, noradId: 25544, altitude: issRec.alt ?? (issRec.apogee != null && issRec.perigee != null ? Math.round((issRec.apogee + issRec.perigee) / 2) : null),
+      apogee: issRec.apogee, perigee: issRec.perigee, period: issRec.period, inclination: issRec.inclination,
+      lat: issRec.lat, lon: issRec.lon, velocity: issRec.vel, at: issRec.at, epoch: issRec.epoch,
+    } : null,
+    issPosition: issRec && issRec.lat != null ? { lat: issRec.lat, lon: issRec.lon, name: issRec.name } : null,
+    stations,
+    stationPositions: stations.filter(s => s.lat != null).slice(0, 20).map(s => ({ lat: s.lat, lon: s.lon, name: s.name })),
+    stationsSource: spaceData.stationsSource || null,
     recentLaunches: (spaceData.recentLaunches || []).slice(0, 10).map(l => ({
       name: l.name, country: l.country, epoch: l.epoch,
       apogee: l.apogee, perigee: l.perigee, type: l.objectType
