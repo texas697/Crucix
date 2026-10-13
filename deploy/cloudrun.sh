@@ -125,7 +125,7 @@ gcloud run deploy "$SERVICE" \
   --service-account "$SERVICE_ACCOUNT" \
   --allow-unauthenticated \
   --min-instances 1 --max-instances 1 --concurrency 250 \
-  --cpu 1 --memory 1Gi --timeout 3600 \
+  --cpu 1 --memory 1Gi --timeout 3600 --no-cpu-throttling \
   --session-affinity \
   --env-vars-file deploy/env.yaml \
   --set-secrets "$SECRETS" \
