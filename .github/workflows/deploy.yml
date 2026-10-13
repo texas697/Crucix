@@ -36,4 +36,5 @@ jobs:
           PROJECT: ${{ vars.GCP_PROJECT }}
           AIS_RELAY_URL: ${{ vars.AIS_RELAY_URL }}
           OPENSKY_RELAY_URL: ${{ vars.OPENSKY_RELAY_URL }}
+          FEEDBACK_ADMIN_EMAILS: ${{ vars.FEEDBACK_ADMIN_EMAILS }}
         run: bash deploy/cloudrun.sh
