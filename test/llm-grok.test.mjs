@@ -12,7 +12,7 @@ describe('GrokProvider', () => {
   it('should set defaults correctly', () => {
     const provider = new GrokProvider({ apiKey: 'sk-test' });
     assert.equal(provider.name, 'grok');
-    assert.equal(provider.model, 'grok-4-latest');
+    assert.equal(provider.model, 'grok-4.3');
     assert.equal(provider.isConfigured, true);
   });
 

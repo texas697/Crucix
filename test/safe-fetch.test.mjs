@@ -144,7 +144,7 @@ describe('safeFetch', () => {
     });
     await safeFetch('https://example.com/api', { headers: { 'X-Custom': 'test' } });
     assert.equal(usedHeaders['X-Custom'], 'test');
-    assert.equal(usedHeaders['User-Agent'], 'Crucix/1.0');
+    assert.equal(usedHeaders['User-Agent'], 'Crucix/2.0');
   });
 
   it('should send POST body when method is POST', async () => {
