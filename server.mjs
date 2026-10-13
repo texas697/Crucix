@@ -120,7 +120,7 @@ app.get('/api/status', (req, res) => {
 
 app.use('/brand', express.static(join(ROOT, 'dashboard/public/brand'))); // logos/favicons for the public pages below
 
-// MFB Digest mobile app's public pages (store listing URLs) — no auth, so reviewers and signed-out users can read them.
+// MFB Think Tank mobile app's public pages (store listing URLs) — no auth, so reviewers and signed-out users can read them.
 const site = config.site;
 const siteLayout = readFileSync(join(ROOT, 'dashboard/site/layout.html'), 'utf-8');
 const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -144,14 +144,14 @@ function renderSitePage({ file, title, docTitle, description, meta = '' }) {
   return fillSite(siteLayout, { ...siteVars, TITLE: escHtml(title), DOC_TITLE: escHtml(docTitle), DESCRIPTION: escHtml(description), META: meta, BODY: body });
 }
 const sitePages = {
-  marketing: renderSitePage({ file: 'marketing.html', title: `${site.appName}: think-tank analysis, briefed`, docTitle: site.appName,
+  marketing: renderSitePage({ file: 'marketing.html', title: `${site.appName}: policy analysis, briefed`, docTitle: site.appName,
     description: `${site.appName} brings long-form analysis from think tanks, policy journals and global newsrooms into one feed, with AI summaries and cited deep dives.` }),
   support: renderSitePage({ file: 'support.html', title: 'Support', docTitle: `Support — ${site.appName}`, description: `Get help with ${site.appName}: contact support, FAQs and account deletion.` }),
   privacy: renderSitePage({ file: 'privacy.html', title: 'Privacy Policy', docTitle: `Privacy Policy — ${site.appName}`, description: `How ${site.operator} handles your information in ${site.appName}.`, meta: legalMeta }),
   terms: renderSitePage({ file: 'terms.html', title: 'Terms of Service', docTitle: `Terms of Service — ${site.appName}`, description: `Terms of Service for ${site.appName}.`, meta: legalMeta }),
 };
 const sendSitePage = name => (req, res) => res.set('Cache-Control', 'public, max-age=3600').type('html').send(sitePages[name]);
-app.get('/mfb-digest', sendSitePage('marketing'));
+app.get('/mfb-think-tank', sendSitePage('marketing'));
 app.get('/support', sendSitePage('support'));
 app.get(['/privacy', '/privacy-policy'], sendSitePage('privacy'));
 app.get(['/terms', '/terms-of-service'], sendSitePage('terms'));
@@ -400,7 +400,7 @@ if (AUTH_ENABLED) {
     }
   });
 
-  // ─── Feedback (MFB Digest mobile app's "Send feedback") ───────────────────
+  // ─── Feedback (MFB Think Tank mobile app's "Send feedback") ───────────────────
   app.post('/api/feedback', express.json({ limit: '1600kb' }), async (req, res) => {
     try { res.status(201).json({ ok: true, ...(await feedback.submitFeedback(req.user, req.body || {})) }); }
     catch (err) {

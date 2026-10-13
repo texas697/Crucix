@@ -19,16 +19,16 @@ export default {
     triggerToken: (process.env.SWEEP_TRIGGER_TOKEN || '').trim() || null, // trimmed: secret managers often append a newline
   },
 
-  // Public pages for the MFB Digest mobile app, linked from its App Store / Google Play listings:
-  // /mfb-digest (marketing), /support, /privacy, /terms. Templates live in dashboard/site/.
+  // Public pages for the MFB Think Tank mobile app, linked from its App Store / Google Play listings:
+  // /mfb-think-tank (marketing), /support, /privacy, /terms. Templates live in dashboard/site/.
   site: {
-    appName: process.env.SITE_APP_NAME || 'MFB Digest',
+    appName: process.env.SITE_APP_NAME || 'MFB Think Tank',
     operator: process.env.SITE_OPERATOR || 'MFB Services, Inc.',
     contactEmail: process.env.SITE_CONTACT_EMAIL || 'rsanchezdev697@gmail.com',
     postalAddress: process.env.SITE_POSTAL_ADDRESS || null,
     jurisdiction: process.env.SITE_JURISDICTION || 'the State of Texas',
     legalEffectiveDate: 'October 13, 2026', // bump when privacy.html or terms.html changes
-    appStoreUrl: process.env.SITE_APP_STORE_URL || null, // download buttons on /mfb-digest appear once these are set
+    appStoreUrl: process.env.SITE_APP_STORE_URL || null, // download buttons on /mfb-think-tank appear once these are set
     playStoreUrl: process.env.SITE_PLAY_STORE_URL || null,
   },
 
