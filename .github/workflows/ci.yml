@@ -19,7 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # The unit suite has known failures (stale expectations), so it is not a
-      # gate yet. Every module must at least parse.
       - name: Syntax check
         run: git ls-files '*.mjs' | xargs -n1 node --check
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
