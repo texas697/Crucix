@@ -38,17 +38,22 @@ REFRESH_INTERVAL_MINUTES: "$REFRESH_MINUTES"
 PUBLIC_URL: "${PUBLIC_URL:-https://${PROJECT}.firebaseapp.com}"
 NODE_ENV: "production"
 YAML
-# Operator LLM (shared key for map area briefs when a user has not saved their own). The key itself lives in
-# Secret Manager as LLM_API_KEY; create it once with:
-#   printf '%s' "$XAI_API_KEY" | gcloud secrets create LLM_API_KEY --data-file=- --project $PROJECT
-LLM_PROVIDER="${LLM_PROVIDER:-grok}"
-LLM_MODEL="${LLM_MODEL:-grok-4.20-0309-non-reasoning}"
+# Operator LLM (shared key for digest write-ups, deep dives and map area briefs when a user has not saved their
+# own). Default is DeepSeek Flash through the OpenAI-compatible provider. The key itself lives in Secret Manager
+# as LLM_API_KEY; create it once with:
+#   printf '%s' "$DEEPSEEK_API_KEY" | gcloud secrets create LLM_API_KEY --data-file=- --project $PROJECT
+LLM_PROVIDER="${LLM_PROVIDER:-openai-compatible}"
+LLM_MODEL="${LLM_MODEL:-deepseek-flash}"
+LLM_BASE_URL="${LLM_BASE_URL:-https://api.deepseek.com/v1}"
 SECRETS="BYOK_ENCRYPTION_KEY=BYOK_ENCRYPTION_KEY:latest,SWEEP_TRIGGER_TOKEN=SWEEP_TRIGGER_TOKEN:latest"
 if gcloud secrets describe LLM_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
   cat >> deploy/env.yaml <<YAML
 LLM_PROVIDER: "$LLM_PROVIDER"
 LLM_MODEL: "$LLM_MODEL"
+LLM_BASE_URL: "$LLM_BASE_URL"
 DIGEST_OPERATOR_WRITEUPS: "${DIGEST_OPERATOR_WRITEUPS:-false}"
+DIGEST_SHARED_PER_USER_HOUR: "${DIGEST_SHARED_PER_USER_HOUR:-20}"
+DIGEST_SHARED_PER_DAY: "${DIGEST_SHARED_PER_DAY:-600}"
 BRIEF_SHARED_PER_USER_HOUR: "${BRIEF_SHARED_PER_USER_HOUR:-30}"
 BRIEF_SHARED_PER_DAY: "${BRIEF_SHARED_PER_DAY:-400}"
 YAML

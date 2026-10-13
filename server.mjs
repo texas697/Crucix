@@ -375,7 +375,8 @@ if (AUTH_ENABLED) {
   app.get('/api/me', async (req, res) => {
     try {
       const me = await users.getUser(req.user);
-      res.json({ ...me, providers: users.SUPPORTED_PROVIDERS, byokEnabled: !!process.env.BYOK_ENCRYPTION_KEY });
+      const sharedLlm = llmProvider?.isConfigured ? { provider: llmProvider.name, model: llmProvider.model || null } : null;
+      res.json({ ...me, providers: users.SUPPORTED_PROVIDERS, byokEnabled: !!process.env.BYOK_ENCRYPTION_KEY, sharedLlm });
     } catch (err) { console.error('[BYOK] /api/me:', err.message); res.status(500).json({ error: 'Failed to load profile' }); }
   });
 
@@ -554,7 +555,27 @@ app.get('/api/alerts', async (req, res) => {
     res.json(data);
   } catch (e) { res.status(502).json({ error: 'alerts unavailable' }); }
 });
-const userProvider = async (req) => (AUTH_ENABLED ? users.providerForUser(req.user.uid) : (llmProvider?.isConfigured ? llmProvider : null));
+// Digest write-ups and deep dives: the user's own key when saved, else the operator's shared key (budgeted) so
+// people can use the app before they bring a key. Returns { provider, keyOwner } or throws a 400/429.
+const digestBudget = createBudget({
+  perUserPerHour: parseInt(process.env.DIGEST_SHARED_PER_USER_HOUR) || 20,
+  perDay: parseInt(process.env.DIGEST_SHARED_PER_DAY) || 600,
+  unit: 'write-ups',
+});
+async function digestProvider(req) {
+  if (AUTH_ENABLED) {
+    const own = await users.providerForUser(req.user.uid);
+    if (own) return { provider: own, keyOwner: 'user' };
+  }
+  if (llmProvider?.isConfigured) {
+    if (AUTH_ENABLED) {
+      const b = digestBudget.take(req.user.uid);
+      if (!b.ok) throw Object.assign(new Error(b.reason), { status: 429 });
+    }
+    return { provider: llmProvider, keyOwner: 'operator' };
+  }
+  throw Object.assign(new Error('No LLM configured — add your API key in settings'), { status: 400 });
+}
 const sendErr = (res, err) => res.status(err.status || 500).json({ error: err.message });
 
 // ─── Map area brief: draw a shape → places inside → recent news → (optional) LLM brief ──────────────
@@ -623,13 +644,12 @@ app.post('/api/digest/:id/feedback', async (req, res) => {
   catch (err) { sendErr(res, err); }
 });
 app.post('/api/digest/:id/summarize', async (req, res) => {
-  try { await digest.summarize(String(req.params.id).slice(0, 40), await userProvider(req), AUTH_ENABLED ? 'user' : 'operator'); res.json(await digest.getFull(String(req.params.id).slice(0, 40), req.user.uid)); }
+  try { const { provider, keyOwner } = await digestProvider(req); await digest.summarize(String(req.params.id).slice(0, 40), provider, keyOwner); res.json(await digest.getFull(String(req.params.id).slice(0, 40), req.user.uid)); }
   catch (err) { sendErr(res, err); }
 });
 app.post('/api/digest/:id/research', async (req, res) => {
   try {
-    const provider = await userProvider(req);
-    if (!provider) return res.status(400).json({ error: 'No LLM configured — add your API key in settings' });
+    const { provider } = await digestProvider(req);
     const id = String(req.params.id).slice(0, 40);
     const existing = await digest.store.getResearch(req.user.uid, id);
     if (existing?.state === 'running' && Date.now() - new Date(existing.updatedAt || 0).getTime() < 5 * 60000) return res.status(202).json({ state: 'running' });
