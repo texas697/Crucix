@@ -16,6 +16,7 @@ import { MemoryManager } from './lib/delta/index.mjs';
 import { createLLMProvider } from './lib/llm/index.mjs';
 import { generateLLMIdeas } from './lib/llm/ideas.mjs';
 import * as users from './lib/auth/users.mjs';
+import * as feedback from './lib/feedback.mjs';
 import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
 
@@ -68,7 +69,8 @@ const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
 app.use((req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); });
-app.use(express.json({ limit: '32kb' }));
+const jsonBody = express.json({ limit: '32kb' });
+app.use((req, res, next) => (req.path === '/api/feedback' ? next() : jsonBody(req, res, next))); // feedback carries a screenshot; parsed on its route, after auth
 
 // ─── Public routes (no auth) ───────────────────────────────────────────────
 // Minimal liveness probe for Docker/Cloud Run — leaks nothing. (Google's front end swallows a bare /healthz.)
@@ -115,6 +117,44 @@ app.get('/api/status', (req, res) => {
     failed: failed.map(c => c.name), warnings: warnings.map(c => c.name), checks,
   });
 });
+
+app.use('/brand', express.static(join(ROOT, 'dashboard/public/brand'))); // logos/favicons for the public pages below
+
+// MFB Think Tank mobile app's public pages (store listing URLs) — no auth, so reviewers and signed-out users can read them.
+const site = config.site;
+const siteLayout = readFileSync(join(ROOT, 'dashboard/site/layout.html'), 'utf-8');
+const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const storeLinks = [[site.appStoreUrl, 'Download on the App Store'], [site.playStoreUrl, 'Get it on Google Play']].filter(([u]) => u);
+const siteVars = {
+  APP_NAME: escHtml(site.appName),
+  APP_NAME_URL: encodeURIComponent(site.appName),
+  OPERATOR: escHtml(site.operator),
+  CONTACT_EMAIL: escHtml(site.contactEmail),
+  JURISDICTION: escHtml(site.jurisdiction),
+  POSTAL_ADDRESS_LINE: site.postalAddress ? `<br>Mail: ${escHtml(site.postalAddress)}` : '',
+  STORE_LINKS: storeLinks.length
+    ? `<div class="stores">${storeLinks.map(([u, label]) => `<a class="store" href="${escHtml(u)}" rel="noopener">${label}</a>`).join('')}</div>`
+    : '<p class="soon">Coming soon to iPhone and Android</p>',
+  YEAR: String(new Date().getFullYear()),
+};
+const fillSite = (tpl, vars) => tpl.replace(/\{\{(\w+)\}\}/g, (m, k) => vars[k] ?? m);
+const legalMeta = `<div class="meta">Effective ${escHtml(site.legalEffectiveDate)} · Last updated ${escHtml(site.legalEffectiveDate)}</div>`;
+function renderSitePage({ file, title, docTitle, description, meta = '' }) {
+  const body = fillSite(readFileSync(join(ROOT, 'dashboard/site', file), 'utf-8'), siteVars);
+  return fillSite(siteLayout, { ...siteVars, TITLE: escHtml(title), DOC_TITLE: escHtml(docTitle), DESCRIPTION: escHtml(description), META: meta, BODY: body });
+}
+const sitePages = {
+  marketing: renderSitePage({ file: 'marketing.html', title: `${site.appName}: policy analysis, briefed`, docTitle: site.appName,
+    description: `${site.appName} brings long-form analysis from think tanks, policy journals and global newsrooms into one feed, with AI summaries and cited deep dives.` }),
+  support: renderSitePage({ file: 'support.html', title: 'Support', docTitle: `Support — ${site.appName}`, description: `Get help with ${site.appName}: contact support, FAQs and account deletion.` }),
+  privacy: renderSitePage({ file: 'privacy.html', title: 'Privacy Policy', docTitle: `Privacy Policy — ${site.appName}`, description: `How ${site.operator} handles your information in ${site.appName}.`, meta: legalMeta }),
+  terms: renderSitePage({ file: 'terms.html', title: 'Terms of Service', docTitle: `Terms of Service — ${site.appName}`, description: `Terms of Service for ${site.appName}.`, meta: legalMeta }),
+};
+const sendSitePage = name => (req, res) => res.set('Cache-Control', 'public, max-age=3600').type('html').send(sitePages[name]);
+app.get('/mfb-think-tank', sendSitePage('marketing'));
+app.get('/support', sendSitePage('support'));
+app.get(['/privacy', '/privacy-policy'], sendSitePage('privacy'));
+app.get(['/terms', '/terms-of-service'], sendSitePage('terms'));
 
 if (AUTH_ENABLED) {
   const loginHtml = readFileSync(join(ROOT, 'dashboard/auth/login.html'), 'utf-8');
@@ -337,6 +377,50 @@ if (AUTH_ENABLED) {
       const me = await users.getUser(req.user);
       res.json({ ...me, providers: users.SUPPORTED_PROVIDERS, byokEnabled: !!process.env.BYOK_ENCRYPTION_KEY });
     } catch (err) { console.error('[BYOK] /api/me:', err.message); res.status(500).json({ error: 'Failed to load profile' }); }
+  });
+
+  // Permanent account deletion (App Store 5.1.1(v) / Google Play account-deletion policy). Works for both the
+  // session cookie and mobile Bearer tokens. Firestore data goes first so a failed Auth delete can be retried.
+  app.delete('/api/me', async (req, res) => {
+    const { uid } = req.user;
+    try {
+      await authLib.revokeSessions(uid).catch(() => {});
+      await users.deleteUserData(uid);
+      await feedback.deleteFeedbackForUser(uid);
+      await authLib.deleteAuthUser(uid);
+      authLib.clearSessionCookie(req, res);
+      console.log(`[Account] deleted ${uid}`);
+      res.json({ ok: true });
+      // A research job still running would write its result back after the wipe — sweep again once it settles.
+      const jobs = digest.researchJobsFor(uid);
+      if (jobs.length) Promise.allSettled(jobs).then(() => users.deleteUserData(uid)).catch(err => console.error(`[Account] ${uid} cleanup:`, err.message));
+    } catch (err) {
+      console.error(`[Account] delete ${uid}:`, err.message);
+      res.status(500).json({ error: 'Account deletion failed — please retry or contact support' });
+    }
+  });
+
+  // ─── Feedback (MFB Think Tank mobile app's "Send feedback") ───────────────────
+  app.post('/api/feedback', express.json({ limit: '1600kb' }), async (req, res) => {
+    try { res.status(201).json({ ok: true, ...(await feedback.submitFeedback(req.user, req.body || {})) }); }
+    catch (err) {
+      if ((err.status || 500) >= 500) console.error('[Feedback] submit:', err.message);
+      res.status(err.status || 500).json({ error: err.status ? err.message : 'Could not save feedback' });
+    }
+  });
+  // Triage for FEEDBACK_ADMIN_EMAILS only.
+  app.get('/api/feedback', async (req, res) => {
+    if (!feedback.isFeedbackAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    try { res.json({ items: await feedback.listFeedback({ limit: Math.min(500, parseInt(req.query.limit) || 100) }) }); }
+    catch (err) { console.error('[Feedback] list:', err.message); res.status(500).json({ error: 'Could not load feedback' }); }
+  });
+  app.get('/api/feedback/:id/screenshot', async (req, res) => {
+    if (!feedback.isFeedbackAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
+    try {
+      const shot = await feedback.getScreenshot(String(req.params.id).slice(0, 40));
+      if (!shot) return res.status(404).json({ error: 'No screenshot' });
+      res.type(shot.contentType).send(Buffer.from(shot.data));
+    } catch (err) { console.error('[Feedback] screenshot:', err.message); res.status(500).json({ error: 'Could not load screenshot' }); }
   });
 
   app.put('/api/me/llm', async (req, res) => {
