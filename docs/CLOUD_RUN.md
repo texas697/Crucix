@@ -50,6 +50,20 @@ openssl rand -hex 32 | gcloud secrets create BYOK_ENCRYPTION_KEY --data-file=-
 openssl rand -hex 24 | gcloud secrets create SWEEP_TRIGGER_TOKEN --data-file=-
 ```
 
+## Deploying from GitHub Actions
+
+`.github/workflows/deploy.yml` runs `deploy/cloudrun.sh` on demand (Actions > Deploy to Cloud Run >
+Run workflow, from `main`). It never runs on push. One-time setup:
+
+1. Create a Workload Identity Pool and GitHub provider restricted to this repository, and a deploy
+   service account the pool may impersonate (roles: Cloud Run Admin, Cloud Build Editor, Service Account
+   User on `crucix-run`, Secret Manager Viewer, Cloud Scheduler Admin, Service Usage Consumer, Firebase Viewer).
+2. Create a GitHub environment named `production` with required reviewers.
+3. Set repository variables: `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DEPLOY_SERVICE_ACCOUNT`, `GCP_PROJECT`,
+   `AIS_RELAY_URL`, `OPENSKY_RELAY_URL`.
+
+Pull requests only run a syntax check (`ci.yml`).
+
 ## Deploy / redeploy
 
 ```bash
