@@ -2845,11 +2845,12 @@ function reinit(){
 // === SSE: Live Updates from Server ===
 function connectSSE(){
   if (typeof EventSource === 'undefined') return;
-  // Firebase Hosting does not stream responses: an EventSource there just hangs for 60s and reconnects
-  // forever, tying up the backend. The 60s poll (pollForNewSweep) covers updates on those domains.
-  if (/\.firebaseapp\.com$|\.web\.app$/i.test(location.hostname)) return;
-  // Only connect if served from localhost (not file://)
-  if (location.protocol === 'file:') return;
+  // Firebase Hosting does not stream responses: an EventSource there (including the custom domain
+  // mfbintelligence.com) just hangs and reconnects forever, and every abandoned stream ties up a Cloud Run
+  // request slot for an hour. Only stream when talking to the service directly; the 60s poll
+  // (pollForNewSweep) covers updates everywhere else.
+  const direct = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) || /\.run\.app$/i.test(location.hostname);
+  if (!direct) return;
 
   const es = new EventSource('/events');
   es.onmessage = (e) => {
