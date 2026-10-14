@@ -121,6 +121,26 @@ in Firestore and used only for your own ideas and digest write-ups.
 Restrict access with `AUTH_ALLOWED_EMAILS` / `AUTH_ALLOWED_DOMAINS`, or set `AUTH_ALLOW_SIGNUP=false` and create
 accounts in the Firebase console.
 
+### Mobile Auth Endpoints
+The F-Droid/FOSS mobile client cannot ship the Firebase SDK, so Crucix proxies Firebase Auth's Identity Toolkit
+REST API. These public endpoints let any client obtain a Firebase **ID token** — the same token the server
+already verifies as `Authorization: Bearer <token>` — while sharing accounts with the Play/App Store app.
+They need a Firebase Web API key: set `FIREBASE_WEB_API_KEY`, or Crucix falls back to the `apiKey` inside
+`FIREBASE_WEB_CONFIG`. With neither set, every endpoint returns `503 { error: { code: "unavailable" } }`.
+
+| Endpoint | Request | Success response |
+|----------|---------|------------------|
+| `POST /api/auth/signin` | `{ email, password }` | `200 { token, refreshToken, user }` |
+| `POST /api/auth/signup` | `{ email, password, displayName? }` | `200 { token, refreshToken, user }` |
+| `POST /api/auth/refresh` | `{ refreshToken }` | `200 { token, refreshToken }` |
+| `POST /api/auth/reset-password` | `{ email }` | `200 { ok: true }` |
+| `POST /api/auth/verify-email` | Bearer ID token in `Authorization` | `200 { ok: true }` |
+
+Failures return `{ error: { code, message } }`, where `code` is the app's `AuthFailure` value
+(`invalid-credential`, `email-already-in-use`, `weak-password`, `too-many-requests`, ...). Sign-up honors the
+existing policy: `AUTH_ALLOW_SIGNUP=false` returns `403 signup-disabled`, and an address outside
+`AUTH_ALLOWED_EMAILS` / `AUTH_ALLOWED_DOMAINS` returns `403 not-allowed`.
+
 ### Auto-Refresh
 Every 15 minutes (configurable) the server:
 1. Queries all 28 sources in parallel (~30s)
