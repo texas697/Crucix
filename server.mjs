@@ -320,7 +320,18 @@ app.get('/api/locales', (req, res) => {
 });
 
 // SSE: live updates
+// Firebase Hosting (mfbintelligence.com rewrites to this service) buffers responses, so a stream opened
+// through it never reaches the browser: the client gives up and reconnects every few seconds while each
+// abandoned request stays open here until the Cloud Run request timeout (1h). Those piled up to the
+// instance's concurrency cap and every request, website and mobile app alike, got 429. Refuse the stream
+// for proxied requests (the 60s poll covers them) and cap the lifetime of every stream as a backstop.
+const SSE_MAX_LIFETIME_MS = 10 * 60 * 1000;
+const isProxiedThroughHosting = req => {
+  const fwd = req.headers['x-forwarded-host'] || req.headers['x-fh-requested-host'];
+  return !!fwd && fwd !== req.headers.host;
+};
 app.get('/events', (req, res) => {
+  if (isProxiedThroughHosting(req)) return res.status(204).end();
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -331,7 +342,8 @@ app.get('/events', (req, res) => {
   sseClients.add(res);
   // Keep proxies (Cloud Run, Cloudflare) from closing idle streams
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch { /* closed */ } }, 25000);
-  req.on('close', () => { clearInterval(ping); sseClients.delete(res); });
+  const lifetime = setTimeout(() => { try { res.end(); } catch { /* closed */ } }, SSE_MAX_LIFETIME_MS); // EventSource reconnects
+  req.on('close', () => { clearInterval(ping); clearTimeout(lifetime); sseClients.delete(res); });
 });
 
 // ─── Per-user BYOK (bring your own key) + personal ideas ───────────────────
