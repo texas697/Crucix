@@ -68,7 +68,15 @@ const DIGEST_AFTER_SWEEP = (process.env.DIGEST_AFTER_SWEEP || 'true').toLowerCas
 const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
-app.use((req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); });
+// API responses never touch a cache. Pages and assets revalidate instead (ETag -> 304): `no-store` on the
+// documents kept Chrome from using the back/forward cache, so every tab switch and Back was a cold reload,
+// and `no-store` on /css, /js and /brand made each navigation redownload every asset.
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'private, no-store');
+  else if (req.path.startsWith('/brand/')) res.setHeader('Cache-Control', 'public, max-age=86400');
+  else res.setHeader('Cache-Control', 'private, no-cache');
+  next();
+});
 const jsonBody = express.json({ limit: '32kb' });
 app.use((req, res, next) => (req.path === '/api/feedback' ? next() : jsonBody(req, res, next))); // feedback carries a screenshot; parsed on its route, after auth
 

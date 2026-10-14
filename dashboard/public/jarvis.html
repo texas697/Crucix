@@ -22,6 +22,7 @@
 <script src="/js/reader.js"></script>
 <script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
+@view-transition{navigation:auto}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;
@@ -676,6 +677,9 @@ html.light .theme-toggle:hover{background:var(--raised)}
 html.light .mainnav{background:var(--seg-bg)}
 html.light .nav-tab.active{background:#ffffff;color:var(--text);box-shadow:0 1px 3px rgba(16,24,40,0.14)}
 </style>
+<script type="speculationrules">
+{"prerender":[{"source":"document","where":{"selector_matches":".mainnav a"},"eagerness":"moderate"}]}
+</script>
 </head>
 <body>
 <div id="boot">

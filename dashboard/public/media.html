@@ -13,6 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
+@view-transition{navigation:auto}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.90 0.012 250);--accent-soft:rgba(220,226,236,0.15);--on-accent:#0a0f1f;--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(220,226,236,0.06),transparent 70%);-webkit-font-smoothing:antialiased}
@@ -77,6 +78,9 @@ html.light .pill{background:var(--raised)}
 html.light .overlay{background:rgba(238,241,246,0.9)}
 html.light .ctrl:hover{color:var(--text)}
 </style>
+<script type="speculationrules">
+{"prerender":[{"source":"document","where":{"selector_matches":".mainnav a"},"eagerness":"moderate"}]}
+</script>
 </head>
 <body>
 <div class="topbar">
