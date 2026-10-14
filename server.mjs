@@ -222,6 +222,11 @@ if (AUTH_ENABLED) {
     res.json({ ok: true });
   });
 
+  // Public mobile auth endpoints — a Firebase-SDK-free client exchanges credentials here for an
+  // ID token it then sends as `Authorization: Bearer`. Must stay above the gate.
+  const { mountMobileAuthRoutes } = await import('./lib/auth/identity.mjs');
+  mountMobileAuthRoutes(app);
+
   // Everything below this line requires a valid session
   const gate = authLib.requireAuth();
   app.use((req, res, next) => (req.path.startsWith('/api/internal/') ? next() : gate(req, res, next)));
