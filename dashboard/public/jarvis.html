@@ -58,7 +58,7 @@ a{color:var(--accent);text-decoration:none}a:hover{color:#fff}
 #main{opacity:0;min-height:100vh;position:relative;padding:20px 24px 40px;display:flex;flex-direction:column;gap:16px}
 
 /* TOPBAR / HEADER */
-.topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;background:var(--glass);border:1px solid var(--border);border-radius:8px;backdrop-filter:blur(12px);transition:border-color .3s}
+.topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;background:var(--glass);border:1px solid var(--border);border-radius:8px;transition:border-color .3s}
 .top-left{display:flex;align-items:center;gap:12px;flex:none;white-space:nowrap}
 .brand{display:flex;align-items:center;gap:12px;font-family:var(--sans)}
 .brand-logo{height:34px;width:auto;display:block;flex:none}
@@ -84,8 +84,9 @@ html.light .boot-logo-light{display:block}
 .tb-seg .tb-slash{color:var(--dim-3);margin:0 1px}
 .tb-i{width:13px;height:13px;flex:none;opacity:.75;color:var(--sub)}
 .tb-live{color:var(--text)}
-.tb-live .tb-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:tb-pulse 2.2s ease-in-out infinite}
-@keyframes tb-pulse{0%,100%{box-shadow:0 0 0 0 var(--accent-soft)}50%{box-shadow:0 0 0 5px var(--accent-soft)}}
+.tb-live .tb-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);position:relative}
+.tb-live .tb-dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--accent-soft);opacity:0;animation:tb-pulse 2.2s ease-in-out 8}
+@keyframes tb-pulse{0%,100%{transform:scale(1);opacity:0}50%{transform:scale(2.6);opacity:1}}
 .tb-time{font-family:var(--mono);font-size:12px;color:var(--dim)}
 .tb-time .tb-i{opacity:.6}
 @media (max-width:720px){.tb-status{flex-wrap:wrap}.tb-seg + .tb-seg{box-shadow:none}.tb-model{display:none}}
@@ -455,7 +456,7 @@ html.light .ab-watch{background:rgba(30,41,59,0.06)}
 .delta-badge{font-family:var(--mono);font-size:8px;letter-spacing:0.05em;padding:1px 4px;margin-left:4px;border-radius:2px;vertical-align:middle}
 .delta-badge.up{color:var(--mint);border:1px solid rgba(143,227,201,0.3);background:rgba(143,227,201,0.08)}
 .delta-badge.down{color:var(--danger);border:1px solid rgba(255,107,116,0.3);background:rgba(255,107,116,0.08)}
-.delta-badge.new{color:var(--sky);border:1px solid rgba(220,226,236,0.3);background:rgba(220,226,236,0.08);animation:pulse-new 2s ease infinite}
+.delta-badge.new{color:var(--sky);border:1px solid rgba(220,226,236,0.3);background:rgba(220,226,236,0.08);animation:pulse-new 2s ease 5}
 .delta-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .delta-stat{padding:10px 12px;border-radius:6px;background:var(--panel-2);display:flex;flex-direction:column;gap:2px}
 .delta-stat .k{font-size:11.5px;color:var(--dim);white-space:nowrap}
@@ -523,7 +524,7 @@ html.light .ab-watch{background:rgba(30,41,59,0.06)}
 .collapsible:not(.collapsed) .badge.toggle::before{content:'\25BE HIDE'}
 
 /* BYOK */
-.byok-cta{cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;padding:6px 14px;color:var(--on-accent);background:var(--accent);border:1px solid var(--accent);border-radius:5px;box-shadow:0 0 0 0 rgba(220,226,236,0.6);animation:byokPulse 2.2s infinite}
+.byok-cta{cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;padding:6px 14px;color:var(--on-accent);background:var(--accent);border:1px solid var(--accent);border-radius:5px;box-shadow:0 0 0 0 rgba(220,226,236,0.6);animation:byokPulse 2.2s 4}
 .byok-cta:hover{background:#eef1f6;color:#0a0f1f}
 .byok-cta .k{display:inline-block;margin-right:6px}
 @keyframes byokPulse{0%{box-shadow:0 0 0 0 rgba(220,226,236,0.45)}70%{box-shadow:0 0 0 10px rgba(220,226,236,0)}100%{box-shadow:0 0 0 0 rgba(220,226,236,0)}}
@@ -558,8 +559,10 @@ body.low-perf .byok-cta{animation:none}
 /* LOW PERFORMANCE MODE */
 body.low-perf .bg-grid,body.low-perf .bg-radial,body.low-perf .scanline{display:none!important}
 body.low-perf .topbar,body.low-perf .g-panel,body.low-perf .map-popup,body.low-perf .map-loading{backdrop-filter:none!important}
-body.low-perf .logo-ring::before,body.low-perf .logo-ring::after,body.low-perf .chip.alert .dot,body.low-perf .conflict-ring,body.low-perf .corridor-flow{animation:none!important}
+body.low-perf .logo-ring::before,body.low-perf .logo-ring::after,body.low-perf .chip.alert .dot,body.low-perf .tb-live .tb-dot::after,body.low-perf .delta-badge.new{animation:none!important}
 body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(220,226,236,0.2) transparent}
+/* Hidden tab: freeze every CSS animation so the compositor goes idle */
+body.tab-hidden *,body.tab-hidden *::before,body.tab-hidden *::after{animation-play-state:paused!important}
 
 /* RESPONSIVE */
 @media(max-width:1100px){
@@ -601,16 +604,9 @@ body.low-perf .ticker-wrap{overflow-y:auto;scrollbar-width:thin;scrollbar-color:
   .zoomed-in .map-label:not(.agg){display:block}
 }
 
-/* CONFLICT LAYER */
-@keyframes pulse-conflict{0%,100%{opacity:0.5;stroke-width:1.5}50%{opacity:0.9;stroke-width:2.5}}
-.conflict-ring{animation:pulse-conflict 2.5s ease-in-out infinite}
 
 /* FLIGHT CORRIDORS */
 .corridor-line{fill:none;opacity:0.6;pointer-events:none}
-@keyframes flicker-ghost{0%,100%{opacity:0.15}30%{opacity:0.45}60%{opacity:0.1}85%{opacity:0.35}}
-.ghost-marker{animation:flicker-ghost 2s ease-in-out infinite}
-@keyframes dash-flow{to{stroke-dashoffset:-20}}
-.corridor-flow{animation:dash-flow 2s linear infinite}
 
 /* SPARKLINES */
 .spark-svg{display:inline-block;width:52px;height:18px;vertical-align:middle;margin-left:4px}
@@ -640,7 +636,6 @@ html.light body{background:var(--bg)}
 html.light a:hover{color:#000}
 html.light ::-webkit-scrollbar-thumb{background:#c3ccd9}
 html.light .bg-radial{opacity:0}
-html.light .corridor-flow{opacity:1}
 html.light #boot{background:var(--bg)}
 html.light #bootLines{color:#5b6b82}
 html.light #bootLines .ok,html.light #bootLines .count,html.light #bootFinal{color:var(--accent)}
@@ -1398,7 +1393,10 @@ function bindMapLifecycleEvents(){
   window.addEventListener('resize', () => syncResponsiveLayout());
   window.addEventListener('orientationchange', () => setTimeout(() => syncResponsiveLayout(true), 150));
   document.addEventListener('visibilitychange', () => {
-    if(!document.hidden) setTimeout(() => syncResponsiveLayout(true), 150);
+    document.body.classList.toggle('tab-hidden', document.hidden);
+    if(document.hidden){ if(spaceTimer){ clearInterval(spaceTimer); spaceTimer=null; } return; }
+    if(mapReady && (D.space?.stations||[]).length) startSpaceLive();
+    setTimeout(() => syncResponsiveLayout(true), 150);
   });
   window.addEventListener('pageshow', () => setTimeout(() => syncResponsiveLayout(true), 150));
   document.addEventListener('keydown', e => {
