@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MFB Services Intelligence — Initializing</title>
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
-<link rel="apple-touch-icon" href="/brand/icon-192.png">
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon-180.png">
 <meta property="og:title" content="MFB Services Intelligence">
 <meta property="og:description" content="Live OSINT, markets and AI trade ideas from 29 sources.">
 <meta property="og:image" content="/brand/og-image.png">
@@ -15,15 +17,19 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#05070b;--text:#e9ecf2;--dim:#8a94a8;--accent:oklch(0.76 0.13 262);
-  --border:rgba(120,150,255,0.18);--mono:'Geist Mono',monospace;
+  --bg:#05070b;--text:#e9ecf2;--dim:#8a94a8;--accent:oklch(0.90 0.012 250);
+  --border:rgba(220,226,236,0.18);--mono:'Geist Mono',monospace;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;align-items:center;justify-content:center}
 
-.logo-ring{width:120px;height:120px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
-.logo-ring::before{content:'';position:absolute;inset:-8px;border:1px solid var(--border);border-radius:50%;border-top-color:var(--accent);animation:spin 2s linear infinite}
-.logo-ring::after{content:'';position:absolute;inset:-16px;border:1px solid rgba(120,150,255,0.08);border-radius:50%;border-bottom-color:rgba(120,150,255,0.2);animation:spin 3s linear infinite reverse}
-@keyframes spin{to{transform:rotate(360deg)}}
+.loading-logo{width:min(420px,80vw);display:flex;flex-direction:column;align-items:center;gap:18px}
+.loading-logo-img{width:100%;height:auto;display:block}
+.loading-logo-light{display:none}
+html.light .loading-logo-dark{display:none}
+html.light .loading-logo-light{display:block}
+.loading-sub{display:flex;align-items:center;gap:14px;width:100%}
+.loading-sub i{flex:1;height:1px;background:var(--border)}
+.loading-sub span{font-weight:700;font-size:16px;letter-spacing:.38em;padding-left:.38em;color:var(--dim)}
 @keyframes pulse-blink{0%,100%{opacity:1}50%{opacity:0.3}}
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
@@ -39,23 +45,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--m
 
 #countdown{margin-top:8px;font-size:11px;color:var(--dim);letter-spacing:0.1em;text-align:center;min-height:16px}
 #countdown .eta{color:var(--text)}
-#countdown .bar-wrap{width:340px;height:2px;background:rgba(120,150,255,0.1);margin-top:8px;overflow:hidden}
+#countdown .bar-wrap{width:340px;height:2px;background:rgba(220,226,236,0.1);margin-top:8px;overflow:hidden}
 #countdown .bar-fill{height:100%;background:var(--accent);width:0%;transition:width 1s linear;box-shadow:0 0 6px var(--accent)}
 
-.ll-mark .ll-bg{fill:#0a0d14}
-.ll-mark .ll-ring,.ll-mark .ll-rays{stroke:#98a8ff}
-.ll-mark .ll-dot{fill:#e9ecf2}
-html.light{--bg:#eef1f6;--text:#0f172a;--dim:#5b6b82;--accent:oklch(0.55 0.16 262);--border:rgba(16,24,40,0.18)}
-html.light .ll-mark .ll-bg{fill:#ffffff;stroke:rgba(16,24,40,0.14);stroke-width:2}
-html.light .ll-mark .ll-ring,html.light .ll-mark .ll-rays{stroke:#4a6cf0}
-html.light .ll-mark .ll-dot{fill:#0f172a}
+html.light{--bg:#eef1f6;--text:#0f172a;--dim:#5b6b82;--accent:oklch(0.52 0.015 250);--border:rgba(16,24,40,0.18)}
 html.light #countdown .bar-wrap{background:rgba(16,24,40,0.08)}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="logo-ring">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="60" height="60" class="ll-mark" aria-hidden="true"><rect class="ll-bg" width="48" height="48" rx="10"/><circle class="ll-ring" cx="24" cy="24" r="14" stroke-width="4" fill="none"/><path class="ll-rays" d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke-width="4" stroke-linecap="round"/><circle class="ll-dot" cx="24" cy="24" r="4"/></svg>
+  <div class="loading-logo">
+    <img class="loading-logo-img loading-logo-dark" src="/brand/mfb-loading-dark-transparent.png" alt="MFB Services Intelligence" width="1744" height="892">
+    <img class="loading-logo-img loading-logo-light" src="/brand/mfb-loading-light-transparent.png" alt="" aria-hidden="true" width="1744" height="892">
+    <div class="loading-sub"><i></i><span>INTELLIGENCE</span><i></i></div>
   </div>
 
   <div id="bootLines"></div>

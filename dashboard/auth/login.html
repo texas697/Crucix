@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MFB Services Intelligence — Sign in</title>
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
-<link rel="apple-touch-icon" href="/brand/icon-192.png">
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon-180.png">
 <meta property="og:title" content="MFB Services Intelligence">
 <meta property="og:description" content="Live OSINT, markets and AI trade ideas from 29 sources.">
 <meta property="og:image" content="/brand/og-image.png">
@@ -13,10 +15,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#020408;--panel:rgba(6,14,22,0.82);--border:rgba(100,240,200,0.12);--border-bright:rgba(100,240,200,0.3);--text:#e8f4f0;--dim:#6a8a82;--accent:#64f0c8;--accent2:#44ccff;--warn:#ffb84c;--danger:#ff5f63;--mono:'IBM Plex Mono',monospace;--sans:'Space Grotesk',sans-serif}
+:root{--bg:#05070b;--panel:rgba(10,13,20,0.82);--border:rgba(220,226,236,0.12);--border-bright:rgba(220,226,236,0.32);--text:#e9ecf2;--dim:#8a94a8;--accent:#dce2ec;--accent2:#c2cbd8;--warn:#ffb84c;--danger:#ff5f63;--mono:'IBM Plex Mono',monospace;--sans:'Space Grotesk',sans-serif}
 html,body{height:100%}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex;align-items:center;justify-content:center;padding:24px 16px;
-  background-image:radial-gradient(ellipse at 20% 10%,rgba(100,240,200,0.06),transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(68,204,255,0.06),transparent 50%)}
+  background-image:radial-gradient(ellipse at 20% 10%,rgba(220,226,236,0.05),transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(139,149,166,0.05),transparent 50%)}
 .card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--border);padding:28px 26px;backdrop-filter:blur(10px)}
 .brand{font-family:var(--mono);font-size:11px;letter-spacing:0.22em;color:var(--accent);text-transform:uppercase}
 .brand .blink{display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;margin-right:8px;animation:bl 1.6s infinite}
@@ -27,8 +29,8 @@ label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:0.12em
 input{width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 11px;outline:none}
 input:focus{border-color:var(--border-bright)}
 button{cursor:pointer;font-family:var(--mono);letter-spacing:0.1em;text-transform:uppercase;font-size:11px;font-weight:600}
-.primary{width:100%;margin-top:18px;padding:12px;background:rgba(100,240,200,0.12);border:1px solid var(--border-bright);color:var(--accent)}
-.primary:hover{background:rgba(100,240,200,0.2)}
+.primary{width:100%;margin-top:18px;padding:12px;background:rgba(220,226,236,0.10);border:1px solid var(--border-bright);color:var(--accent)}
+.primary:hover{background:rgba(220,226,236,0.18)}
 .primary:disabled{opacity:0.5;cursor:wait}
 .google{width:100%;margin-top:0;padding:11px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;gap:10px}
 .google:hover{border-color:var(--border-bright)}
@@ -44,7 +46,7 @@ button{cursor:pointer;font-family:var(--mono);letter-spacing:0.1em;text-transfor
 </head>
 <body>
 <div class="card">
-  <div style="text-align:center;margin-bottom:6px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" style="width:100%;max-width:320px;height:auto" aria-label="MFB Services Intelligence">  <defs>    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">      <stop offset="0" stop-color="#64f0c8"/>      <stop offset="1" stop-color="#44ccff"/>    </linearGradient>    <clipPath id="hex"><path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z"/></clipPath>  </defs>  <g>    <path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z" fill="#050d14" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>    <g clip-path="url(#hex)">      <circle cx="80" cy="80" r="56" fill="none" stroke="#64f0c8" stroke-opacity="0.16"/>      <circle cx="80" cy="80" r="36" fill="none" stroke="#64f0c8" stroke-opacity="0.2"/>      <path d="M80 80 L80 14 A66 66 0 0 1 137 47 Z" fill="url(#g)" opacity="0.16"/>      <line x1="80" y1="80" x2="137" y2="47" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/>      <circle cx="110" cy="58" r="2.6" fill="#64f0c8"/>    </g>    <text x="80" y="94" text-anchor="middle" font-family="'Space Grotesk','IBM Plex Mono',Arial,sans-serif" font-weight="700" font-size="40" letter-spacing="1" fill="#e8f4f0">MFB</text>    <line x1="42" y1="103" x2="118" y2="103" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>  </g>  <text x="172" y="78" font-family="'Space Grotesk',Arial,sans-serif" font-weight="700" font-size="52" letter-spacing="2" fill="#e8f4f0">MFB SERVICES</text>  <text x="174" y="122" font-family="'IBM Plex Mono',monospace" font-weight="600" font-size="24" letter-spacing="11" fill="url(#g)">INTELLIGENCE</text></svg></div>
+  <div style="text-align:center;margin-bottom:6px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" style="width:100%;max-width:320px;height:auto" aria-label="MFB Services Intelligence">  <defs>    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">      <stop offset="0" stop-color="#eef1f6"/>      <stop offset="1" stop-color="#8b95a6"/>    </linearGradient>    <clipPath id="hex"><path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z"/></clipPath>  </defs>  <g>    <path d="M80 10 L141 45 L141 115 L80 150 L19 115 L19 45 Z" fill="#0a0d14" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>    <g clip-path="url(#hex)">      <circle cx="80" cy="80" r="56" fill="none" stroke="#dce2ec" stroke-opacity="0.16"/>      <circle cx="80" cy="80" r="36" fill="none" stroke="#dce2ec" stroke-opacity="0.2"/>      <path d="M80 80 L80 14 A66 66 0 0 1 137 47 Z" fill="url(#g)" opacity="0.16"/>      <line x1="80" y1="80" x2="137" y2="47" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/>      <circle cx="110" cy="58" r="2.6" fill="#dce2ec"/>    </g>    <text x="80" y="94" text-anchor="middle" font-family="'Space Grotesk','IBM Plex Mono',Arial,sans-serif" font-weight="700" font-size="40" letter-spacing="1" fill="#e9ecf2">MFB</text>    <line x1="42" y1="103" x2="118" y2="103" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>  </g>  <text x="172" y="78" font-family="'Space Grotesk',Arial,sans-serif" font-weight="700" font-size="52" letter-spacing="2" fill="#e9ecf2">MFB SERVICES</text>  <text x="174" y="122" font-family="'IBM Plex Mono',monospace" font-weight="600" font-size="24" letter-spacing="11" fill="url(#g)">INTELLIGENCE</text></svg></div>
   <h1 id="title" style="text-align:center">Sign in</h1>
   <div class="sub" id="sub" style="text-align:center">Access to this intelligence terminal requires an account.</div>
   <button class="google" id="google" type="button">

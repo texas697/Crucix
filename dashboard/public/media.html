@@ -4,23 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Live media — MFB Services Intelligence</title>
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.76 0.13 262);--accent-soft:rgba(120,150,255,0.15);--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(120,150,255,0.06),transparent 70%);-webkit-font-smoothing:antialiased}
+:root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.90 0.012 250);--accent-soft:rgba(220,226,236,0.15);--on-accent:#0a0f1f;--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(220,226,236,0.06),transparent 70%);-webkit-font-smoothing:antialiased}
 .topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
 .brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
-.brand .mark{width:34px;height:34px;border-radius:6px;flex:none}
-.mark .bm-bg{fill:#0a0d14}
-.mark .bm-ring,.mark .bm-rays{stroke:#98a8ff;fill:none}
-.mark .bm-dot{fill:#e9ecf2}
-.brand .b1{font-size:15px;font-weight:600;letter-spacing:-0.01em;display:block}
-.brand .sub{font-size:12px;color:var(--dim);display:block}
+.brand-logo{height:34px;width:auto;display:block;flex:none}
+.brand-logo-light{display:none}
+html.light .brand-logo-dark{display:none}
+html.light .brand-logo-light{display:block}
 .mainnav{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
 .nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center}
 .nav-tab:hover{color:var(--text)}
@@ -47,11 +48,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .overlay.show{display:flex}
 .overlay .t{font-size:15px;font-weight:600}
 .overlay .s{font-size:13px;color:var(--sub);max-width:420px}
-.spin{width:30px;height:30px;border:2px solid rgba(120,150,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+.spin{width:30px;height:30px;border:2px solid rgba(220,226,236,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .btn{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:500;padding:8px 13px;border:1px solid var(--border);border-radius:5px;background:var(--raised);color:var(--text);text-decoration:none}
 .btn:hover{border-color:var(--border-bright);background:var(--raised-2)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#0a0f1f}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .bar .now{font-size:13.5px;font-weight:500}
 .bar .live{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--danger);padding:4px 9px;border:1px solid rgba(240,90,80,0.3);border-radius:5px;background:rgba(240,90,80,0.08)}
@@ -60,7 +61,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .bar .sp{flex:1}
 .ctrl{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;background:var(--raised);color:var(--text-2);cursor:pointer;font-size:15px}
 .ctrl:hover{border-color:var(--border-bright);color:#fff;background:var(--raised-2)}
-.ctrl.on{background:var(--accent);border-color:var(--accent);color:#0a0f1f}
+.ctrl.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .vol{width:110px}
 .foot{margin-top:10px;font-size:12px;color:var(--dim-3);line-height:1.55}
 .gridmode{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
@@ -68,22 +69,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .gridmode video,.gridmode iframe{width:100%;height:100%;border:0;display:block}
 .gridmode .cap{position:absolute;left:6px;bottom:6px;font-size:11px;color:#fff;text-shadow:0 1px 3px #000}
 @media (max-width:900px){.layout{grid-template-columns:1fr}.channels{max-height:none;flex-direction:row;flex-wrap:wrap}.chan{width:auto}}
-html.light{--bg:#eef1f6;--panel:#ffffff;--panel-2:#f6f8fc;--raised:#eef1f7;--raised-2:#e3e8f1;--glass:rgba(255,255,255,0.85);--border:rgba(16,24,40,0.10);--border-bright:rgba(16,24,40,0.22);--text:#0f172a;--text-2:#334155;--sub:#475569;--dim:#5b6b82;--dim-2:#6b7a90;--dim-3:#8593a8;--accent:oklch(0.55 0.16 262);--accent-soft:rgba(70,100,220,0.12);--sky:#2b5f86;--danger:#b3261e;--mint:#0f7a5a;--seg-bg:#e6eaf1}
+html.light{--bg:#eef1f6;--panel:#ffffff;--panel-2:#f6f8fc;--raised:#eef1f7;--raised-2:#e3e8f1;--glass:rgba(255,255,255,0.85);--border:rgba(16,24,40,0.10);--border-bright:rgba(16,24,40,0.22);--text:#0f172a;--text-2:#334155;--sub:#475569;--dim:#5b6b82;--dim-2:#6b7a90;--dim-3:#8593a8;--accent:oklch(0.52 0.015 250);--accent-soft:rgba(30,41,59,0.12);--on-accent:#f5f7fa;--sky:#2b5f86;--danger:#b3261e;--mint:#0f7a5a;--seg-bg:#e6eaf1}
 html.light body{background-image:none}
 html.light .mainnav{background:var(--seg-bg)}
 html.light .nav-tab.active{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,0.14)}
 html.light .pill{background:var(--raised)}
 html.light .overlay{background:rgba(238,241,246,0.9)}
-html.light .mark .bm-bg{fill:#fff;stroke:rgba(16,24,40,0.14);stroke-width:2}
-html.light .mark .bm-ring,html.light .mark .bm-rays{stroke:#4a6cf0}
-html.light .mark .bm-dot{fill:#0f172a}
+html.light .ctrl:hover{color:var(--text)}
 </style>
 </head>
 <body>
 <div class="topbar">
   <a class="brand" href="/" title="Back to the dashboard">
-    <svg viewBox="0 0 48 48" class="mark" aria-hidden="true"><rect class="bm-bg" width="48" height="48" rx="10"/><circle class="bm-ring" cx="24" cy="24" r="14" stroke-width="4" fill="none"/><path class="bm-rays" d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke-width="4" stroke-linecap="round"/><circle class="bm-dot" cx="24" cy="24" r="4"/></svg>
-    <span><span class="b1">MFB Services</span><span class="sub">Intelligence</span></span>
+    <img class="brand-logo brand-logo-dark" src="/brand/mfb-intelligence-navbar-dark-transparent.png" alt="MFB Services Intelligence" width="1124" height="160">
+    <img class="brand-logo brand-logo-light" src="/brand/mfb-intelligence-navbar-light-transparent.png" alt="" aria-hidden="true" width="1124" height="160">
   </a>
   <nav class="mainnav">
     <a class="nav-tab" href="/">Dashboard</a>

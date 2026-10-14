@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Readers Digest — MFB Services Intelligence</title>
-<link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
+<link rel="apple-touch-icon" href="/brand/apple-touch-icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/reader.css">
@@ -13,16 +16,14 @@
 <script>try{document.documentElement.classList.toggle('light',localStorage.getItem('crucix_theme')==='light');}catch(e){}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.76 0.13 262);--accent-2:oklch(0.55 0.15 280);--accent2:oklch(0.75 0.11 235);--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--warn:#e9c9a0;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(120,150,255,0.06),transparent 70%);-webkit-font-smoothing:antialiased}
+:root{--bg:#05070b;--panel:#0a0d14;--panel-2:#080b11;--raised:#111520;--raised-2:#171c2a;--glass:rgba(10,13,20,0.8);--border:rgba(255,255,255,0.05);--border-bright:rgba(255,255,255,0.14);--text:#e9ecf2;--text-2:#c8cedb;--sub:#98a1b3;--dim:#8a94a8;--dim-2:#67718a;--dim-3:#586279;--accent:oklch(0.90 0.012 250);--accent-2:oklch(0.74 0.010 248);--accent2:oklch(0.80 0.010 248);--on-accent:#0a0f1f;--green:oklch(0.80 0.12 165);--red:oklch(0.70 0.15 25);--amber:oklch(0.80 0.12 80);--sky:#8fb8d8;--mint:#8fe3c9;--warn:#e9c9a0;--danger:#ffb4ab;--mono:'Geist Mono',ui-monospace,monospace;--sans:'Geist',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(220,226,236,0.06),transparent 70%);-webkit-font-smoothing:antialiased}
 .topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
 .brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
-.brand .mark{width:34px;height:34px;border-radius:6px;flex:none}
-.mark .bm-bg{fill:#0a0d14}
-.mark .bm-ring,.mark .bm-rays{stroke:#98a8ff;fill:none}
-.mark .bm-dot{fill:#e9ecf2}
-.brand .b1{font-size:15px;font-weight:600;letter-spacing:-0.01em;display:block}
-.brand .sub{font-size:12px;color:var(--dim);display:block}
+.brand-logo{height:34px;width:auto;display:block;flex:none}
+.brand-logo-light{display:none}
+html.light .brand-logo-dark{display:none}
+html.light .brand-logo-light{display:block}
 .mainnav{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
 .nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center}
 .nav-tab:hover{color:var(--text)}
@@ -41,7 +42,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .filters .seg .pill{border:0;background:transparent;padding:7px 14px;border-radius:5px}
 .filters .seg .pill.active{background:var(--raised-2);color:var(--text)}
 .filters input{flex:1;min-width:260px;height:40px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:13.5px;padding:0 14px;outline:none}
-.filters input:focus{border-color:rgba(120,150,255,0.4)}
+.filters input:focus{border-color:rgba(220,226,236,0.4)}
 .topics{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
 .topic{font-family:var(--sans);font-size:12.5px;padding:5px 11px;border:1px solid var(--border);border-radius:5px;color:var(--sub);cursor:pointer;background:transparent;display:inline-flex;gap:6px}
 .topic:hover,.topic.active{border-color:var(--border-bright);color:var(--text)}
@@ -50,23 +51,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .taste{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--sans);font-size:12px;color:var(--dim);margin-bottom:12px}
 .taste b{color:var(--accent)}
 .empty{padding:48px;text-align:center;color:var(--dim);font-family:var(--sans);font-size:12.5px;border:1px dashed var(--border);border-radius:8px}
-.byok-cta{cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;color:#0a0f1f;background:var(--accent)}
-html.light{--bg:#eef1f6;--panel:#ffffff;--panel-2:#f6f8fc;--raised:#eef1f7;--raised-2:#e3e8f1;--glass:rgba(255,255,255,0.85);--border:rgba(16,24,40,0.10);--border-bright:rgba(16,24,40,0.22);--text:#0f172a;--text-2:#334155;--sub:#475569;--dim:#5b6b82;--dim-2:#6b7a90;--dim-3:#8593a8;--accent:oklch(0.55 0.16 262);--accent-2:oklch(0.5 0.16 280);--accent2:oklch(0.55 0.14 235);--accent-soft:rgba(70,100,220,0.12);--sky:#2b5f86;--warn:#8a5a12;--danger:#b3261e;--mint:#0f7a5a;--seg-bg:#e6eaf1}
+.byok-cta{cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;color:var(--on-accent);background:var(--accent)}
+html.light{--bg:#eef1f6;--panel:#ffffff;--panel-2:#f6f8fc;--raised:#eef1f7;--raised-2:#e3e8f1;--glass:rgba(255,255,255,0.85);--border:rgba(16,24,40,0.10);--border-bright:rgba(16,24,40,0.22);--text:#0f172a;--text-2:#334155;--sub:#475569;--dim:#5b6b82;--dim-2:#6b7a90;--dim-3:#8593a8;--accent:oklch(0.52 0.015 250);--accent-2:oklch(0.60 0.012 248);--accent2:oklch(0.60 0.012 248);--on-accent:#f5f7fa;--accent-soft:rgba(30,41,59,0.12);--sky:#2b5f86;--warn:#8a5a12;--danger:#b3261e;--mint:#0f7a5a;--seg-bg:#e6eaf1}
 html.light body{background-image:none}
 html.light .mainnav{background:var(--seg-bg)}
 html.light .nav-tab.active{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,0.14)}
 html.light .pill{background:var(--raised)}
-html.light .mark .bm-bg{fill:#fff;stroke:rgba(16,24,40,0.14);stroke-width:2}
-html.light .mark .bm-ring,html.light .mark .bm-rays{stroke:#4a6cf0}
-html.light .mark .bm-dot{fill:#0f172a}
 @media (max-width:640px){body{padding:12px}.topbar{padding:10px}.hero h1{font-size:24px}}
 </style>
 </head>
 <body>
 <div class="topbar">
   <a class="brand" href="/" title="Back to the dashboard">
-    <svg viewBox="0 0 48 48" class="mark" aria-hidden="true"><rect class="bm-bg" width="48" height="48" rx="10"/><circle class="bm-ring" cx="24" cy="24" r="14" stroke-width="4" fill="none"/><path class="bm-rays" d="M24 4v8M24 36v8M4 24h8M36 24h8" stroke-width="4" stroke-linecap="round"/><circle class="bm-dot" cx="24" cy="24" r="4"/></svg>
-    <span><span class="b1">MFB Services</span><span class="sub">Intelligence</span></span>
+    <img class="brand-logo brand-logo-dark" src="/brand/mfb-intelligence-navbar-dark-transparent.png" alt="MFB Services Intelligence" width="1124" height="160">
+    <img class="brand-logo brand-logo-light" src="/brand/mfb-intelligence-navbar-light-transparent.png" alt="" aria-hidden="true" width="1124" height="160">
   </a>
   <nav class="mainnav">
     <a class="nav-tab" href="/">Dashboard</a>
