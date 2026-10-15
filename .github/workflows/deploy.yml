@@ -68,6 +68,8 @@ jobs:
           UI_MEDIA: ${{ vars.UI_MEDIA }}
           UI_LOGIN: ${{ vars.UI_LOGIN }}
           UI_SITE: ${{ vars.UI_SITE }}
+          TELEGRAM_CHATS: ${{ vars.TELEGRAM_CHATS }}
+          TELEGRAM_TRANSLATE: ${{ vars.TELEGRAM_TRANSLATE }}
         run: bash deploy/cloudrun.sh
 
   # Flip the UI_* flags in seconds without rebuilding. Same targets, same approvals. Change the var

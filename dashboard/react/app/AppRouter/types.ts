@@ -9,6 +9,7 @@ export interface SurfaceComponents {
   dashboard: ComponentType;
   digest: ComponentType<DigestSurfaceProps>;
   media: ComponentType;
+  telegram: ComponentType;
 }
 
 export type SurfaceLoader = () => Promise<unknown>;

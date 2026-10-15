@@ -22,7 +22,7 @@ describe('readUiFlags', () => {
 
   it('merges the injected flags over the defaults and ignores garbage', () => {
     flagWindow.__CRUCIX_UI__ = { media: 'legacy' };
-    expect(readUiFlags()).toEqual({ dashboard: 'react', digest: 'react', media: 'legacy' });
+    expect(readUiFlags()).toEqual({ dashboard: 'react', digest: 'react', media: 'legacy', telegram: 'react' });
     flagWindow.__CRUCIX_UI__ = ['nope'];
     expect(readUiFlags()).toEqual(DEFAULT_UI_FLAGS);
   });

@@ -55,6 +55,8 @@ UI_DIGEST: "$UI_DIGEST"
 UI_MEDIA: "$UI_MEDIA"
 UI_LOGIN: "$UI_LOGIN"
 UI_SITE: "$UI_SITE"
+TELEGRAM_CHATS: "${TELEGRAM_CHATS:-}"
+TELEGRAM_TRANSLATE: "${TELEGRAM_TRANSLATE:-}"
 YAML
 # Operator LLM (shared key for digest write-ups, deep dives and map area briefs when a user has not saved their
 # own). Default is DeepSeek Flash through the OpenAI-compatible provider. The key itself lives in Secret Manager
@@ -112,6 +114,16 @@ if gcloud secrets describe AISSTREAM_API_KEY --project "$PROJECT" >/dev/null 2>&
   echo "▶ AIS: aisstream.io key from Secret Manager"
 else
   echo "▶ No AISSTREAM_API_KEY secret — chokepoint statistics only (PortWatch)"
+fi
+# Telegram (optional): read-only subscribed chats at /telegram over MTProto. Run `npm run telegram:auth` locally, then:
+#   printf '%s' "$TELEGRAM_API_ID"   | gcloud secrets create TELEGRAM_API_ID --data-file=- --project $PROJECT
+#   printf '%s' "$TELEGRAM_API_HASH" | gcloud secrets create TELEGRAM_API_HASH --data-file=- --project $PROJECT
+#   printf '%s' "$TELEGRAM_SESSION"  | gcloud secrets create TELEGRAM_SESSION --data-file=- --project $PROJECT
+if gcloud secrets describe TELEGRAM_SESSION --project "$PROJECT" >/dev/null 2>&1; then
+  SECRETS="$SECRETS,TELEGRAM_API_ID=TELEGRAM_API_ID:latest,TELEGRAM_API_HASH=TELEGRAM_API_HASH:latest,TELEGRAM_SESSION=TELEGRAM_SESSION:latest"
+  echo "▶ Telegram: session from Secret Manager"
+else
+  echo "▶ No TELEGRAM_SESSION secret — /telegram shows the setup notice"
 fi
 # AIS relay (deploy/ais-relay.py on the always-on host; Cloud Run throttles CPU between requests so the WebSocket
 # cannot live here). Export AIS_RELAY_URL=https://ais.rsanchez-server.com before deploying; the relay shares the

@@ -20,6 +20,10 @@ import * as feedback from './lib/feedback.mjs';
 import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
 import { loadManifest, entryAssets, entryForSurface, hasSurface, renderSurfaceDocument, uiFlagsScript } from './dashboard/server/ui.mjs';
+import * as telegramClient from './lib/telegram/client.mjs';
+import { groupDialogs, isAllowed, parseAllowlist, readAllowlist, readGroups } from './lib/telegram/selection.mjs';
+import { createTranslator } from './lib/telegram/translate.mjs';
+import { MEDIA_KINDS, createMediaStore } from './lib/telegram/media.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -48,10 +52,11 @@ const UI_FLAGS = {
   dashboard: uiFlag('UI_DASHBOARD'),
   digest: uiFlag('UI_DIGEST'),
   media: uiFlag('UI_MEDIA'),
+  telegram: process.env.UI_TELEGRAM ? uiFlag('UI_TELEGRAM') : 'react',
   login: uiFlag('UI_LOGIN'),
   site: uiFlag('UI_SITE'),
 };
-const UI_TITLES = { dashboard: 'Dashboard', digest: 'Readers Digest', media: 'Live media', login: 'Sign in' };
+const UI_TITLES = { dashboard: 'Dashboard', digest: 'Readers Digest', media: 'Live media', telegram: 'Telegram', login: 'Sign in' };
 const uiManifest = loadManifest(ROOT);
 const UI_DIST = join(ROOT, 'dashboard', 'dist');
 // Dev-only Vite middleware adapter. Never mounted in production; see the mount site below.
@@ -106,6 +111,8 @@ if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmPr
 
 // === Readers Digest ===
 const DIGEST_OPERATOR_WRITEUPS = (process.env.DIGEST_OPERATOR_WRITEUPS || 'false').toLowerCase() === 'true';
+const telegramMedia = createMediaStore({ runsDir: RUNS_DIR, getClient: telegramClient.getClient });
+const telegramTranslator = createTranslator({ provider: llmProvider?.isConfigured ? llmProvider : null });
 const digest = createDigest({ db: () => authLib.db(), authEnabled: AUTH_ENABLED, operatorProvider: DIGEST_OPERATOR_WRITEUPS && llmProvider?.isConfigured ? llmProvider : null });
 if (llmProvider?.isConfigured && !DIGEST_OPERATOR_WRITEUPS) console.log('[Digest] operator write-ups off (set DIGEST_OPERATOR_WRITEUPS=true to spend the operator key on every ingested article)');
 if (AUTH_ENABLED) digest.init().catch(err => console.error('[Digest] init failed:', err.message));
@@ -584,6 +591,12 @@ app.get(['/media', '/media/:id'], (req, res) => {
   res.type('html').send(mediaHtml);
 });
 
+// ─── Telegram (Read-only subscribed channels & chats) ───────────────────────
+app.get(['/telegram', '/telegram/:id'], (req, res) => {
+  if (reactSurface('telegram')) return sendReactSurface(res, 'telegram', { head: spaHead() });
+  res.redirect('/');
+});
+
 // ─── Neptun live tracks (drone / missile) + Ukraine alerts via WebSocket ────
 const neptun = { tracks: new Map(), alerts: null, updated: null, backoff: 1000 };
 function startNeptunStream() {
@@ -781,6 +794,74 @@ app.post('/api/digest/:id/research', async (req, res) => {
 app.get('/api/digest/:id/research', async (req, res) => {
   try { const r = await digest.store.getResearch(req.user.uid, String(req.params.id).slice(0, 40)); res.json(r || { state: 'none' }); }
   catch (err) { sendErr(res, err); }
+});
+
+// ─── Telegram APIs ──────────────────────────────────────────────────────────
+app.get('/api/telegram/status', async (req, res) => {
+  try {
+    const status = await telegramClient.getTelegramStatus();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/telegram/dialogs', async (req, res) => {
+  try {
+    const limit = Math.min(200, parseInt(req.query.limit, 10) || 100);
+    const dialogs = await telegramClient.getTelegramDialogs({ limit });
+    res.json({ dialogs: groupDialogs(dialogs, readGroups()) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+async function publishedDialog(id) {
+  const dialogs = await telegramClient.getTelegramDialogs({ limit: 200 });
+  const dialog = dialogs.find((d) => d.id === String(id));
+  return dialog && isAllowed(dialog, readAllowlist()) ? dialog : null;
+}
+
+app.get('/api/telegram/avatar/:chatId', async (req, res) => {
+  try {
+    const dialog = await publishedDialog(req.params.chatId);
+    const file = dialog ? await telegramMedia.avatar(dialog.id) : null;
+    if (!file) return res.status(404).json({ error: 'no avatar' });
+    res.set('Cache-Control', 'private, max-age=86400');
+    res.type(file.mime);
+    res.sendFile(file.path);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/telegram/media/:chatId/:msgId', async (req, res) => {
+  try {
+    const dialog = await publishedDialog(req.params.chatId);
+    const msgId = parseInt(req.params.msgId, 10);
+    if (!dialog || !Number.isFinite(msgId)) return res.status(404).json({ error: 'not found' });
+    const kind = MEDIA_KINDS.includes(req.query.kind) ? req.query.kind : 'photo';
+    const file = await telegramMedia.fetch(dialog.id, msgId, kind);
+    if (!file) return res.status(404).json({ error: 'no such media' });
+    res.set('Cache-Control', 'private, max-age=86400');
+    res.type(file.mime);
+    res.sendFile(file.path);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/telegram/messages/:id', async (req, res) => {
+  try {
+    const dialog = await publishedDialog(req.params.id);
+    if (!dialog) return res.status(404).json({ error: 'chat not published' });
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const raw = await telegramClient.getTelegramMessages(dialog.id, { limit });
+    const translate = isAllowed(dialog, parseAllowlist(process.env.TELEGRAM_TRANSLATE));
+    res.json({ messages: translate ? await telegramTranslator.translate(dialog.id, raw) : raw, translated: translate });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 function broadcast(data) {
