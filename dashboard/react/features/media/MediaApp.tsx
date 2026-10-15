@@ -375,6 +375,18 @@ export function MediaApp({ history, location }: MediaAppProps) {
 
   return (
     <div className="media-app">
+      <div className="topbar">
+        <a className="brand" href="/" title="Back to the dashboard">
+          <img className="brand-logo brand-logo-dark" src="/brand/mfb-intelligence-navbar-dark-transparent.png" alt="MFB Services Intelligence" width={1124} height={160} />
+          <img className="brand-logo brand-logo-light" src="/brand/mfb-intelligence-navbar-light-transparent.png" alt="" aria-hidden="true" width={1124} height={160} />
+        </a>
+        <nav className="mainnav">
+          <a className="nav-tab" href="/">Dashboard</a>
+          <a className="nav-tab" href="/digest">Readers Digest</a>
+          <a className="nav-tab active" href="/media">Live media</a>
+        </nav>
+      </div>
+
       <header className="hero">
         <div>
           <h1>Live media</h1>
