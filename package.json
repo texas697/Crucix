@@ -6,6 +6,13 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test $(ls test/*.test.mjs | grep -v integration)",
+    "test:e2e": "playwright test",
+    "test:ui": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "vite build && vite build --config vite.site.config.ts",
+    "build:standalone": "vite build --config vite.standalone.config.ts",
+    "serve:fixtures": "node test/fixtures/server.mjs",
+    "fixtures:build": "node test/scripts/build-fixtures.mjs",
     "dev": "node --trace-warnings server.mjs",
     "sweep": "node apis/briefing.mjs",
     "inject": "node dashboard/inject.mjs",
@@ -24,15 +31,39 @@
   "author": "Crucix",
   "license": "AGPL-3.0-only",
   "engines": {
-    "node": ">=22",
+    "node": ">=22.12.0",
     "npm": ">=10"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.18.0",
+    "clsx": "^2.1.1",
     "express": "^5.1.0",
     "firebase-admin": "^13.10.0",
+    "hls.js": "^1.5.17",
+    "maplibre-gl": "^6.14.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-map-gl": "^8.1.3",
+    "react-router-dom": "^7.18.4",
     "satellite.js": "^6.0.1"
   },
   "overrides": {
     "undici": "^7.24.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
   }
 }

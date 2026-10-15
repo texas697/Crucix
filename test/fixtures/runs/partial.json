@@ -1,0 +1,129 @@
+{
+  "crucix": {
+    "version": "2.0.0",
+    "timestamp": "2026-10-14T11:00:00.000Z",
+    "totalDurationMs": 5000,
+    "sourcesQueried": 12,
+    "sourcesOk": 10,
+    "sourcesFailed": 2
+  },
+  "sources": {
+    "OpenSky": {
+      "source": "OpenSky",
+      "timestamp": "2026-10-14T11:00:00.000Z",
+      "openSky": null,
+      "militaryTotal": 0,
+      "signals": [],
+      "hotspots": [
+        {
+          "region": "Pacific",
+          "key": "pacific",
+          "totalAircraft": 0,
+          "byCountry": null,
+          "noCallsign": null,
+          "highAltitude": null,
+          "military": 0,
+          "militaryTop": [],
+          "via": "OpenSky",
+          "coverage": "partial",
+          "sampledAt": null
+        }
+      ],
+      "military": []
+    },
+    "FIRMS": {
+      "hotspots": [],
+      "signals": null,
+      "access": null,
+      "window": null,
+      "satellites": [],
+      "lastModified": null,
+      "globalDetections": 0,
+      "error": "service timeout"
+    },
+    "Maritime": {
+      "chokepoints": {},
+      "ais": null,
+      "access": null,
+      "provider": null,
+      "latestDate": null,
+      "summary": null,
+      "signals": [],
+      "disruptions": []
+    },
+    "Safecast": {
+      "sites": [],
+      "signals": null,
+      "feed": null,
+      "liveSensors": 0,
+      "windowDays": null,
+      "timestamp": null
+    },
+    "GDELT": {
+      "totalArticles": 0,
+      "conflicts": [],
+      "economy": [],
+      "health": [],
+      "crisis": [],
+      "allArticles": [],
+      "docStatus": null,
+      "signals": [],
+      "events": {},
+      "geoPoints": []
+    },
+    "Treasury": {
+      "debt": [],
+      "signals": []
+    },
+    "EIA": {
+      "oilPrices": {},
+      "gasPrice": null,
+      "inventories": {},
+      "signals": []
+    },
+    "NOAA": {
+      "totalSevereAlerts": 0,
+      "topAlerts": []
+    },
+    "EPA": {
+      "totalReadings": 0,
+      "readings": []
+    },
+    "Space": {
+      "source": "Space (CelesTrak + fallback)",
+      "timestamp": "2026-10-14T11:00:00.000Z",
+      "status": "active",
+      "spaceStations": [],
+      "stations": [],
+      "iss": null,
+      "totalNewObjects": 0,
+      "recentLaunches": [],
+      "signals": []
+    },
+    "Cloudflare-Radar": {
+      "status": "no_credentials"
+    },
+    "SWPC": {
+      "error": "rate limited"
+    }
+  },
+  "errors": [
+    { "name": "FRED", "error": "request timeout" },
+    { "name": "YFinance", "error": "request timeout" }
+  ],
+  "timing": {
+    "OpenSky": { "status": "ok", "ms": 900 },
+    "FIRMS": { "status": "ok", "ms": 400 },
+    "Maritime": { "status": "ok", "ms": 300 },
+    "Safecast": { "status": "ok", "ms": 250 },
+    "GDELT": { "status": "ok", "ms": 1100 },
+    "Treasury": { "status": "ok", "ms": 350 },
+    "EIA": { "status": "ok", "ms": 480 },
+    "NOAA": { "status": "ok", "ms": 270 },
+    "EPA": { "status": "ok", "ms": 310 },
+    "Space": { "status": "ok", "ms": 880 },
+    "Cloudflare-Radar": { "status": "ok", "ms": 200 },
+    "SWPC": { "status": "failed", "ms": 150 }
+  },
+  "news": []
+}

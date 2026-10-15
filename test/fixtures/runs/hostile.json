@@ -1,0 +1,1143 @@
+{
+  "crucix": {
+    "version": "2.0.0",
+    "timestamp": "2026-10-14T11:00:00.000Z",
+    "totalDurationMs": 12345,
+    "sourcesQueried": 21,
+    "sourcesOk": 21,
+    "sourcesFailed": 0
+  },
+  "sources": {
+    "OpenSky": {
+      "source": "<script>alert(1)</script>",
+      "timestamp": "</script>",
+      "openSky": {
+        "accessed": true,
+        "credits": 3800,
+        "rateLimitRemaining": 400
+      },
+      "militaryTotal": 2,
+      "signals": [
+        "<!--"
+      ],
+      "hotspots": [
+        {
+          "region": "\"><img src=x onerror=alert(1)>",
+          "key": "{{APP_NAME}}",
+          "totalAircraft": 1240,
+          "byCountry": {
+            "Germany": 310,
+            "France": 260,
+            "United Kingdom": 180
+          },
+          "noCallsign": 42,
+          "highAltitude": 135,
+          "military": 2,
+          "militaryTop": [
+            {
+              "hex": "<script>alert(1)</script>",
+              "callsign": "</script>"
+            },
+            {
+              "hex": "<!--",
+              "callsign": "\"><img src=x onerror=alert(1)>"
+            }
+          ],
+          "via": "{{APP_NAME}}",
+          "coverage": "<script>alert(1)</script>",
+          "sampledAt": "</script>"
+        }
+      ],
+      "military": [
+        {
+          "hex": "<!--",
+          "callsign": "\"><img src=x onerror=alert(1)>",
+          "type": "{{APP_NAME}}",
+          "reg": "<script>alert(1)</script>",
+          "country": "</script>",
+          "lat": 49.53,
+          "lon": 8.42,
+          "altFt": 31000,
+          "gs": 452,
+          "track": 92,
+          "squawk": "<!--"
+        }
+      ]
+    },
+    "FIRMS": {
+      "hotspots": [
+        {
+          "region": "\"><img src=x onerror=alert(1)>",
+          "totalDetections": 1850,
+          "highConfidence": 340,
+          "nightDetections": 420,
+          "highIntensityCount": 2,
+          "highIntensity": [
+            {
+              "lat": -3.21,
+              "lon": -60.14,
+              "frp": 220.5,
+              "date": "{{APP_NAME}}",
+              "time": "<script>alert(1)</script>",
+              "confidence": "</script>",
+              "daynight": "<!--",
+              "satellite": "\"><img src=x onerror=alert(1)>"
+            },
+            {
+              "lat": -12.44,
+              "lon": -55.71,
+              "frp": 180.2,
+              "date": "{{APP_NAME}}",
+              "time": "<script>alert(1)</script>",
+              "confidence": "</script>",
+              "daynight": "<!--",
+              "satellite": "\"><img src=x onerror=alert(1)>"
+            }
+          ]
+        }
+      ],
+      "signals": [
+        "{{APP_NAME}}"
+      ],
+      "access": "<script>alert(1)</script>",
+      "window": "</script>",
+      "satellites": [
+        "<!--",
+        "\"><img src=x onerror=alert(1)>"
+      ],
+      "lastModified": "{{APP_NAME}}",
+      "globalDetections": 9042
+    },
+    "Maritime": {
+      "chokepoints": {
+        "hormuz": {
+          "id": "<script>alert(1)</script>",
+          "label": "</script>",
+          "lat": 26.57,
+          "lon": 56.25,
+          "major": true,
+          "note": "<!--",
+          "status": "\"><img src=x onerror=alert(1)>",
+          "transits": {
+            "perDay7": 21,
+            "perDayPrior7": 19,
+            "baseline365": 20,
+            "pctVsBaseline": 5,
+            "trend7Pct": 10.5,
+            "tankerShare7": 0.42,
+            "latestDate": "{{APP_NAME}}",
+            "daily": [
+              {
+                "n": 21
+              },
+              {
+                "n": 20
+              },
+              {
+                "n": 22
+              }
+            ]
+          },
+          "events": [
+            {
+              "name": "<script>alert(1)</script>",
+              "type": "</script>",
+              "from": "<!--",
+              "ongoing": true
+            }
+          ]
+        },
+        "malacca": {
+          "id": "\"><img src=x onerror=alert(1)>",
+          "label": "{{APP_NAME}}",
+          "lat": 2.5,
+          "lon": 101.5,
+          "major": true,
+          "note": "<script>alert(1)</script>",
+          "status": "</script>",
+          "transits": {
+            "perDay7": 58,
+            "perDayPrior7": 57,
+            "baseline365": 56,
+            "pctVsBaseline": 3.6,
+            "trend7Pct": 1.8,
+            "tankerShare7": 0.22,
+            "latestDate": "<!--",
+            "daily": [
+              {
+                "n": 58
+              },
+              {
+                "n": 57
+              }
+            ]
+          },
+          "events": []
+        }
+      },
+      "ais": {
+        "enabled": true,
+        "connected": true,
+        "liveVessels": 42,
+        "since": "\"><img src=x onerror=alert(1)>",
+        "lastMessageAt": "{{APP_NAME}}",
+        "windowMinutes": 60
+      },
+      "access": "<script>alert(1)</script>",
+      "provider": "</script>",
+      "latestDate": "<!--",
+      "summary": "\"><img src=x onerror=alert(1)>",
+      "signals": [
+        "{{APP_NAME}}"
+      ],
+      "disruptions": [
+        {
+          "name": "<script>alert(1)</script>",
+          "type": "</script>",
+          "from": "<!--",
+          "lat": 13,
+          "lon": 43,
+          "affected": [
+            "\"><img src=x onerror=alert(1)>"
+          ],
+          "ongoing": true
+        }
+      ]
+    },
+    "Safecast": {
+      "sites": [
+        {
+          "site": "{{APP_NAME}}",
+          "key": "<script>alert(1)</script>",
+          "lat": 35.68,
+          "lon": 139.69,
+          "radiusKm": 30,
+          "coverage": "</script>",
+          "sensors": 5,
+          "medianCPM": 25,
+          "maxCPM": 90,
+          "medianUsvh": 0.15,
+          "maxUsvh": 0.5,
+          "alertUsvh": 1,
+          "anomaly": false,
+          "hotSensors": 0,
+          "readings": [
+            {
+              "name": "<!--",
+              "lat": 35.69,
+              "lon": 139.7,
+              "distanceKm": 2.1,
+              "cpm": 30,
+              "usvh": 0.18,
+              "tube": "\"><img src=x onerror=alert(1)>",
+              "capturedAt": "{{APP_NAME}}"
+            }
+          ]
+        }
+      ],
+      "signals": [
+        "<script>alert(1)</script>"
+      ],
+      "feed": "</script>",
+      "liveSensors": 5,
+      "windowDays": 7,
+      "timestamp": "<!--"
+    },
+    "KiwiSDR": {
+      "network": {
+        "totalReceivers": 640,
+        "probed": 520,
+        "online": 430,
+        "private": 35,
+        "unreachable": 90,
+        "totalUsers": 910,
+        "totalCapacity": 2100
+      },
+      "conflictZones": {
+        "ukraine": {
+          "region": "\"><img src=x onerror=alert(1)>",
+          "count": 12,
+          "online": 9,
+          "private": 1,
+          "down": 2,
+          "users": 30,
+          "capacity": 48,
+          "receivers": [
+            {
+              "name": "{{APP_NAME}}",
+              "lat": 50.4,
+              "lon": 30.5,
+              "url": "javascript:alert(1)",
+              "live": "<script>alert(1)</script>",
+              "users": 3,
+              "usersMax": 4,
+              "snr": {
+                "hf": 12
+              },
+              "antenna": "</script>",
+              "hw": "<!--",
+              "gpsGood": 1,
+              "country": "\"><img src=x onerror=alert(1)>"
+            }
+          ]
+        }
+      },
+      "all": [
+        [
+          "{{APP_NAME}}",
+          50.4,
+          30.5,
+          "<script>alert(1)</script>",
+          "</script>"
+        ],
+        [
+          "<!--",
+          35.68,
+          139.69,
+          "\"><img src=x onerror=alert(1)>",
+          "{{APP_NAME}}"
+        ]
+      ],
+      "directory": "<script>alert(1)</script>"
+    },
+    "WHO": {
+      "diseaseOutbreakNews": [
+        {
+          "title": "</script>",
+          "date": "<!--",
+          "summary": "\"><img src=x onerror=alert(1)>",
+          "url": "javascript:alert(1)"
+        }
+      ],
+      "outbreaks": [
+        {
+          "disease": "{{APP_NAME}}",
+          "places": [
+            "<script>alert(1)</script>",
+            "</script>"
+          ],
+          "updates": 3,
+          "firstDate": "<!--",
+          "lastDate": "\"><img src=x onerror=alert(1)>",
+          "latestDonId": "{{APP_NAME}}",
+          "url": "https://example.com/\"><img src=x onerror=alert(1)>",
+          "summary": "<script>alert(1)</script>",
+          "risk": "</script>"
+        }
+      ],
+      "cdc": {
+        "travelNotices": [
+          {
+            "level": "<!--",
+            "name": "\"><img src=x onerror=alert(1)>",
+            "countries": [
+              "{{APP_NAME}}"
+            ],
+            "url": "javascript:alert(1)",
+            "date": "<script>alert(1)</script>"
+          }
+        ],
+        "outbreaks": [
+          {
+            "title": "</script>",
+            "date": "<!--",
+            "url": "javascript:alert(1)",
+            "categories": [
+              "\"><img src=x onerror=alert(1)>"
+            ]
+          }
+        ]
+      },
+      "noticesInFeed": 2,
+      "recentDays": 30,
+      "activeDays": 90,
+      "signals": [
+        "{{APP_NAME}}"
+      ],
+      "timestamp": "<script>alert(1)</script>"
+    },
+    "GDACS": {
+      "events": [
+        {
+          "id": "</script>",
+          "type": "<!--",
+          "typeLabel": "\"><img src=x onerror=alert(1)>",
+          "level": "{{APP_NAME}}",
+          "score": 1.5,
+          "name": "<script>alert(1)</script>",
+          "country": "</script>",
+          "countries": [
+            {
+              "name": "<!--"
+            }
+          ],
+          "lat": 35.6,
+          "lon": 139.7,
+          "from": "\"><img src=x onerror=alert(1)>",
+          "to": "{{APP_NAME}}",
+          "current": true,
+          "severity": {
+            "text": "<script>alert(1)</script>"
+          },
+          "report": "https://example.com/\"><img src=x onerror=alert(1)>"
+        }
+      ],
+      "counts": {
+        "red": 0,
+        "orange": 1,
+        "green": 2
+      },
+      "signals": [
+        "</script>"
+      ],
+      "timestamp": "<!--"
+    },
+    "IODA": {
+      "countries": [
+        {
+          "cc": "\"><img src=x onerror=alert(1)>",
+          "name": "{{APP_NAME}}",
+          "score": 3.2,
+          "events": 4,
+          "regionAlerts": 1,
+          "asnAlerts": 2,
+          "worstDrop": 85,
+          "countryAlerts": [
+            {
+              "datasource": "<script>alert(1)</script>",
+              "time": "</script>"
+            },
+            {
+              "datasource": "<!--",
+              "time": "\"><img src=x onerror=alert(1)>"
+            }
+          ],
+          "lat": 20,
+          "lon": 78,
+          "national": false,
+          "minor": true
+        }
+      ],
+      "alerts": [
+        {
+          "type": "{{APP_NAME}}",
+          "name": "<script>alert(1)</script>",
+          "cc": "</script>",
+          "drop": 60,
+          "datasource": "<!--",
+          "time": "\"><img src=x onerror=alert(1)>",
+          "org": "{{APP_NAME}}"
+        }
+      ],
+      "counts": {
+        "countries": 1,
+        "alerts": 1
+      },
+      "windowHours": 24,
+      "signals": [
+        "<script>alert(1)</script>"
+      ],
+      "timestamp": "</script>"
+    },
+    "Cloudflare-Radar": {
+      "status": "<!--",
+      "outages": {
+        "activeEvents": [
+          {
+            "id": "\"><img src=x onerror=alert(1)>",
+            "description": "{{APP_NAME}}",
+            "startDate": "<script>alert(1)</script>",
+            "endDate": null,
+            "locations": [
+              "</script>"
+            ],
+            "locationNames": [
+              "<!--"
+            ],
+            "asnNames": [
+              "\"><img src=x onerror=alert(1)>"
+            ],
+            "eventType": "{{APP_NAME}}",
+            "cause": "<script>alert(1)</script>",
+            "outageType": "</script>",
+            "linkedUrl": "javascript:alert(1)"
+          }
+        ],
+        "recentResolved": []
+      },
+      "anomalies": {
+        "events": [
+          {
+            "verified": true,
+            "startDate": "<!--",
+            "endDate": null,
+            "type": "\"><img src=x onerror=alert(1)>",
+            "cc": "{{APP_NAME}}",
+            "country": "<script>alert(1)</script>",
+            "asn": {
+              "cc": "</script>",
+              "name": "<!--"
+            }
+          }
+        ]
+      },
+      "attacks": {
+        "l3Targets": [
+          {
+            "location": "\"><img src=x onerror=alert(1)>",
+            "value": 12
+          }
+        ],
+        "l3Origins": [],
+        "l7Targets": []
+      },
+      "signals": [
+        {
+          "signal": "{{APP_NAME}}"
+        }
+      ],
+      "timestamp": "<script>alert(1)</script>"
+    },
+    "SWPC": {
+      "kp": 4.5,
+      "flare": {
+        "class": "</script>",
+        "time": "<!--"
+      },
+      "scales": {
+        "g": 1,
+        "s": 0,
+        "r": 0
+      },
+      "alerts": [
+        {
+          "message": "\"><img src=x onerror=alert(1)>"
+        }
+      ],
+      "signals": [
+        "{{APP_NAME}}"
+      ],
+      "timestamp": "<script>alert(1)</script>"
+    },
+    "FRED": {
+      "indicators": [
+        {
+          "id": "</script>",
+          "label": "<!--",
+          "value": 22.5,
+          "date": "\"><img src=x onerror=alert(1)>",
+          "recent": [
+            21,
+            22.5
+          ],
+          "momChange": 1.5,
+          "momChangePct": 7.14
+        },
+        {
+          "id": "{{APP_NAME}}",
+          "label": "<script>alert(1)</script>",
+          "value": 3.6,
+          "date": "</script>",
+          "recent": [
+            3.5,
+            3.6
+          ],
+          "momChange": 0.1,
+          "momChangePct": 2.86
+        },
+        {
+          "id": "<!--",
+          "label": "\"><img src=x onerror=alert(1)>",
+          "value": 0.35,
+          "date": "{{APP_NAME}}",
+          "recent": [
+            0.3,
+            0.35
+          ],
+          "momChange": 0.05,
+          "momChangePct": 16.67
+        }
+      ]
+    },
+    "EIA": {
+      "oilPrices": {
+        "wti": {
+          "value": 78.5,
+          "recent": [
+            {
+              "value": 77
+            },
+            {
+              "value": 78.5
+            }
+          ]
+        },
+        "brent": {
+          "value": 82.3,
+          "recent": [
+            {
+              "value": 81
+            },
+            {
+              "value": 82.3
+            }
+          ]
+        }
+      },
+      "gasPrice": {
+        "value": 3.12
+      },
+      "inventories": {
+        "crudeStocks": {
+          "value": 420000
+        }
+      },
+      "signals": [
+        "<script>alert(1)</script>"
+      ]
+    },
+    "YFinance": {
+      "quotes": {
+        "^GSPC": {
+          "price": 5800,
+          "change": 20,
+          "changePct": 0.35,
+          "history": [
+            {
+              "close": 5780
+            },
+            {
+              "close": 5800
+            }
+          ]
+        },
+        "^IXIC": {
+          "price": 18500,
+          "change": 100,
+          "changePct": 0.54,
+          "history": [
+            {
+              "close": 18400
+            },
+            {
+              "close": 18500
+            }
+          ]
+        },
+        "^DJI": {
+          "price": 42000,
+          "change": -50,
+          "changePct": -0.12,
+          "history": [
+            {
+              "close": 42050
+            },
+            {
+              "close": 42000
+            }
+          ]
+        },
+        "^VIX": {
+          "price": 22.5,
+          "change": 1.5,
+          "changePct": 7.14,
+          "history": [
+            {
+              "close": 21
+            },
+            {
+              "close": 22.5
+            }
+          ]
+        },
+        "GC=F": {
+          "price": 2650,
+          "change": 12,
+          "changePct": 0.45,
+          "history": [
+            {
+              "close": 2638
+            },
+            {
+              "close": 2650
+            }
+          ]
+        },
+        "SI=F": {
+          "price": 31.2,
+          "change": 0.3,
+          "changePct": 0.97,
+          "history": [
+            {
+              "close": 30.9
+            },
+            {
+              "close": 31.2
+            }
+          ]
+        },
+        "CL=F": {
+          "price": 78.5,
+          "change": 1.2,
+          "changePct": 1.55,
+          "history": [
+            {
+              "close": 77.3
+            },
+            {
+              "close": 78.5
+            }
+          ]
+        },
+        "BZ=F": {
+          "price": 82.3,
+          "change": 1.1,
+          "changePct": 1.35,
+          "history": [
+            {
+              "close": 81.2
+            },
+            {
+              "close": 82.3
+            }
+          ]
+        },
+        "NG=F": {
+          "price": 3.1,
+          "change": 0.05,
+          "changePct": 1.64,
+          "history": [
+            {
+              "close": 3.05
+            },
+            {
+              "close": 3.1
+            }
+          ]
+        }
+      },
+      "indexes": [
+        {
+          "symbol": "</script>",
+          "name": "<!--",
+          "price": 5800,
+          "change": 20,
+          "changePct": 0.35,
+          "history": [
+            {
+              "close": 5800
+            }
+          ]
+        }
+      ],
+      "rates": [
+        {
+          "symbol": "\"><img src=x onerror=alert(1)>",
+          "name": "{{APP_NAME}}",
+          "price": 4.1,
+          "change": 0.02,
+          "changePct": 0.49
+        }
+      ],
+      "commodities": [
+        {
+          "symbol": "<script>alert(1)</script>",
+          "name": "</script>",
+          "price": 2650,
+          "change": 12,
+          "changePct": 0.45,
+          "history": [
+            {
+              "close": 2650
+            }
+          ]
+        }
+      ],
+      "crypto": [
+        {
+          "symbol": "<!--",
+          "name": "\"><img src=x onerror=alert(1)>",
+          "price": 64000,
+          "change": 500,
+          "changePct": 0.79
+        }
+      ],
+      "summary": {
+        "timestamp": "{{APP_NAME}}"
+      }
+    },
+    "Treasury": {
+      "debt": [
+        {
+          "totalDebt": "<script>alert(1)</script>",
+          "date": "</script>"
+        }
+      ],
+      "signals": [
+        "<!--"
+      ]
+    },
+    "BLS": {
+      "indicators": [
+        {
+          "id": "\"><img src=x onerror=alert(1)>",
+          "label": "{{APP_NAME}}",
+          "value": 4.4,
+          "date": "<script>alert(1)</script>",
+          "recent": [
+            4.4
+          ],
+          "momChange": 0.1,
+          "momChangePct": 2.33
+        },
+        {
+          "id": "</script>",
+          "label": "<!--",
+          "value": 159000,
+          "date": "\"><img src=x onerror=alert(1)>",
+          "recent": [
+            159000
+          ],
+          "momChange": 120,
+          "momChangePct": 0.08
+        },
+        {
+          "id": "{{APP_NAME}}",
+          "label": "<script>alert(1)</script>",
+          "value": 315.2,
+          "date": "</script>",
+          "recent": [
+            315.2
+          ],
+          "momChange": 0.3,
+          "momChangePct": 0.1
+        },
+        {
+          "id": "<!--",
+          "label": "\"><img src=x onerror=alert(1)>",
+          "value": 250.1,
+          "date": "{{APP_NAME}}",
+          "recent": [
+            250.1
+          ],
+          "momChange": 0.9,
+          "momChangePct": 0.36
+        }
+      ]
+    },
+    "GSCPI": {
+      "latest": {
+        "value": 0.65,
+        "date": "<script>alert(1)</script>",
+        "interpretation": "</script>"
+      }
+    },
+    "USAspending": {
+      "recentDefenseContracts": [
+        {
+          "recipient": "<!--",
+          "amount": 450000000,
+          "description": "\"><img src=x onerror=alert(1)>"
+        }
+      ],
+      "signals": [
+        "{{APP_NAME}}"
+      ]
+    },
+    "NOAA": {
+      "totalSevereAlerts": 12,
+      "topAlerts": [
+        {
+          "event": "<script>alert(1)</script>",
+          "severity": "</script>",
+          "headline": "<!--",
+          "lat": 31,
+          "lon": -100
+        }
+      ]
+    },
+    "EPA": {
+      "totalReadings": 100,
+      "readings": [
+        {
+          "location": "\"><img src=x onerror=alert(1)>",
+          "state": "{{APP_NAME}}",
+          "lat": 30.27,
+          "lon": -97.74,
+          "analyte": "<script>alert(1)</script>",
+          "result": 0.02,
+          "unit": "</script>"
+        }
+      ]
+    },
+    "Space": {
+      "source": "<!--",
+      "timestamp": "\"><img src=x onerror=alert(1)>",
+      "status": "{{APP_NAME}}",
+      "spaceStations": [
+        {
+          "name": "<script>alert(1)</script>",
+          "noradId": 25544,
+          "primary": true,
+          "attached": false,
+          "inclination": 51.64,
+          "period": 92.9,
+          "apogee": 420,
+          "perigee": 410,
+          "epoch": "</script>",
+          "position": {
+            "lat": 10.2,
+            "lon": 45.1,
+            "altitude": 415,
+            "velocity": 27600,
+            "at": "<!--"
+          },
+          "omm": {},
+          "live": null
+        }
+      ],
+      "stations": [
+        {
+          "name": "\"><img src=x onerror=alert(1)>",
+          "noradId": 25544,
+          "primary": true,
+          "attached": false,
+          "inclination": 51.64,
+          "period": 92.9,
+          "apogee": 420,
+          "perigee": 410,
+          "epoch": "{{APP_NAME}}",
+          "position": {
+            "lat": 10.2,
+            "lon": 45.1,
+            "altitude": 415,
+            "velocity": 27600,
+            "at": "<script>alert(1)</script>"
+          },
+          "omm": {},
+          "live": null
+        }
+      ],
+      "iss": {
+        "name": "</script>",
+        "noradId": 25544,
+        "primary": true,
+        "attached": false,
+        "inclination": 51.64,
+        "period": 92.9,
+        "apogee": 420,
+        "perigee": 410,
+        "epoch": "<!--",
+        "position": {
+          "lat": 10.2,
+          "lon": 45.1,
+          "altitude": 415,
+          "velocity": 27600,
+          "at": "\"><img src=x onerror=alert(1)>"
+        },
+        "omm": {},
+        "live": null
+      },
+      "stationsSource": "{{APP_NAME}}",
+      "totalNewObjects": 42,
+      "launchByCountry": {
+        "United States": 5,
+        "China": 3
+      },
+      "militarySatellites": 8,
+      "militaryByCountry": {
+        "United States": 5,
+        "Russia": 2,
+        "China": 1
+      },
+      "constellations": {
+        "starlink": 6000,
+        "oneweb": 630
+      },
+      "recentLaunches": [
+        {
+          "name": "<script>alert(1)</script>",
+          "country": "</script>",
+          "epoch": "<!--",
+          "apogee": 550,
+          "perigee": 540,
+          "objectType": "\"><img src=x onerror=alert(1)>"
+        }
+      ],
+      "signals": [
+        "{{APP_NAME}}"
+      ]
+    },
+    "GDELT": {
+      "totalArticles": 4,
+      "conflicts": [
+        {}
+      ],
+      "economy": [
+        {}
+      ],
+      "health": [
+        {}
+      ],
+      "crisis": [],
+      "allArticles": [
+        {
+          "title": "<script>alert(1)</script>",
+          "url": "javascript:alert(1)"
+        }
+      ],
+      "docStatus": "</script>",
+      "signals": [
+        "<!--"
+      ],
+      "events": {
+        "windowHours": 6,
+        "filesFetched": 20,
+        "newest": "\"><img src=x onerror=alert(1)>",
+        "oldest": "{{APP_NAME}}",
+        "totalEvents": 600,
+        "conflictEvents": 550,
+        "byType": {
+          "Armed clash": 200,
+          "Protest": 90
+        },
+        "byRegion": {
+          "Europe": 100,
+          "Middle East": 80
+        },
+        "topCountries": [
+          {
+            "name": "<script>alert(1)</script>",
+            "count": 50
+          },
+          {
+            "name": "</script>",
+            "count": 40
+          }
+        ]
+      },
+      "geoPoints": [
+        {
+          "lat": 50.4,
+          "lon": 30.5,
+          "name": "<!--",
+          "country": "\"><img src=x onerror=alert(1)>",
+          "count": 12,
+          "events": 12,
+          "type": "{{APP_NAME}}",
+          "worst": "<script>alert(1)</script>",
+          "goldstein": -8,
+          "tone": -5,
+          "latest": "</script>",
+          "samples": [
+            {
+              "actors": "<!--",
+              "url": "https://example.com/\"><img src=x onerror=alert(1)>"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "timing": {
+    "OpenSky": {
+      "status": "ok",
+      "ms": 820
+    },
+    "FIRMS": {
+      "status": "ok",
+      "ms": 410
+    },
+    "Maritime": {
+      "status": "ok",
+      "ms": 300
+    },
+    "Safecast": {
+      "status": "ok",
+      "ms": 260
+    },
+    "KiwiSDR": {
+      "status": "ok",
+      "ms": 1800
+    },
+    "WHO": {
+      "status": "ok",
+      "ms": 240
+    },
+    "GDACS": {
+      "status": "ok",
+      "ms": 190
+    },
+    "IODA": {
+      "status": "ok",
+      "ms": 350
+    },
+    "Cloudflare-Radar": {
+      "status": "ok",
+      "ms": 420
+    },
+    "SWPC": {
+      "status": "ok",
+      "ms": 150
+    },
+    "FRED": {
+      "status": "ok",
+      "ms": 600
+    },
+    "EIA": {
+      "status": "ok",
+      "ms": 500
+    },
+    "YFinance": {
+      "status": "ok",
+      "ms": 700
+    },
+    "Treasury": {
+      "status": "ok",
+      "ms": 380
+    },
+    "BLS": {
+      "status": "ok",
+      "ms": 620
+    },
+    "GSCPI": {
+      "status": "ok",
+      "ms": 210
+    },
+    "USAspending": {
+      "status": "ok",
+      "ms": 450
+    },
+    "NOAA": {
+      "status": "ok",
+      "ms": 280
+    },
+    "EPA": {
+      "status": "ok",
+      "ms": 330
+    },
+    "Space": {
+      "status": "ok",
+      "ms": 900
+    },
+    "GDELT": {
+      "status": "ok",
+      "ms": 1200
+    }
+  },
+  "news": [
+    {
+      "title": "<script>alert(1)</script>",
+      "source": "{{APP_NAME}} Feed",
+      "date": "2026-10-14T09:00:00.000Z",
+      "url": "javascript:alert(1)"
+    },
+    {
+      "title": "</script><!--\"><img src=x onerror=alert(1)>",
+      "source": "BBC",
+      "date": "2026-10-14T08:00:00.000Z",
+      "url": "https://example.com/news/\"><img src=x onerror=alert(1)>"
+    }
+  ]
+}

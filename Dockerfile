@@ -1,12 +1,27 @@
-FROM node:22-alpine
+# syntax=docker/dockerfile:1
+# Multi-stage build: compile the React frontend with dev dependencies, then ship a runtime image with
+# production dependencies only. React/React DOM stay in the runtime image because the public pages
+# are server-rendered in P7.
 
+FROM node:22.12-alpine AS build
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:22.12-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
 
 # Install production deps first for better layer caching
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy source
+# Compiled frontend (manifest + hashed assets) from the build stage
+COPY --from=build /app/dashboard/dist ./dashboard/dist
+
+# Copy source (dashboard/dist is excluded from the build context; the build stage output wins)
 COPY . .
 
 # Persistent state (sweep history, delta memory). Mount a volume here in the cloud.

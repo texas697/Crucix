@@ -4,7 +4,7 @@
 
 **One private dashboard for what's happening in the world. 28 open sources, refreshed every 15 minutes.**
 
-[![Node.js 22+](https://img.shields.io/badge/node-22%2B-brightgreen)](#quick-start)
+[![Node.js 22.12+](https://img.shields.io/badge/node-22.12%2B-brightgreen)](#quick-start)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPLv3-blue.svg)](LICENSE)
 [![Sources](https://img.shields.io/badge/OSINT%20sources-28-cyan)](#data-sources-28)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](#docker)
@@ -20,6 +20,9 @@ and a reading library.
 
 It is a fork of the open-source [Crucix](https://github.com/calesthio/Crucix) project (AGPL-3.0) with a new
 interface, a Firebase login, per-user AI keys and a Google Cloud deployment.
+
+The user-facing UI is migrating from self-contained HTML pages to a React app built with Vite. The legacy pages
+remain the default and are still served when a surface's `UI_*` flag is `legacy`.
 
 ## Why This Exists
 
@@ -47,7 +50,7 @@ automatically.
 > **If `npm run dev` fails silently**, run `node --trace-warnings server.mjs` directly, or `node diag.mjs`
 > to check your Node version, imports and port. See [Troubleshooting](#troubleshooting).
 
-**Requirements:** Node.js 22+.
+**Requirements:** Node.js 22.12+. The React build adds tooling on top of the backend, which still runs on plain Node.
 
 ### Cloud (Google Cloud Run + Firebase)
 
@@ -212,7 +215,7 @@ crucix/
 ├── crucix.config.mjs          # Configuration with env var overrides + delta thresholds
 ├── diag.mjs                   # Diagnostic script — run if server fails to start
 ├── .env.example               # All documented env vars
-├── package.json               # Runtime: express, firebase-admin
+├── package.json               # Backend: express, firebase-admin. Frontend: react, react-dom
 ├── docs/                      # Screenshots for README
 │
 ├── apis/
@@ -232,10 +235,16 @@ crucix/
 │
 ├── dashboard/
 │   ├── inject.mjs             # Data synthesis + standalone HTML injection
-│   └── public/
-│       ├── jarvis.html        # Main dashboard
-│       ├── digest.html        # Readers Digest
-│       └── media.html         # Live TV
+│   ├── server/
+│   │   └── ui.mjs             # Manifest-driven HTML rendering + route selection
+│   ├── react/                 # React source (Vite)
+│   │   ├── entries/           # Dashboard, digest, media, login browser entry points
+│   │   └── app/               # Providers, bootstrap, typed route selection
+│   ├── dist/                  # Generated build output (gitignored)
+│   └── public/                # Legacy pages, served when a UI_* flag is `legacy`
+│       ├── jarvis.html        # Legacy main dashboard
+│       ├── digest.html        # Legacy Readers Digest
+│       └── media.html         # Legacy Live TV
 │
 ├── lib/
 │   ├── llm/                   # LLM abstraction (8 providers, raw fetch, no SDKs)
@@ -255,6 +264,11 @@ crucix/
 │   │   ├── memory.mjs         # Hot memory (3 runs, atomic writes) + cold storage (daily archives)
 │   │   └── index.mjs          # Re-exports
 │
+├── test/
+│   ├── ui/                    # Vitest component and contract tests
+│   ├── e2e/                   # Playwright browser tests
+│   └── fixtures/              # Raw + synthesized fixtures and vendored assets
+│
 └── runs/                      # Runtime data (gitignored)
     ├── latest.json            # Most recent sweep output
     └── memory/                # Delta memory (hot.json + cold/YYYY-MM-DD.json)
@@ -262,11 +276,11 @@ crucix/
 
 ### Design Principles
 - **Pure ESM** — every file is `.mjs` with explicit imports
-- **Minimal dependencies** — Express and firebase-admin are the only runtime dependencies. LLM providers use raw `fetch()`, no SDKs.
+- **Deliberate dependencies** — Express and firebase-admin remain the only backend runtime dependencies, and LLM providers still use raw `fetch()` with no SDKs. The frontend adds `react` and `react-dom` at runtime plus a Vite/TypeScript build toolchain (`vite`, `@vitejs/plugin-react`, `typescript`, `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`, `@types/react`, `@types/react-dom`, `@playwright/test`) in devDependencies. New dependencies require a written rationale; the record is `docs/REACT_MIGRATION_PLAN.md` section 3, "Dependency rationale".
 - **Parallel execution** — `Promise.allSettled()` fires all 28 sources simultaneously
 - **Graceful degradation** — missing keys produce errors, not crashes. LLM failures don't kill sweeps.
 - **Each source is standalone** — run `node apis/sources/gdelt.mjs` to test any source independently
-- **Self-contained dashboard** — the HTML file works with or without the server
+- **Progressive React UI** — the user-facing UI is migrating to a React app built with Vite (`dashboard/react/` → `dashboard/dist/`). Per-surface flags (`UI_DASHBOARD`, `UI_DIGEST`, `UI_MEDIA`, `UI_LOGIN`, `UI_SITE`, values `legacy` or `react`, default `legacy`) select the build server-side; they never change the URL. Legacy pages are served unchanged while a flag is `legacy`, and a `react` flag with no build fails startup.
 
 ---
 
@@ -336,9 +350,17 @@ crucix/
 |--------|---------|-------------|
 | `npm run dev` | `node --trace-warnings server.mjs` | Start dashboard with auto-refresh |
 | `npm run sweep` | `node apis/briefing.mjs` | Run a single sweep, output JSON to stdout |
-| `npm run inject` | `node dashboard/inject.mjs` | Inject latest data into static HTML |
+| `npm run inject` | `node dashboard/inject.mjs` | Inject latest data into static HTML. The standalone export's LLM behavior is a known area still being finalized (P8); the command is otherwise unchanged. |
 | `npm run brief:save` | `node apis/save-briefing.mjs` | Run sweep + save timestamped JSON |
 | `npm run diag` | `node diag.mjs` | Run diagnostics (Node version, imports, port check) |
+| `npm run build` | `vite build` | Build the React frontend into `dashboard/dist` |
+| `npm run typecheck` | `tsc --noEmit` | Type-check frontend sources without emitting |
+| `npm run test:ui` | `vitest run` | Component and contract tests under `test/ui` |
+| `npm run test:e2e` | `playwright test` | Browser tests under `test/e2e` |
+| `npm run fixtures:build` | `node test/scripts/build-fixtures.mjs` | Regenerate `test/fixtures/synthesized` from `test/fixtures/runs` |
+| `npm run serve:fixtures` | `node test/fixtures/server.mjs` | Serve fixtures on loopback for local work |
+
+`npm test` is unchanged: `node --test` over `test/*.test.mjs`, with integration files excluded.
 
 ---
 
@@ -414,7 +436,7 @@ Then try starting again. You can also change the port by setting `PORT=3118` in 
 ```bash
 node --version
 ```
-Crucix requires Node.js 22 or later. If you have an older version, download the latest LTS from [nodejs.org](https://nodejs.org/).
+Crucix requires Node.js 22.12+ (Vite requires Node 20.19+ or 22.12+, and the repo enforces the 22.12 floor in `package.json` `engines`, `.nvmrc`, CI and the container base image). If you have an older version, download the latest LTS from [nodejs.org](https://nodejs.org/).
 
 ### Dashboard shows empty panels after first start
 

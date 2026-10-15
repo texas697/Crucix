@@ -1,0 +1,196 @@
+{
+  "air": [],
+  "airMeta": {
+    "fallback": false,
+    "liveTotal": 0,
+    "militaryTotal": 0,
+    "openSky": null,
+    "signals": [],
+    "source": "OpenSky",
+    "timestamp": "2026-10-14T11:00:00.000Z"
+  },
+  "bls": [],
+  "chokepoints": [],
+  "defense": [],
+  "disasters": {
+    "asOf": null,
+    "counts": null,
+    "error": null,
+    "events": [],
+    "signals": []
+  },
+  "energy": {
+    "signals": [],
+    "wtiRecent": []
+  },
+  "epa": {
+    "stations": [],
+    "totalReadings": 0
+  },
+  "fred": [],
+  "gdelt": {
+    "byRegion": {},
+    "byType": {},
+    "conflictEvents": 0,
+    "conflicts": 0,
+    "crisis": 0,
+    "docStatus": null,
+    "economy": 0,
+    "geoPoints": [],
+    "health": 0,
+    "signals": [],
+    "topCountries": [],
+    "topTitles": [],
+    "totalArticles": 0,
+    "totalEvents": 0,
+    "window": {
+      "files": 0,
+      "hours": 0,
+      "newest": null,
+      "oldest": null
+    }
+  },
+  "gscpi": null,
+  "health": [],
+  "healthWatch": {
+    "activeDays": 90,
+    "asOf": null,
+    "cdcOutbreaks": [],
+    "error": null,
+    "notices": 0,
+    "outbreaks": [],
+    "recent": 0,
+    "recentDays": 30,
+    "signals": [],
+    "travel": [],
+    "travelError": null
+  },
+  "ideas": [],
+  "ideasSource": "disabled",
+  "maritimeMeta": {
+    "access": null,
+    "asOf": null,
+    "disruptions": [],
+    "error": null,
+    "lagDays": null,
+    "provider": null,
+    "signals": [],
+    "summary": null
+  },
+  "markets": {
+    "commodities": [],
+    "crypto": [],
+    "indexes": [],
+    "rates": [],
+    "timestamp": null,
+    "vix": null
+  },
+  "meta": {
+    "sourcesFailed": 0,
+    "sourcesOk": 0,
+    "sourcesQueried": 0,
+    "timestamp": "2026-10-14T11:00:00.000Z",
+    "totalDurationMs": 0,
+    "version": "2.0.0"
+  },
+  "metals": {
+    "goldRecent": [],
+    "silverRecent": []
+  },
+  "milAir": [],
+  "news": [],
+  "newsFeed": [],
+  "noaa": {
+    "alerts": [],
+    "totalAlerts": 0
+  },
+  "nuke": [],
+  "nukeMeta": {
+    "at": null,
+    "error": null,
+    "feed": null,
+    "liveSensors": 0,
+    "windowDays": null
+  },
+  "nukeSignals": [],
+  "outages": {
+    "alerts": [],
+    "asOf": null,
+    "countries": [],
+    "counts": null,
+    "error": null,
+    "radar": {
+      "annotations": [],
+      "anomalies": [],
+      "asOf": null,
+      "attacks": {
+        "l3Origins": [],
+        "l3Targets": [],
+        "l7Targets": []
+      },
+      "enabled": true,
+      "signals": []
+    },
+    "signals": [],
+    "windowHours": 24
+  },
+  "sdr": {
+    "all": [],
+    "capacity": 0,
+    "directory": null,
+    "error": null,
+    "online": 0,
+    "private": 0,
+    "probed": 0,
+    "total": 0,
+    "unreachable": 0,
+    "users": 0,
+    "zones": []
+  },
+  "shipsMeta": {
+    "connected": false,
+    "enabled": false,
+    "error": null,
+    "lastMessageAt": null,
+    "liveVessels": 0,
+    "since": null,
+    "windowMinutes": 60
+  },
+  "space": {
+    "constellations": {},
+    "iss": null,
+    "issPosition": null,
+    "launchByCountry": {},
+    "militaryByCountry": {},
+    "militarySats": 0,
+    "recentLaunches": [],
+    "signals": [],
+    "stationPositions": [],
+    "stations": [],
+    "stationsSource": null,
+    "totalNewObjects": 0
+  },
+  "spaceWeather": {
+    "alerts": [],
+    "asOf": null,
+    "flare": null,
+    "kp": null,
+    "scales": null,
+    "signals": []
+  },
+  "tSignals": [],
+  "thermal": [],
+  "thermalMeta": {
+    "access": null,
+    "error": null,
+    "globalDetections": 0,
+    "lastModified": null,
+    "satellites": [],
+    "window": null
+  },
+  "treasury": {
+    "signals": [],
+    "totalDebt": "0"
+  },
+  "who": []
+}

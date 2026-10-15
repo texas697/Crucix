@@ -6,7 +6,7 @@
 // Exports synthesize(), generateIdeas(), fetchAllNews() for use by server.mjs
 
 import { CENTROID as IODA_CENTROID } from '../apis/sources/ioda.mjs';
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { exec } from 'child_process';
@@ -127,14 +127,16 @@ function summarizeAirHotspots(hotspots = []) {
 
 // Military aircraft currently broadcasting (adsb.lol global feed), for real markers on the air layer
 function summarizeMilitary(list = []) {
-  return list.filter(a => typeof a.lat === 'number' && typeof a.lon === 'number').slice(0, 150).map(a => ({
+  return list.filter(a => typeof a.lat === 'number' && typeof a.lon === 'number').slice(0, 2000).map(a => ({
     hex: a.hex, cs: a.callsign || '', type: a.type || '', reg: a.reg || '', country: a.country || 'Unknown',
     lat: +a.lat.toFixed(3), lon: +a.lon.toFixed(3), alt: a.altFt ?? null, gs: a.gs ?? null, trk: a.track ?? null, sq: a.squawk || null,
   }));
 }
 
-function loadOpenSkyFallback(currentTimestamp) {
-  const runsDir = join(ROOT, 'runs');
+function loadOpenSkyFallback(currentTimestamp, runsDirOverride) {
+  // Production reads the repository's runs/ directory. Tests pass an override so a fixture run can
+  // be resolved against a controlled directory instead of the operator's live sweep history.
+  const runsDir = runsDirOverride || join(ROOT, 'runs');
   if (!existsSync(runsDir)) return null;
 
   const currentMs = currentTimestamp ? new Date(currentTimestamp).getTime() : NaN;
@@ -403,11 +405,15 @@ export function generateIdeas(V2) {
 }
 
 // === Synthesize raw sweep data into dashboard format ===
-export async function synthesize(data) {
+// `deps` is a narrow test seam only: fetchNews injects the RSS fetcher (production uses the module
+// binding) and runsDir overrides the historical OpenSky fallback directory. Both default to the
+// existing production behavior so runtime call sites are unchanged.
+export async function synthesize(data, deps = {}) {
+  const fetchNews = deps.fetchNews || fetchAllNews;
   const liveAirHotspots = data.sources.OpenSky?.hotspots || [];
   const airFallback = sumAirHotspots(liveAirHotspots) > 0
     ? null
-    : loadOpenSkyFallback(data.sources.OpenSky?.timestamp || data.crucix?.timestamp);
+    : loadOpenSkyFallback(data.sources.OpenSky?.timestamp || data.crucix?.timestamp, deps.runsDir);
   const effectiveAirHotspots = airFallback?.hotspots || liveAirHotspots;
   const air = summarizeAirHotspots(effectiveAirHotspots);
   const milAir = summarizeMilitary(data.sources.OpenSky?.military || []);
@@ -730,7 +736,7 @@ export async function synthesize(data) {
   // Fetch RSS
   // Fetch RSS. A fresh Cloud Run instance synthesizes the stored run at startup with the CPU throttled, so the
   // 19 feeds can all time out; fall back to the news saved with the run rather than render an empty ticker.
-  let news = await fetchAllNews();
+  let news = await fetchNews();
   if (!news.length && Array.isArray(data.news) && data.news.length) {
     console.log(`[Crucix] RSS returned nothing — reusing ${data.news.length} stored news items from the last sweep`);
     news = data.news;
@@ -812,65 +818,189 @@ function getCliArg(flag) {
   return idx >= 0 ? process.argv[idx + 1] : null;
 }
 
-async function cliInject() {
-  const data = JSON.parse(readFileSync(join(ROOT, 'runs/latest.json'), 'utf8'));
-  const htmlOverride = getCliArg('--html');
-  const shouldOpen = !process.argv.includes('--no-open');
+// --- Pure injection helpers (shared by cliInject and test/standalone.test.mjs) -------------------
 
-  console.log('Fetching RSS news feeds...');
-  const V2 = await synthesize(data);
-  const llmProvider = createLLMProvider(config.llm);
+/** The new React template's snapshot marker; `cliInject` replaces this statement with the payload. */
+export const SNAPSHOT_MARKER = 'window.__CRUCIX_SNAPSHOT__ = {}; /* CRUCIX_SNAPSHOT */';
 
-  if (llmProvider?.isConfigured) {
-    try {
-      console.log(`[LLM] Generating ideas via ${llmProvider.name}...`);
-      const llmIdeas = await generateLLMIdeas(llmProvider, V2, null, []);
-      if (llmIdeas?.length) {
-        V2.ideas = llmIdeas;
-        V2.ideasSource = 'llm';
-        console.log(`[LLM] Generated ${llmIdeas.length} ideas`);
-      } else {
-        V2.ideas = generateIdeas(V2);
-        V2.ideasSource = 'rules';
-        console.log('[LLM] No ideas returned, falling back to rule-based ideas');
-      }
-    } catch (err) {
-      V2.ideas = generateIdeas(V2);
-      V2.ideasSource = 'rules';
-      console.log('[LLM] Idea generation failed, falling back to rule-based ideas:', err.message);
-    }
-  } else {
-    V2.ideas = generateIdeas(V2);
-    V2.ideasSource = 'rules';
+// Escape the sequences the HTML parser still honours inside a <script> element (</script> and <!--),
+// so feed text can't end the block early and inject markup.
+export function escapeSnapshotJson(payload) {
+  return JSON.stringify(payload).replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
+}
+
+const LEGACY_D_RE = /^(let|const) D = .*;\s*$/m;
+const SNAPSHOT_MARKER_RE = /window\.__CRUCIX_SNAPSHOT__\s*=\s*[^;]*;\s*\/\* CRUCIX_SNAPSHOT \*\//;
+
+/**
+ * Substitute an embedded snapshot into an HTML template, recognising two forms:
+ *   - legacy: a `let D = ...;` (or `const D`) line, replaced exactly as the historical export did
+ *   - snapshot: the P8 React marker (`window.__CRUCIX_SNAPSHOT__ = ...; /* CRUCIX_SNAPSHOT *\/`)
+ * Returns `{ html, mode }` with mode 'legacy' | 'snapshot' | 'unrecognized'. On 'unrecognized' the
+ * `html` is null and the caller must NOT write the file (an unknown template is never overwritten).
+ */
+export function injectIntoHtml(html, payload) {
+  const json = escapeSnapshotJson(payload);
+  if (LEGACY_D_RE.test(html)) {
+    // A replacer function keeps JSON literal even when it contains `$`.
+    return { html: html.replace(LEGACY_D_RE, () => 'let D = ' + json + ';'), mode: 'legacy' };
   }
-  console.log(`Generated ${V2.ideas.length} leverageable ideas`);
+  if (SNAPSHOT_MARKER_RE.test(html)) {
+    return {
+      html: html.replace(SNAPSHOT_MARKER_RE, () => 'window.__CRUCIX_SNAPSHOT__ = ' + json + '; /* CRUCIX_SNAPSHOT */'),
+      mode: 'snapshot',
+    };
+  }
+  return { html: null, mode: 'unrecognized' };
+}
 
-  // Escape sequences the HTML parser still honours inside a <script> element
-  // (</script> and <!--), so feed text can't end the block early and inject markup.
-  const json = JSON.stringify(V2).replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
-  console.log('\n--- Synthesis ---');
-  console.log('Size:', json.length, 'bytes | Air:', V2.air.length, '| Thermal:', V2.thermal.length,
-    '| News:', V2.news.length, '| Ideas:', V2.ideas.length, '| Sources:', V2.health.length);
+/**
+ * Decide and generate the export's ideas. Default OFF: without `--llm` this NEVER constructs a
+ * provider, so a fixture/CI export produces rule-based ideas without contacting anyone. With `--llm`
+ * it uses the configured operator provider, falling back to rule-based ideas on any failure. Every
+ * seam is injectable so the behaviour is testable offline.
+ */
+export async function resolveIdeas(V2, options = {}) {
+  const {
+    useLlm = false,
+    providerFactory = createLLMProvider,
+    generateLLM = generateLLMIdeas,
+    generateRules = generateIdeas,
+    llmConfig = config.llm,
+    log = console.log,
+  } = options;
 
-  const htmlPath = htmlOverride || join(ROOT, 'dashboard/public/jarvis.html');
-  let html = readFileSync(htmlPath, 'utf8');
-  // Use a replacer function so JSON is inserted literally even if it contains `$`.
-  html = html.replace(/^(let|const) D = .*;\s*$/m, () => 'let D = ' + json + ';');
-  writeFileSync(htmlPath, html);
-  console.log('Data injected into jarvis.html!');
+  if (!useLlm) {
+    V2.ideas = generateRules(V2);
+    V2.ideasSource = 'rules';
+    log('Ideas: rule-based (no LLM call; pass --llm to use the configured provider)');
+    return { source: 'rules', provider: null };
+  }
 
-  if (!shouldOpen) return;
+  let provider = null;
+  try {
+    provider = providerFactory(llmConfig);
+  } catch (err) {
+    provider = null;
+    log('[LLM] Provider setup failed, falling back to rule-based ideas:', err?.message || err);
+  }
 
-  // Auto-open dashboard in default browser
+  if (!provider?.isConfigured) {
+    V2.ideas = generateRules(V2);
+    V2.ideasSource = 'rules';
+    log('[LLM] Provider not configured, falling back to rule-based ideas');
+    return { source: 'rules', provider: null };
+  }
+
+  try {
+    log(`[LLM] Generating ideas via ${provider.name}...`);
+    const llmIdeas = await generateLLM(provider, V2, null, []);
+    if (llmIdeas?.length) {
+      V2.ideas = llmIdeas;
+      V2.ideasSource = 'llm';
+      log(`[LLM] Generated ${llmIdeas.length} ideas`);
+      return { source: 'llm', provider: provider.name };
+    }
+    V2.ideas = generateRules(V2);
+    V2.ideasSource = 'rules';
+    log('[LLM] No ideas returned, falling back to rule-based ideas');
+    return { source: 'rules', provider: provider.name };
+  } catch (err) {
+    V2.ideas = generateRules(V2);
+    V2.ideasSource = 'rules';
+    log('[LLM] Idea generation failed, falling back to rule-based ideas:', err.message);
+    return { source: 'rules', provider: provider.name };
+  }
+}
+
+// --- Default export target: the built React standalone directory ---------------------------------
+
+const STANDALONE_DIR = join(ROOT, 'dashboard', 'dist', 'standalone');
+const STANDALONE_TEMPLATE = join(ROOT, 'dashboard', 'react', 'standalone', 'template.html');
+const STANDALONE_BUNDLE = join(STANDALONE_DIR, 'crucix-standalone.js');
+const STANDALONE_INDEX = join(STANDALONE_DIR, 'index.html');
+
+/** Open a file in the OS default browser (existing behaviour, preserved for both export paths). */
+function openInBrowser(target) {
   // NOTE: On Windows, `start` in PowerShell is an alias for Start-Service, not cmd's start.
   // We must use `cmd /c start ""` to ensure it works in both cmd.exe and PowerShell.
   const openCmd = process.platform === 'win32' ? 'cmd /c start ""' :
                   process.platform === 'darwin' ? 'open' : 'xdg-open';
-  const dashUrl = htmlPath.replace(/\\/g, '/');
-  exec(`${openCmd} "${dashUrl}"`, (err) => {
+  const url = target.replace(/\\/g, '/');
+  exec(`${openCmd} "${url}"`, (err) => {
     if (err) console.log('Could not auto-open browser:', err.message);
     else console.log('Dashboard opened in browser!');
   });
+}
+
+/**
+ * Build the standalone HTML for the default (no `--html`) export from the committed template plus the
+ * built bundle. Requires `npm run build:standalone` to have run; the index is written next to the
+ * bundle so the template's relative asset URLs resolve.
+ */
+export function buildStandaloneDocument(payload, {
+  templatePath = STANDALONE_TEMPLATE,
+  bundlePath = STANDALONE_BUNDLE,
+  outPath = STANDALONE_INDEX,
+} = {}) {
+  if (!existsSync(bundlePath)) {
+    throw new Error(`Standalone bundle not found at ${bundlePath}. Run: npm run build:standalone`);
+  }
+  const template = readFileSync(templatePath, 'utf8');
+  const result = injectIntoHtml(template, payload);
+  if (result.mode !== 'snapshot' || !result.html) {
+    throw new Error(`Standalone template ${templatePath} is missing the CRUCIX_SNAPSHOT marker`);
+  }
+  return { html: result.html, outPath };
+}
+
+async function cliInject() {
+  const data = JSON.parse(readFileSync(join(ROOT, 'runs/latest.json'), 'utf8'));
+  const htmlOverride = getCliArg('--html');
+  const shouldOpen = !process.argv.includes('--no-open');
+  // LLM ideas are an explicit opt-in: default OFF so an export never contacts a provider.
+  const useLlm = process.argv.includes('--llm');
+
+  console.log('Fetching RSS news feeds...');
+  const V2 = await synthesize(data);
+  await resolveIdeas(V2, { useLlm });
+  console.log(`Generated ${V2.ideas.length} leverageable ideas`);
+
+  console.log('\n--- Synthesis ---');
+  const json = escapeSnapshotJson(V2);
+  console.log('Size:', json.length, 'bytes | Air:', V2.air.length, '| Thermal:', V2.thermal.length,
+    '| News:', V2.news.length, '| Ideas:', V2.ideas.length, '| Sources:', V2.health.length);
+
+  if (htmlOverride) {
+    // Explicit --html target: keep substituting legacy `let D` templates, support the new React
+    // marker, and refuse to touch anything unrecognised.
+    const html = readFileSync(htmlOverride, 'utf8');
+    const result = injectIntoHtml(html, V2);
+    if (!result.html) {
+      console.error(
+        `Unrecognized template at ${htmlOverride}; not overwriting. ` +
+        `Expected a legacy "let D = ...;" line or the marker "${SNAPSHOT_MARKER}".`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+    writeFileSync(htmlOverride, result.html);
+    console.log(`Data injected into ${htmlOverride} (${result.mode} template)!`);
+    if (shouldOpen) openInBrowser(htmlOverride);
+    return;
+  }
+
+  // Default: no longer rewrite application source (jarvis.html). Build the React standalone export.
+  try {
+    const { html, outPath } = buildStandaloneDocument(V2);
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, html);
+    console.log(`Standalone snapshot written to ${outPath}`);
+    if (shouldOpen) openInBrowser(outPath);
+  } catch (err) {
+    console.error(err.message);
+    process.exitCode = 1;
+  }
 }
 
 // Run CLI if invoked directly

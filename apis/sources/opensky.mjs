@@ -29,7 +29,7 @@ const ADSB_CACHE_MAX_MS = 90 * 60000;
 // Theaters are sampled in rotation across sweeps (about 4 per sweep fit the budget); the instance keeps
 // the last sample per theater so every theater still has recent data.
 const adsbCache = new Map();
-const MAX_MIL_LISTED = 150;
+const MAX_MIL_LISTED = 2000;
 
 // Key hotspot regions for monitoring
 export const HOTSPOTS = {

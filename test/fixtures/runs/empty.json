@@ -1,0 +1,14 @@
+{
+  "crucix": {
+    "version": "2.0.0",
+    "timestamp": "2026-10-14T11:00:00.000Z",
+    "totalDurationMs": 0,
+    "sourcesQueried": 0,
+    "sourcesOk": 0,
+    "sourcesFailed": 0
+  },
+  "sources": {},
+  "errors": [],
+  "timing": {},
+  "news": []
+}

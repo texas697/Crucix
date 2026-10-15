@@ -64,6 +64,40 @@ Run workflow, from `main`). It never runs on push. One-time setup:
 
 Pull requests only run a syntax check (`ci.yml`).
 
+## Staging
+
+A second Cloud Run service, `crucix-staging`, exists so flag flips and rollbacks can be rehearsed without
+touching live traffic. It is documented here but **has not been provisioned in this branch** — see the note at
+the end of this section.
+
+- **Service and bucket** — `crucix-staging` in the same project, deployed with its own `SERVICE`, `PUBLIC_URL`
+  and `BUCKET` (the state bucket for `RUNS_DIR`), so staging sweep history never mixes with production.
+- **Scheduler jobs** — the sweep and digest job names are parametrized as `SWEEP_JOB` and `DIGEST_JOB`
+  (production defaults `crucix-sweep` / `crucix-digest`), so a staging deploy creates or updates staging jobs
+  instead of repointing production sweeps.
+- **Workflow target** — `deploy.yml` takes a `target` input, `production` (the default) or `staging`. The staging
+  target uses a `staging` GitHub environment with its own `vars` and no reviewer approval; production keeps the
+  existing approval.
+- **Flags without a rebuild** — a `flags-only` job in `deploy.yml` updates the `UI_*` variables on the service
+  with `gcloud run services update --update-env-vars` and no image build. Change the GitHub environment var
+  first, then run the job, so the next full deploy agrees with it.
+- **LLM key** — `deploy/cloudrun.sh` attaches the project's `LLM_API_KEY` secret whenever it exists, so a naive
+  staging deploy would inherit the production operator key. A `LLM_SECRET` name override points staging at an
+  empty or capped key instead.
+- **Hosting and OAuth** — a second Firebase Hosting site/target rewrites to the staging service, and the staging
+  host is added to the Firebase Auth authorized domains so Hosting-proxied behavior and real OAuth checks work
+  there.
+- **Auth** — staging runs `AUTH_MODE` on with test accounts and the same image or source build as production.
+
+The `UI_*` flags are emitted into the generated `deploy/env.yaml` on every deploy, with `legacy` as the default.
+Because `--env-vars-file` replaces the service's whole environment, any `UI_*` value set by hand with
+`gcloud run services update` (or in the gitignored `deploy/extra-env.yaml`) is lost on the next deploy — that is
+why the `flags-only` job exists.
+
+> **Not provisioned yet.** Staging does not exist in this branch. Provisioning requires cloud and Firebase
+> access (`crucix-staging` and its bucket, the staging scheduler jobs, a second Hosting site, the
+> authorized-domain edit, and the `staging` GitHub environment) and is a pending gate item.
+
 ## Deploy / redeploy
 
 ```bash

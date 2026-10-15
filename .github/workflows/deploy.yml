@@ -1,23 +1,34 @@
 name: Deploy to Cloud Run
 
-# Manual only, from main, behind the `production` environment (configure
-# required reviewers on it). Nothing deploys on push.
+# Manual only, from main. The `production` environment keeps its required reviewers; `staging` has
+# none. Every value comes from per-environment GitHub `vars`, so a staging deploy never touches
+# production jobs, buckets or scheduler jobs.
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        type: choice
+        options: [production, staging]
+        default: production
+      flags_only:
+        description: Update UI_* environment variables only (no build)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
   id-token: write
 
 concurrency:
-  group: deploy-production
+  group: deploy-${{ inputs.target || 'production' }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && inputs.flags_only != true
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ inputs.target || 'production' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,10 +45,58 @@ jobs:
       - name: Deploy
         env:
           PROJECT: ${{ vars.GCP_PROJECT }}
+          SERVICE: ${{ vars.SERVICE }}
+          BUCKET: ${{ vars.BUCKET }}
+          SWEEP_JOB: ${{ vars.SWEEP_JOB }}
+          DIGEST_JOB: ${{ vars.DIGEST_JOB }}
+          LLM_SECRET: ${{ vars.LLM_SECRET }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
           AIS_RELAY_URL: ${{ vars.AIS_RELAY_URL }}
           OPENSKY_RELAY_URL: ${{ vars.OPENSKY_RELAY_URL }}
           FEEDBACK_ADMIN_EMAILS: ${{ vars.FEEDBACK_ADMIN_EMAILS }}
           LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          # Access policy: an empty AUTH_ALLOWED_EMAILS/DOMAINS means the server allows EVERY identity
+          # (see lib/auth/firebase.mjs isEmailAllowed). Always set AUTH_ALLOWED_EMAILS per target — the
+          # staging service shares production's Firebase project, so leaving it empty exposes staging.
+          AUTH_ALLOWED_EMAILS: ${{ vars.AUTH_ALLOWED_EMAILS }}
+          AUTH_ALLOWED_DOMAINS: ${{ vars.AUTH_ALLOWED_DOMAINS }}
+          AUTH_ALLOW_SIGNUP: ${{ vars.AUTH_ALLOW_SIGNUP }}
+          UI_DASHBOARD: ${{ vars.UI_DASHBOARD }}
+          UI_DIGEST: ${{ vars.UI_DIGEST }}
+          UI_MEDIA: ${{ vars.UI_MEDIA }}
+          UI_LOGIN: ${{ vars.UI_LOGIN }}
+          UI_SITE: ${{ vars.UI_SITE }}
         run: bash deploy/cloudrun.sh
+
+  # Flip the UI_* flags in seconds without rebuilding. Same targets, same approvals. Change the var
+  # first, then run this job, so the next full deploy agrees with the running revision.
+  flags-only:
+    if: github.ref == 'refs/heads/main' && inputs.flags_only == true
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target || 'production' }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Update UI_* flags
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT }}
+          SERVICE: ${{ vars.SERVICE }}
+          REGION: ${{ vars.REGION }}
+          UI_DASHBOARD: ${{ vars.UI_DASHBOARD || 'legacy' }}
+          UI_DIGEST: ${{ vars.UI_DIGEST || 'legacy' }}
+          UI_MEDIA: ${{ vars.UI_MEDIA || 'legacy' }}
+          UI_LOGIN: ${{ vars.UI_LOGIN || 'legacy' }}
+          UI_SITE: ${{ vars.UI_SITE || 'legacy' }}
+        run: |
+          set -euo pipefail
+          gcloud run services update "${SERVICE:-crucix}" \
+            --project "$PROJECT" --region "${REGION:-us-central1}" \
+            --update-env-vars "UI_DASHBOARD=$UI_DASHBOARD,UI_DIGEST=$UI_DIGEST,UI_MEDIA=$UI_MEDIA,UI_LOGIN=$UI_LOGIN,UI_SITE=$UI_SITE" \
+            --quiet

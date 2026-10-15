@@ -8,3 +8,7 @@ output
 .claude
 .playwright-cli
 deploy/env.yaml
+dashboard/dist
+test
+playwright-report
+test-results

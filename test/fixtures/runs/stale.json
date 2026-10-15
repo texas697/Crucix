@@ -1,0 +1,1143 @@
+{
+  "crucix": {
+    "version": "2.0.0",
+    "timestamp": "2026-08-01T11:00:00.000Z",
+    "totalDurationMs": 12345,
+    "sourcesQueried": 21,
+    "sourcesOk": 21,
+    "sourcesFailed": 0
+  },
+  "sources": {
+    "OpenSky": {
+      "source": "OpenSky",
+      "timestamp": "2026-08-01T11:00:00.000Z",
+      "openSky": {
+        "accessed": true,
+        "credits": 3800,
+        "rateLimitRemaining": 400
+      },
+      "militaryTotal": 2,
+      "signals": [
+        "2 military aircraft broadcasting in Europe"
+      ],
+      "hotspots": [
+        {
+          "region": "Europe",
+          "key": "europe",
+          "totalAircraft": 1240,
+          "byCountry": {
+            "Germany": 310,
+            "France": 260,
+            "United Kingdom": 180
+          },
+          "noCallsign": 42,
+          "highAltitude": 135,
+          "military": 2,
+          "militaryTop": [
+            {
+              "hex": "ae1234",
+              "callsign": "RCH123"
+            },
+            {
+              "hex": "ae5678",
+              "callsign": "HOMER31"
+            }
+          ],
+          "via": "OpenSky",
+          "coverage": "full",
+          "sampledAt": "2026-08-01T11:00:00.000Z"
+        }
+      ],
+      "military": [
+        {
+          "hex": "ae1234",
+          "callsign": "RCH123",
+          "type": "C-17",
+          "reg": "07-7177",
+          "country": "United States",
+          "lat": 49.53,
+          "lon": 8.42,
+          "altFt": 31000,
+          "gs": 452,
+          "track": 92,
+          "squawk": "4213"
+        }
+      ]
+    },
+    "FIRMS": {
+      "hotspots": [
+        {
+          "region": "Amazon Basin",
+          "totalDetections": 1850,
+          "highConfidence": 340,
+          "nightDetections": 420,
+          "highIntensityCount": 2,
+          "highIntensity": [
+            {
+              "lat": -3.21,
+              "lon": -60.14,
+              "frp": 220.5,
+              "date": "2026-08-01",
+              "time": "0230",
+              "confidence": "high",
+              "daynight": "N",
+              "satellite": "VIIRS"
+            },
+            {
+              "lat": -12.44,
+              "lon": -55.71,
+              "frp": 180.2,
+              "date": "2026-08-01",
+              "time": "0145",
+              "confidence": "nominal",
+              "daynight": "N",
+              "satellite": "MODIS"
+            }
+          ]
+        }
+      ],
+      "signals": [
+        "Elevated fire activity across the Amazon"
+      ],
+      "access": "ok",
+      "window": "24h",
+      "satellites": [
+        "VIIRS",
+        "MODIS"
+      ],
+      "lastModified": "2026-08-01T06:20:00.000Z",
+      "globalDetections": 9042
+    },
+    "Maritime": {
+      "chokepoints": {
+        "hormuz": {
+          "id": "hormuz",
+          "label": "Strait of Hormuz",
+          "lat": 26.57,
+          "lon": 56.25,
+          "major": true,
+          "note": "Primary crude transit route",
+          "status": "normal",
+          "transits": {
+            "perDay7": 21,
+            "perDayPrior7": 19,
+            "baseline365": 20,
+            "pctVsBaseline": 5,
+            "trend7Pct": 10.5,
+            "tankerShare7": 0.42,
+            "latestDate": "2026-08-01",
+            "daily": [
+              {
+                "n": 21
+              },
+              {
+                "n": 20
+              },
+              {
+                "n": 22
+              }
+            ]
+          },
+          "events": [
+            {
+              "name": "Tanker anchorage buildup",
+              "type": "delay",
+              "from": "2026-08-01",
+              "ongoing": true
+            }
+          ]
+        },
+        "malacca": {
+          "id": "malacca",
+          "label": "Strait of Malacca",
+          "lat": 2.5,
+          "lon": 101.5,
+          "major": true,
+          "note": "Asia-Europe container corridor",
+          "status": "normal",
+          "transits": {
+            "perDay7": 58,
+            "perDayPrior7": 57,
+            "baseline365": 56,
+            "pctVsBaseline": 3.6,
+            "trend7Pct": 1.8,
+            "tankerShare7": 0.22,
+            "latestDate": "2026-08-01",
+            "daily": [
+              {
+                "n": 58
+              },
+              {
+                "n": 57
+              }
+            ]
+          },
+          "events": []
+        }
+      },
+      "ais": {
+        "enabled": true,
+        "connected": true,
+        "liveVessels": 42,
+        "since": "2026-08-01T10:00:00.000Z",
+        "lastMessageAt": "2026-08-01T11:00:00.000Z",
+        "windowMinutes": 60
+      },
+      "access": "ok",
+      "provider": "IMF PortWatch",
+      "latestDate": "2026-08-01",
+      "summary": "Global chokepoint flows within normal ranges",
+      "signals": [
+        "Hormuz transit volume steady"
+      ],
+      "disruptions": [
+        {
+          "name": "Red Sea rerouting",
+          "type": "diversion",
+          "from": "2026-08-01",
+          "lat": 13,
+          "lon": 43,
+          "affected": [
+            "Container shipping"
+          ],
+          "ongoing": true
+        }
+      ]
+    },
+    "Safecast": {
+      "sites": [
+        {
+          "site": "Tokyo",
+          "key": "tokyo",
+          "lat": 35.68,
+          "lon": 139.69,
+          "radiusKm": 30,
+          "coverage": "live",
+          "sensors": 5,
+          "medianCPM": 25,
+          "maxCPM": 90,
+          "medianUsvh": 0.15,
+          "maxUsvh": 0.5,
+          "alertUsvh": 1,
+          "anomaly": false,
+          "hotSensors": 0,
+          "readings": [
+            {
+              "name": "Shinjuku",
+              "lat": 35.69,
+              "lon": 139.7,
+              "distanceKm": 2.1,
+              "cpm": 30,
+              "usvh": 0.18,
+              "tube": "LND712",
+              "capturedAt": "2026-08-01T10:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "signals": [
+        "No radiation anomalies detected"
+      ],
+      "feed": "safecast.org",
+      "liveSensors": 5,
+      "windowDays": 7,
+      "timestamp": "2026-08-01T11:00:00.000Z"
+    },
+    "KiwiSDR": {
+      "network": {
+        "totalReceivers": 640,
+        "probed": 520,
+        "online": 430,
+        "private": 35,
+        "unreachable": 90,
+        "totalUsers": 910,
+        "totalCapacity": 2100
+      },
+      "conflictZones": {
+        "ukraine": {
+          "region": "Ukraine",
+          "count": 12,
+          "online": 9,
+          "private": 1,
+          "down": 2,
+          "users": 30,
+          "capacity": 48,
+          "receivers": [
+            {
+              "name": "KYIV",
+              "lat": 50.4,
+              "lon": 30.5,
+              "url": "http://sdr.kyiv.example:8073",
+              "live": "online",
+              "users": 3,
+              "usersMax": 4,
+              "snr": {
+                "hf": 12
+              },
+              "antenna": "dipole",
+              "hw": "KiwiSDR",
+              "gpsGood": 1,
+              "country": "Ukraine"
+            }
+          ]
+        }
+      },
+      "all": [
+        [
+          "KYIV",
+          50.4,
+          30.5,
+          "Ukraine",
+          "http://sdr.kyiv.example:8073"
+        ],
+        [
+          "TOKYO",
+          35.68,
+          139.69,
+          "Japan",
+          "http://sdr.tokyo.example:8073"
+        ]
+      ],
+      "directory": "kiwisdr.com/public"
+    },
+    "WHO": {
+      "diseaseOutbreakNews": [
+        {
+          "title": "Cholera outbreak in Haiti",
+          "date": "2026-08-01",
+          "summary": "Cases rising across Port-au-Prince",
+          "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599"
+        }
+      ],
+      "outbreaks": [
+        {
+          "disease": "Cholera",
+          "places": [
+            "Haiti",
+            "Dominican Republic"
+          ],
+          "updates": 3,
+          "firstDate": "2026-08-01",
+          "lastDate": "2026-08-01",
+          "latestDonId": "DON599",
+          "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON599",
+          "summary": "Cholera surge across the island",
+          "risk": "High"
+        }
+      ],
+      "cdc": {
+        "travelNotices": [
+          {
+            "level": "2",
+            "name": "Cholera in Haiti",
+            "countries": [
+              "Haiti"
+            ],
+            "url": "https://wwwnc.cdc.gov/travel/notices/level2/cholera-haiti",
+            "date": "2026-08-01"
+          }
+        ],
+        "outbreaks": [
+          {
+            "title": "Listeria outbreak linked to deli meat",
+            "date": "2026-08-01",
+            "url": "https://www.cdc.gov/listeria/outbreaks/index.html",
+            "categories": [
+              "Foodborne"
+            ]
+          }
+        ]
+      },
+      "noticesInFeed": 2,
+      "recentDays": 30,
+      "activeDays": 90,
+      "signals": [
+        "Cholera activity increasing"
+      ],
+      "timestamp": "2026-08-01T11:00:00.000Z"
+    },
+    "GDACS": {
+      "events": [
+        {
+          "id": "1234567",
+          "type": "EQ",
+          "typeLabel": "Earthquake",
+          "level": "Orange",
+          "score": 1.5,
+          "name": "M6.8 near Tokyo, Japan",
+          "country": "Japan",
+          "countries": [
+            {
+              "name": "Japan"
+            }
+          ],
+          "lat": 35.6,
+          "lon": 139.7,
+          "from": "2026-08-01",
+          "to": "2026-08-01",
+          "current": true,
+          "severity": {
+            "text": "Magnitude 6.8, depth 30km"
+          },
+          "report": "https://www.gdacs.org/report.aspx?eventid=1234567"
+        }
+      ],
+      "counts": {
+        "red": 0,
+        "orange": 1,
+        "green": 2
+      },
+      "signals": [
+        "1 orange alert in the last 24h"
+      ],
+      "timestamp": "2026-08-01T11:00:00.000Z"
+    },
+    "IODA": {
+      "countries": [
+        {
+          "cc": "IN",
+          "name": "India",
+          "score": 3.2,
+          "events": 4,
+          "regionAlerts": 1,
+          "asnAlerts": 2,
+          "worstDrop": 85,
+          "countryAlerts": [
+            {
+              "datasource": "bgp",
+              "time": "2026-08-01T09:00:00.000Z"
+            },
+            {
+              "datasource": "ping-slash24",
+              "time": "2026-08-01T09:30:00.000Z"
+            }
+          ],
+          "lat": 20,
+          "lon": 78,
+          "national": false,
+          "minor": true
+        }
+      ],
+      "alerts": [
+        {
+          "type": "bgp",
+          "name": "Airtel",
+          "cc": "IN",
+          "drop": 60,
+          "datasource": "bgp",
+          "time": "2026-08-01T09:00:00.000Z",
+          "org": "AS9498 Bharti Airtel"
+        }
+      ],
+      "counts": {
+        "countries": 1,
+        "alerts": 1
+      },
+      "windowHours": 24,
+      "signals": [
+        "Internet disruption detected in India"
+      ],
+      "timestamp": "2026-08-01T11:00:00.000Z"
+    },
+    "Cloudflare-Radar": {
+      "status": "ok",
+      "outages": {
+        "activeEvents": [
+          {
+            "id": "cf-outage-1",
+            "description": "Network outage in India",
+            "startDate": "2026-08-01T08:00:00.000Z",
+            "endDate": null,
+            "locations": [
+              "IN"
+            ],
+            "locationNames": [
+              "India"
+            ],
+            "asnNames": [
+              "Airtel"
+            ],
+            "eventType": "NATIONWIDE",
+            "cause": "POWER_OUTAGE",
+            "outageType": "NATIONWIDE",
+            "linkedUrl": "https://radar.cloudflare.com/outage-center/cf-outage-1"
+          }
+        ],
+        "recentResolved": []
+      },
+      "anomalies": {
+        "events": [
+          {
+            "verified": true,
+            "startDate": "2026-08-01T09:00:00.000Z",
+            "endDate": null,
+            "type": "BGP",
+            "cc": "IN",
+            "country": "India",
+            "asn": {
+              "cc": "IN",
+              "name": "Airtel"
+            }
+          }
+        ]
+      },
+      "attacks": {
+        "l3Targets": [
+          {
+            "location": "IN",
+            "value": 12
+          }
+        ],
+        "l3Origins": [],
+        "l7Targets": []
+      },
+      "signals": [
+        {
+          "signal": "Cloudflare Radar annotates an outage in India"
+        }
+      ],
+      "timestamp": "2026-08-01T11:00:00.000Z"
+    },
+    "SWPC": {
+      "kp": 4.5,
+      "flare": {
+        "class": "M1.2",
+        "time": "2026-08-01T07:00:00.000Z"
+      },
+      "scales": {
+        "g": 1,
+        "s": 0,
+        "r": 0
+      },
+      "alerts": [
+        {
+          "message": "G1 geomagnetic storm watch in effect"
+        }
+      ],
+      "signals": [
+        "Elevated geomagnetic activity"
+      ],
+      "timestamp": "2026-08-01T11:00:00.000Z"
+    },
+    "FRED": {
+      "indicators": [
+        {
+          "id": "VIXCLS",
+          "label": "CBOE Volatility Index",
+          "value": 22.5,
+          "date": "2026-08-01",
+          "recent": [
+            21,
+            22.5
+          ],
+          "momChange": 1.5,
+          "momChangePct": 7.14
+        },
+        {
+          "id": "BAMLH0A0HYM2",
+          "label": "US High Yield Spread",
+          "value": 3.6,
+          "date": "2026-08-01",
+          "recent": [
+            3.5,
+            3.6
+          ],
+          "momChange": 0.1,
+          "momChangePct": 2.86
+        },
+        {
+          "id": "T10Y2Y",
+          "label": "10Y-2Y Treasury Spread",
+          "value": 0.35,
+          "date": "2026-08-01",
+          "recent": [
+            0.3,
+            0.35
+          ],
+          "momChange": 0.05,
+          "momChangePct": 16.67
+        }
+      ]
+    },
+    "EIA": {
+      "oilPrices": {
+        "wti": {
+          "value": 78.5,
+          "recent": [
+            {
+              "value": 77
+            },
+            {
+              "value": 78.5
+            }
+          ]
+        },
+        "brent": {
+          "value": 82.3,
+          "recent": [
+            {
+              "value": 81
+            },
+            {
+              "value": 82.3
+            }
+          ]
+        }
+      },
+      "gasPrice": {
+        "value": 3.12
+      },
+      "inventories": {
+        "crudeStocks": {
+          "value": 420000
+        }
+      },
+      "signals": [
+        "Crude inventories drew down"
+      ]
+    },
+    "YFinance": {
+      "quotes": {
+        "^GSPC": {
+          "price": 5800,
+          "change": 20,
+          "changePct": 0.35,
+          "history": [
+            {
+              "close": 5780
+            },
+            {
+              "close": 5800
+            }
+          ]
+        },
+        "^IXIC": {
+          "price": 18500,
+          "change": 100,
+          "changePct": 0.54,
+          "history": [
+            {
+              "close": 18400
+            },
+            {
+              "close": 18500
+            }
+          ]
+        },
+        "^DJI": {
+          "price": 42000,
+          "change": -50,
+          "changePct": -0.12,
+          "history": [
+            {
+              "close": 42050
+            },
+            {
+              "close": 42000
+            }
+          ]
+        },
+        "^VIX": {
+          "price": 22.5,
+          "change": 1.5,
+          "changePct": 7.14,
+          "history": [
+            {
+              "close": 21
+            },
+            {
+              "close": 22.5
+            }
+          ]
+        },
+        "GC=F": {
+          "price": 2650,
+          "change": 12,
+          "changePct": 0.45,
+          "history": [
+            {
+              "close": 2638
+            },
+            {
+              "close": 2650
+            }
+          ]
+        },
+        "SI=F": {
+          "price": 31.2,
+          "change": 0.3,
+          "changePct": 0.97,
+          "history": [
+            {
+              "close": 30.9
+            },
+            {
+              "close": 31.2
+            }
+          ]
+        },
+        "CL=F": {
+          "price": 78.5,
+          "change": 1.2,
+          "changePct": 1.55,
+          "history": [
+            {
+              "close": 77.3
+            },
+            {
+              "close": 78.5
+            }
+          ]
+        },
+        "BZ=F": {
+          "price": 82.3,
+          "change": 1.1,
+          "changePct": 1.35,
+          "history": [
+            {
+              "close": 81.2
+            },
+            {
+              "close": 82.3
+            }
+          ]
+        },
+        "NG=F": {
+          "price": 3.1,
+          "change": 0.05,
+          "changePct": 1.64,
+          "history": [
+            {
+              "close": 3.05
+            },
+            {
+              "close": 3.1
+            }
+          ]
+        }
+      },
+      "indexes": [
+        {
+          "symbol": "^GSPC",
+          "name": "S&P 500",
+          "price": 5800,
+          "change": 20,
+          "changePct": 0.35,
+          "history": [
+            {
+              "close": 5800
+            }
+          ]
+        }
+      ],
+      "rates": [
+        {
+          "symbol": "^TNX",
+          "name": "US 10Y Yield",
+          "price": 4.1,
+          "change": 0.02,
+          "changePct": 0.49
+        }
+      ],
+      "commodities": [
+        {
+          "symbol": "GC=F",
+          "name": "Gold",
+          "price": 2650,
+          "change": 12,
+          "changePct": 0.45,
+          "history": [
+            {
+              "close": 2650
+            }
+          ]
+        }
+      ],
+      "crypto": [
+        {
+          "symbol": "BTC-USD",
+          "name": "Bitcoin",
+          "price": 64000,
+          "change": 500,
+          "changePct": 0.79
+        }
+      ],
+      "summary": {
+        "timestamp": "2026-08-01T11:00:00.000Z"
+      }
+    },
+    "Treasury": {
+      "debt": [
+        {
+          "totalDebt": "36000000000000",
+          "date": "2026-08-01"
+        }
+      ],
+      "signals": [
+        "National debt at a record high"
+      ]
+    },
+    "BLS": {
+      "indicators": [
+        {
+          "id": "LNS14000000",
+          "label": "Unemployment Rate",
+          "value": 4.4,
+          "date": "2026-08-01",
+          "recent": [
+            4.4
+          ],
+          "momChange": 0.1,
+          "momChangePct": 2.33
+        },
+        {
+          "id": "CES0000000001",
+          "label": "Total Nonfarm Payrolls",
+          "value": 159000,
+          "date": "2026-08-01",
+          "recent": [
+            159000
+          ],
+          "momChange": 120,
+          "momChangePct": 0.08
+        },
+        {
+          "id": "CUUR0000SA0",
+          "label": "CPI All Urban Consumers",
+          "value": 315.2,
+          "date": "2026-08-01",
+          "recent": [
+            315.2
+          ],
+          "momChange": 0.3,
+          "momChangePct": 0.1
+        },
+        {
+          "id": "WPUFD49104",
+          "label": "PPI Final Demand",
+          "value": 250.1,
+          "date": "2026-08-01",
+          "recent": [
+            250.1
+          ],
+          "momChange": 0.9,
+          "momChangePct": 0.36
+        }
+      ]
+    },
+    "GSCPI": {
+      "latest": {
+        "value": 0.65,
+        "date": "2026-08-01",
+        "interpretation": "above historical average"
+      }
+    },
+    "USAspending": {
+      "recentDefenseContracts": [
+        {
+          "recipient": "Lockheed Martin Corp",
+          "amount": 450000000,
+          "description": "F-35 sustainment and logistics support"
+        }
+      ],
+      "signals": [
+        "Defense contract awards elevated"
+      ]
+    },
+    "NOAA": {
+      "totalSevereAlerts": 12,
+      "topAlerts": [
+        {
+          "event": "Severe Thunderstorm Warning",
+          "severity": "Severe",
+          "headline": "Severe thunderstorms expected across central Texas",
+          "lat": 31,
+          "lon": -100
+        }
+      ]
+    },
+    "EPA": {
+      "totalReadings": 100,
+      "readings": [
+        {
+          "location": "Austin",
+          "state": "TX",
+          "lat": 30.27,
+          "lon": -97.74,
+          "analyte": "Cs-137",
+          "result": 0.02,
+          "unit": "pCi/m3"
+        }
+      ]
+    },
+    "Space": {
+      "source": "Space (CelesTrak + fallback)",
+      "timestamp": "2026-08-01T11:00:00.000Z",
+      "status": "active",
+      "spaceStations": [
+        {
+          "name": "ISS (ZARYA)",
+          "noradId": 25544,
+          "primary": true,
+          "attached": false,
+          "inclination": 51.64,
+          "period": 92.9,
+          "apogee": 420,
+          "perigee": 410,
+          "epoch": "2026-08-01T00:00:00.000Z",
+          "position": {
+            "lat": 10.2,
+            "lon": 45.1,
+            "altitude": 415,
+            "velocity": 27600,
+            "at": "2026-08-01T11:00:00.000Z"
+          },
+          "omm": {},
+          "live": null
+        }
+      ],
+      "stations": [
+        {
+          "name": "ISS (ZARYA)",
+          "noradId": 25544,
+          "primary": true,
+          "attached": false,
+          "inclination": 51.64,
+          "period": 92.9,
+          "apogee": 420,
+          "perigee": 410,
+          "epoch": "2026-08-01T00:00:00.000Z",
+          "position": {
+            "lat": 10.2,
+            "lon": 45.1,
+            "altitude": 415,
+            "velocity": 27600,
+            "at": "2026-08-01T11:00:00.000Z"
+          },
+          "omm": {},
+          "live": null
+        }
+      ],
+      "iss": {
+        "name": "ISS (ZARYA)",
+        "noradId": 25544,
+        "primary": true,
+        "attached": false,
+        "inclination": 51.64,
+        "period": 92.9,
+        "apogee": 420,
+        "perigee": 410,
+        "epoch": "2026-08-01T00:00:00.000Z",
+        "position": {
+          "lat": 10.2,
+          "lon": 45.1,
+          "altitude": 415,
+          "velocity": 27600,
+          "at": "2026-08-01T11:00:00.000Z"
+        },
+        "omm": {},
+        "live": null
+      },
+      "stationsSource": "CelesTrak",
+      "totalNewObjects": 42,
+      "launchByCountry": {
+        "United States": 5,
+        "China": 3
+      },
+      "militarySatellites": 8,
+      "militaryByCountry": {
+        "United States": 5,
+        "Russia": 2,
+        "China": 1
+      },
+      "constellations": {
+        "starlink": 6000,
+        "oneweb": 630
+      },
+      "recentLaunches": [
+        {
+          "name": "Starlink-200",
+          "country": "United States",
+          "epoch": "2026-08-01",
+          "apogee": 550,
+          "perigee": 540,
+          "objectType": "PAYLOAD"
+        }
+      ],
+      "signals": [
+        "New launch activity detected"
+      ]
+    },
+    "GDELT": {
+      "totalArticles": 4,
+      "conflicts": [
+        {}
+      ],
+      "economy": [
+        {}
+      ],
+      "health": [
+        {}
+      ],
+      "crisis": [],
+      "allArticles": [
+        {
+          "title": "Ceasefire talks resume in Geneva",
+          "url": "https://example.com/gdelt/article1"
+        }
+      ],
+      "docStatus": "ok",
+      "signals": [
+        "Ceasefire talks resume"
+      ],
+      "events": {
+        "windowHours": 6,
+        "filesFetched": 20,
+        "newest": "2026-08-01T11:00:00.000Z",
+        "oldest": "2026-08-01T05:00:00.000Z",
+        "totalEvents": 600,
+        "conflictEvents": 550,
+        "byType": {
+          "Armed clash": 200,
+          "Protest": 90
+        },
+        "byRegion": {
+          "Europe": 100,
+          "Middle East": 80
+        },
+        "topCountries": [
+          {
+            "name": "Ukraine",
+            "count": 50
+          },
+          {
+            "name": "Israel",
+            "count": 40
+          }
+        ]
+      },
+      "geoPoints": [
+        {
+          "lat": 50.4,
+          "lon": 30.5,
+          "name": "Kyiv",
+          "country": "Ukraine",
+          "count": 12,
+          "events": 12,
+          "type": "Armed clash",
+          "worst": "Armed clash",
+          "goldstein": -8,
+          "tone": -5,
+          "latest": "2026-08-01T10:00:00.000Z",
+          "samples": [
+            {
+              "actors": "Military;Rebels",
+              "url": "https://example.com/gdelt/geo1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "timing": {
+    "OpenSky": {
+      "status": "ok",
+      "ms": 820
+    },
+    "FIRMS": {
+      "status": "ok",
+      "ms": 410
+    },
+    "Maritime": {
+      "status": "ok",
+      "ms": 300
+    },
+    "Safecast": {
+      "status": "ok",
+      "ms": 260
+    },
+    "KiwiSDR": {
+      "status": "ok",
+      "ms": 1800
+    },
+    "WHO": {
+      "status": "ok",
+      "ms": 240
+    },
+    "GDACS": {
+      "status": "ok",
+      "ms": 190
+    },
+    "IODA": {
+      "status": "ok",
+      "ms": 350
+    },
+    "Cloudflare-Radar": {
+      "status": "ok",
+      "ms": 420
+    },
+    "SWPC": {
+      "status": "ok",
+      "ms": 150
+    },
+    "FRED": {
+      "status": "ok",
+      "ms": 600
+    },
+    "EIA": {
+      "status": "ok",
+      "ms": 500
+    },
+    "YFinance": {
+      "status": "ok",
+      "ms": 700
+    },
+    "Treasury": {
+      "status": "ok",
+      "ms": 380
+    },
+    "BLS": {
+      "status": "ok",
+      "ms": 620
+    },
+    "GSCPI": {
+      "status": "ok",
+      "ms": 210
+    },
+    "USAspending": {
+      "status": "ok",
+      "ms": 450
+    },
+    "NOAA": {
+      "status": "ok",
+      "ms": 280
+    },
+    "EPA": {
+      "status": "ok",
+      "ms": 330
+    },
+    "Space": {
+      "status": "ok",
+      "ms": 900
+    },
+    "GDELT": {
+      "status": "ok",
+      "ms": 1200
+    }
+  },
+  "news": [
+    {
+      "title": "Global markets steady as ceasefire talks resume",
+      "source": "BBC",
+      "date": "2026-08-01T09:00:00.000Z",
+      "url": "https://example.com/news/markets-steady"
+    },
+    {
+      "title": "Ceasefire hopes rise in Geneva talks",
+      "source": "Reuters",
+      "date": "2026-08-01T08:00:00.000Z",
+      "url": "https://example.com/news/geneva-hopes"
+    }
+  ]
+}
