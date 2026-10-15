@@ -127,3 +127,22 @@ component is reachable from the SPA without a document reload.
 - Keep every existing layer, selection shape, popup, area brief, region bar and legend
   behaviour; only the plumbing changes. The vendored test copies under `test/fixtures/vendor`
   must be re-pinned to the new version for the e2e routing.
+
+## Military aircraft on the React map (required, 2026-10-15)
+
+The data pipeline already delivers live military aircraft (`sources.OpenSky.military`, from
+OpenSky plus the adsb.lol military feed; 136 on 2026-10-15). The legacy page draws them as
+3.4px pale-blue dots inside the generic Air layer, so they are indistinguishable. The React
+map must:
+
+- Render them as their own layer, `militaryAir`, with a plane symbol rotated to heading
+  (`trk`), a distinct colour, and a label (callsign or hex, type) at zoom >= 4.
+- Give the layer its own legend chip with the live count and its own toggle, and list it in
+  the signal guide with source and limitations.
+- Show the marker count that matches `militaryTotal`: raise `MAX_MIL_LISTED` in
+  `apis/sources/opensky.mjs` so the listed set is not capped at 150 (cap at 2000), and make
+  `dashboard/inject.mjs` pass the full list through.
+- Popup: callsign, type, registration, country, flight level, ground speed, heading, squawk,
+  ICAO hex, source. Selection drawing must count them in the selection panel.
+- Tests: a vitest case that plots the fixture's military list to `militaryAir` features with
+  heading, and an e2e check that the legend chip shows the fixture count.
