@@ -14,6 +14,7 @@ export function AppRoutes({ surfaces = LAZY_SURFACES, loaders = SURFACE_LOADERS 
   const Dashboard = surfaces.dashboard;
   const Digest = surfaces.digest;
   const Media = surfaces.media;
+  const Telegram = surfaces.telegram;
   useSurfacePreload({ loaders, flags });
 
   return (
@@ -27,6 +28,9 @@ export function AppRoutes({ surfaces = LAZY_SURFACES, loaders = SURFACE_LOADERS 
         )}
         {isReactSurface(flags, 'media') && (
           <Route path="/media/:channel?" element={<SurfaceMount key="media" surface="media"><Media /></SurfaceMount>} />
+        )}
+        {isReactSurface(flags, 'telegram') && (
+          <Route path="/telegram/:id?" element={<SurfaceMount key="telegram" surface="telegram"><Telegram /></SurfaceMount>} />
         )}
       </Route>
     </Routes>

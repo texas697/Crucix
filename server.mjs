@@ -20,6 +20,7 @@ import * as feedback from './lib/feedback.mjs';
 import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
 import { loadManifest, entryAssets, entryForSurface, hasSurface, renderSurfaceDocument, uiFlagsScript } from './dashboard/server/ui.mjs';
+import * as telegramClient from './lib/telegram/client.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -48,10 +49,11 @@ const UI_FLAGS = {
   dashboard: uiFlag('UI_DASHBOARD'),
   digest: uiFlag('UI_DIGEST'),
   media: uiFlag('UI_MEDIA'),
+  telegram: process.env.UI_TELEGRAM ? uiFlag('UI_TELEGRAM') : 'react',
   login: uiFlag('UI_LOGIN'),
   site: uiFlag('UI_SITE'),
 };
-const UI_TITLES = { dashboard: 'Dashboard', digest: 'Readers Digest', media: 'Live media', login: 'Sign in' };
+const UI_TITLES = { dashboard: 'Dashboard', digest: 'Readers Digest', media: 'Live media', telegram: 'Telegram', login: 'Sign in' };
 const uiManifest = loadManifest(ROOT);
 const UI_DIST = join(ROOT, 'dashboard', 'dist');
 // Dev-only Vite middleware adapter. Never mounted in production; see the mount site below.
@@ -584,6 +586,12 @@ app.get(['/media', '/media/:id'], (req, res) => {
   res.type('html').send(mediaHtml);
 });
 
+// ─── Telegram (Read-only subscribed channels & chats) ───────────────────────
+app.get(['/telegram', '/telegram/:id'], (req, res) => {
+  if (reactSurface('telegram')) return sendReactSurface(res, 'telegram', { head: spaHead() });
+  res.redirect('/');
+});
+
 // ─── Neptun live tracks (drone / missile) + Ukraine alerts via WebSocket ────
 const neptun = { tracks: new Map(), alerts: null, updated: null, backoff: 1000 };
 function startNeptunStream() {
@@ -781,6 +789,36 @@ app.post('/api/digest/:id/research', async (req, res) => {
 app.get('/api/digest/:id/research', async (req, res) => {
   try { const r = await digest.store.getResearch(req.user.uid, String(req.params.id).slice(0, 40)); res.json(r || { state: 'none' }); }
   catch (err) { sendErr(res, err); }
+});
+
+// ─── Telegram APIs ──────────────────────────────────────────────────────────
+app.get('/api/telegram/status', async (req, res) => {
+  try {
+    const status = await telegramClient.getTelegramStatus();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/telegram/dialogs', async (req, res) => {
+  try {
+    const limit = Math.min(200, parseInt(req.query.limit, 10) || 100);
+    const dialogs = await telegramClient.getTelegramDialogs({ limit });
+    res.json({ dialogs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/telegram/messages/:id', async (req, res) => {
+  try {
+    const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
+    const messages = await telegramClient.getTelegramMessages(req.params.id, { limit });
+    res.json({ messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 function broadcast(data) {

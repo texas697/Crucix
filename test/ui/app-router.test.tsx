@@ -18,6 +18,7 @@ const surfaces: SurfaceComponents = {
   dashboard: () => <p>dashboard stub</p>,
   digest: DigestStub,
   media: () => <p>media stub</p>,
+  telegram: () => <p>telegram stub</p>,
 };
 
 afterEach(() => {

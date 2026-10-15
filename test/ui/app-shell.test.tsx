@@ -48,8 +48,8 @@ describe('AppShell', () => {
   it('renders the nav tabs as router links with the surface hrefs', () => {
     renderShell();
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map((t) => t.getAttribute('href'))).toEqual(['/', '/digest', '/media']);
-    expect(tabs.map((t) => t.textContent)).toEqual(['Dashboard', 'Readers Digest', 'Live media']);
+    expect(tabs.map((t) => t.getAttribute('href'))).toEqual(['/', '/digest', '/media', '/telegram']);
+    expect(tabs.map((t) => t.textContent)).toEqual(['Dashboard', 'Readers Digest', 'Live media', 'Telegram']);
     expect(document.querySelector('.crucix-app-bar')).not.toBeNull();
     expect(document.querySelector('.crucix-app-brand-logo')).toHaveAttribute('src', '/brand/mfb-intelligence-navbar-dark-transparent.png');
   });
