@@ -18,6 +18,19 @@ SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-crucix-run@${PROJECT}.iam.gserviceaccount.co
 REFRESH_MINUTES="${REFRESH_MINUTES:-15}"
 ALLOWED_EMAILS="${AUTH_ALLOWED_EMAILS:-}"
 ALLOW_SIGNUP="${AUTH_ALLOW_SIGNUP:-true}"
+# Scheduler job names are parametrized so a staging deploy never repoints the production sweeps.
+SWEEP_JOB="${SWEEP_JOB:-crucix-sweep}"
+DIGEST_JOB="${DIGEST_JOB:-crucix-digest}"
+# Operator LLM secret name override: staging can point at an empty/capped key instead of production's.
+LLM_SECRET="${LLM_SECRET:-LLM_API_KEY}"
+# React UI flags per surface (legacy | react). The GitHub environment vars are the source of truth;
+# this script emits every UI_* value into the generated deploy/env.yaml with legacy as the default,
+# because --env-vars-file replaces the service environment on every deploy.
+UI_DASHBOARD="${UI_DASHBOARD:-legacy}"
+UI_DIGEST="${UI_DIGEST:-legacy}"
+UI_MEDIA="${UI_MEDIA:-legacy}"
+UI_LOGIN="${UI_LOGIN:-legacy}"
+UI_SITE="${UI_SITE:-legacy}"
 
 cd "$(dirname "$0")/.."
 
@@ -37,6 +50,11 @@ SWEEP_MODE: "external"
 REFRESH_INTERVAL_MINUTES: "$REFRESH_MINUTES"
 PUBLIC_URL: "${PUBLIC_URL:-https://${PROJECT}.firebaseapp.com}"
 NODE_ENV: "production"
+UI_DASHBOARD: "$UI_DASHBOARD"
+UI_DIGEST: "$UI_DIGEST"
+UI_MEDIA: "$UI_MEDIA"
+UI_LOGIN: "$UI_LOGIN"
+UI_SITE: "$UI_SITE"
 YAML
 # Operator LLM (shared key for digest write-ups, deep dives and map area briefs when a user has not saved their
 # own). Default is DeepSeek Flash through the OpenAI-compatible provider. The key itself lives in Secret Manager
@@ -46,7 +64,7 @@ LLM_PROVIDER="${LLM_PROVIDER:-openai-compatible}"
 LLM_MODEL="${LLM_MODEL:-deepseek-flash}"
 LLM_BASE_URL="${LLM_BASE_URL:-https://api.deepseek.com/v1}"
 SECRETS="BYOK_ENCRYPTION_KEY=BYOK_ENCRYPTION_KEY:latest,SWEEP_TRIGGER_TOKEN=SWEEP_TRIGGER_TOKEN:latest"
-if gcloud secrets describe LLM_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
+if gcloud secrets describe "$LLM_SECRET" --project "$PROJECT" >/dev/null 2>&1; then
   cat >> deploy/env.yaml <<YAML
 LLM_PROVIDER: "$LLM_PROVIDER"
 LLM_MODEL: "$LLM_MODEL"
@@ -57,8 +75,8 @@ DIGEST_SHARED_PER_DAY: "${DIGEST_SHARED_PER_DAY:-600}"
 BRIEF_SHARED_PER_USER_HOUR: "${BRIEF_SHARED_PER_USER_HOUR:-30}"
 BRIEF_SHARED_PER_DAY: "${BRIEF_SHARED_PER_DAY:-400}"
 YAML
-  SECRETS="$SECRETS,LLM_API_KEY=LLM_API_KEY:latest"
-  echo "▶ Operator LLM: $LLM_PROVIDER / $LLM_MODEL (key from Secret Manager)"
+  SECRETS="$SECRETS,LLM_API_KEY=${LLM_SECRET}:latest"
+  echo "▶ Operator LLM: $LLM_PROVIDER / $LLM_MODEL (key from Secret Manager: $LLM_SECRET)"
 else
   echo "▶ No LLM_API_KEY secret — area briefs will require each user's own key"
 fi
@@ -145,12 +163,12 @@ echo "▶ Service URL: $URL"
 echo "▶ Ensuring Cloud Scheduler sweep job (every $REFRESH_MINUTES min)"
 TOKEN="$(gcloud secrets versions access latest --secret SWEEP_TRIGGER_TOKEN --project "$PROJECT")"
 SCHEDULE="*/$REFRESH_MINUTES * * * *"
-if gcloud scheduler jobs describe crucix-sweep --project "$PROJECT" --location "$REGION" >/dev/null 2>&1; then
-  gcloud scheduler jobs update http crucix-sweep --project "$PROJECT" --location "$REGION" \
+if gcloud scheduler jobs describe $SWEEP_JOB --project "$PROJECT" --location "$REGION" >/dev/null 2>&1; then
+  gcloud scheduler jobs update http $SWEEP_JOB --project "$PROJECT" --location "$REGION" \
     --schedule "$SCHEDULE" --uri "$URL/api/internal/sweep" --http-method POST \
     --update-headers "X-Sweep-Token=$TOKEN" --attempt-deadline 900s --quiet >/dev/null
 else
-  gcloud scheduler jobs create http crucix-sweep --project "$PROJECT" --location "$REGION" \
+  gcloud scheduler jobs create http $SWEEP_JOB --project "$PROJECT" --location "$REGION" \
     --schedule "$SCHEDULE" --uri "$URL/api/internal/sweep" --http-method POST \
     --headers "X-Sweep-Token=$TOKEN" --attempt-deadline 900s --quiet >/dev/null
 fi
@@ -165,18 +183,18 @@ curl -s -X PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJ
   -d "{\"authorizedDomains\":$DOMS}" >/dev/null
 
 echo "▶ Ensuring Cloud Scheduler digest job (every 30 min)"
-if gcloud scheduler jobs describe crucix-digest --project "$PROJECT" --location "$REGION" >/dev/null 2>&1; then
-  gcloud scheduler jobs update http crucix-digest --project "$PROJECT" --location "$REGION" \
+if gcloud scheduler jobs describe $DIGEST_JOB --project "$PROJECT" --location "$REGION" >/dev/null 2>&1; then
+  gcloud scheduler jobs update http $DIGEST_JOB --project "$PROJECT" --location "$REGION" \
     --schedule "7,37 * * * *" --uri "$URL/api/internal/digest" --http-method POST \
     --update-headers "X-Sweep-Token=$TOKEN" --attempt-deadline 900s --quiet >/dev/null
 else
-  gcloud scheduler jobs create http crucix-digest --project "$PROJECT" --location "$REGION" \
+  gcloud scheduler jobs create http $DIGEST_JOB --project "$PROJECT" --location "$REGION" \
     --schedule "7,37 * * * *" --uri "$URL/api/internal/digest" --http-method POST \
     --headers "X-Sweep-Token=$TOKEN" --attempt-deadline 900s --quiet >/dev/null
 fi
 
 echo "▶ Kicking off a sweep now (startup sweeps run CPU-throttled; a scheduler-driven one is fast)"
-gcloud scheduler jobs run crucix-sweep --project "$PROJECT" --location "$REGION" --quiet >/dev/null 2>&1 || true
+gcloud scheduler jobs run $SWEEP_JOB --project "$PROJECT" --location "$REGION" --quiet >/dev/null 2>&1 || true
 
 echo
 echo "✔ Deployed: $URL  (front door: https://${PROJECT}.firebaseapp.com — run: firebase deploy --only hosting)"

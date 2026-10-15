@@ -19,6 +19,7 @@ import * as users from './lib/auth/users.mjs';
 import * as feedback from './lib/feedback.mjs';
 import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
+import { loadManifest, entryAssets, hasSurface, renderSurfaceDocument } from './dashboard/server/ui.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -35,6 +36,61 @@ if (AUTH_ENABLED) {
   console.log(`[Crucix] Auth enabled (Firebase project ${authLib.parseWebConfig()?.projectId || process.env.FIREBASE_PROJECT_ID})`);
 } else {
   console.warn('[Crucix] AUTH_MODE=off — dashboard and API are PUBLIC. Do not expose this to the internet.');
+}
+
+// === React UI flags (per surface: legacy | react) ===
+// Server-selected so the public URL never changes; the value travels with the Cloud Run revision.
+// Defaults to legacy. A missing frontend build forces legacy, so legacy-only mode still boots.
+function uiFlag(name) {
+  return process.env[name] === 'react' ? 'react' : 'legacy';
+}
+const UI_FLAGS = {
+  dashboard: uiFlag('UI_DASHBOARD'),
+  digest: uiFlag('UI_DIGEST'),
+  media: uiFlag('UI_MEDIA'),
+  login: uiFlag('UI_LOGIN'),
+  site: uiFlag('UI_SITE'),
+};
+const UI_TITLES = { dashboard: 'Dashboard', digest: 'Readers Digest', media: 'Live media', login: 'Sign in' };
+const uiManifest = loadManifest(ROOT);
+const UI_DIST = join(ROOT, 'dashboard', 'dist');
+// Dev-only Vite middleware adapter. Never mounted in production; see the mount site below.
+const DEV_UI = process.env.NODE_ENV !== 'production' && process.env.UI_DEV === '1';
+let viteDev = null;
+if (Object.values(UI_FLAGS).includes('react') && !uiManifest && !DEV_UI) {
+  console.error('[Crucix] FATAL: a UI_* flag is set to "react" but no frontend build was found (dashboard/dist). Run `npm run build`, or set every UI_* flag to legacy. Legacy-only mode still boots without a build.');
+  process.exit(1);
+}
+function reactSurface(surface) {
+  if (UI_FLAGS[surface] !== 'react') return false;
+  return DEV_UI ? true : hasSurface(uiManifest, surface);
+}
+// Render a React surface document. In dev the Vite client + raw entry module are served by the
+// middleware adapter; in production it is the manifest-resolved hashed entry.
+function sendReactSurface(res, surface, { head = '', body = '', navigation = false } = {}) {
+  const title = `${config.site?.appName || 'Crucix'} — ${UI_TITLES[surface] || surface}`;
+  let html;
+  if (viteDev) {
+    html = renderSurfaceDocument({
+      surface,
+      title,
+      assets: { js: [`/@vite/client`, `/entries/${surface}.tsx`], css: [] },
+      head,
+      body,
+      navigation: navigation && surface !== 'login',
+    });
+  } else {
+    const assets = entryAssets(uiManifest, surface);
+    html = renderSurfaceDocument({
+      surface,
+      title,
+      assets,
+      head,
+      body,
+      navigation: navigation && surface !== 'login',
+    });
+  }
+  res.set('Cache-Control', 'private, no-cache').type('html').send(html);
 }
 
 // Ensure directories exist
@@ -74,6 +130,9 @@ app.disable('x-powered-by');
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'private, no-store');
   else if (req.path.startsWith('/brand/')) res.setHeader('Cache-Control', 'public, max-age=86400');
+  // Content-hashed Vite assets are immutable; this must be set here because express.static will
+  // not override an already-set Cache-Control.
+  else if (req.path.startsWith('/assets/')) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   else res.setHeader('Cache-Control', 'private, no-cache');
   next();
 });
@@ -127,6 +186,15 @@ app.get('/api/status', (req, res) => {
 });
 
 app.use('/brand', express.static(join(ROOT, 'dashboard/public/brand'))); // logos/favicons for the public pages below
+app.use('/brand', (req, res) => res.status(404).type('text/plain').send('Not found'));
+
+// Content-hashed React assets. Public (no secrets), immutable; a missing asset is a real 404,
+// never the HTML shell, so a stale lazy chunk fails loudly instead of returning a document.
+const DIST_ASSETS = join(UI_DIST, 'assets');
+if (existsSync(DIST_ASSETS)) {
+  app.use('/assets', express.static(DIST_ASSETS, { index: false, immutable: true, maxAge: '1y' }));
+}
+app.use('/assets', (req, res) => res.status(404).type('text/plain').send('Not found'));
 
 // MFB Think Tank mobile app's public pages (store listing URLs) — no auth, so reviewers and signed-out users can read them.
 const site = config.site;
@@ -202,6 +270,7 @@ if (AUTH_ENABLED) {
   app.get('/login', (req, res) => {
     const cfg = JSON.stringify(configFor(req)).replace(/<\/script>/gi, '<\\/script>');
     const boot = `<script>window.__FIREBASE_CONFIG__=${cfg};window.__ALLOW_SIGNUP__=${authLib.allowSignup};</script>`;
+    if (reactSurface('login')) return sendReactSurface(res, 'login', { head: boot });
     res.type('html').send(loginHtml.replace('</head>', `${boot}\n</head>`));
   });
 
@@ -263,12 +332,31 @@ app.post('/api/internal/sweep', async (req, res) => {
   res.json({ status: 'done', lastSweep: lastSweepTime, sourcesOk: currentData?.meta?.sourcesOk ?? null });
 });
 
+// Dev-only Vite middleware (HMR + module serving). Mounted before the page routes and static
+// handlers; never present in production. vite.config.ts (fs.strict + fs.allow/deny) keeps it inside
+// dashboard/react so it can never serve server.mjs, deploy/** or runs/**.
+if (DEV_UI) {
+  const { createServer } = await import('vite');
+  viteDev = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
+  app.use(viteDev.middlewares);
+  console.warn('[Crucix] UI_DEV=1 — Vite dev middleware mounted; not for production use.');
+}
+
 app.use(express.static(join(ROOT, 'dashboard/public'), { index: false }));
 
 // Serve loading page until first sweep completes, then the dashboard with injected locale
 app.get('/', (req, res) => {
+  // Root's loading screen follows the dashboard flag: the React dashboard owns both the startup and
+  // ready states once selected.
+  if (reactSurface('dashboard')) {
+    const locale = getLocale();
+    const localeScript = `<script>window.__CRUCIX_LOCALE__ = ${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`;
+    return sendReactSurface(res, 'dashboard', { head: localeScript, navigation: true });
+  }
   if (!currentData) {
-    res.sendFile(join(ROOT, 'dashboard/public/loading.html'));
+    // Express 5.2 / send 1.2 resolve an absolute sendFile path as not-found; use the {@code root}
+    // form so the pre-first-sweep startup page actually loads.
+    res.sendFile('loading.html', { root: join(ROOT, 'dashboard/public') });
   } else {
     const htmlPath = join(ROOT, 'dashboard/public/jarvis.html');
     let html = readFileSync(htmlPath, 'utf-8');
@@ -479,12 +567,16 @@ if (AUTH_ENABLED) {
 // ─── Readers Digest ───────────────────────────────────────────────────────
 const digestHtml = readFileSync(join(ROOT, 'dashboard/public/digest.html'), 'utf-8');
 app.get(['/digest', '/digest/:id'], (req, res) => {
+  if (reactSurface('digest')) {
+    return sendReactSurface(res, 'digest', { head: `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>`, navigation: true });
+  }
   res.type('html').send(digestHtml.replace('</head>', `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>\n</head>`));
 });
 
 // ─── Live media (broadcaster HLS channels) ─────────────────────────────────
 const mediaHtml = readFileSync(join(ROOT, 'dashboard/public/media.html'), 'utf-8');
 app.get(['/media', '/media/:id'], (req, res) => {
+  if (reactSurface('media')) return sendReactSurface(res, 'media', { navigation: true });
   res.type('html').send(mediaHtml);
 });
 
@@ -781,6 +873,10 @@ async function runSweepCycle() {
   }
 }
 
+// Any unmatched /api path is a JSON 404, never the HTML shell or a page. Previously the default
+// Express 404 answered unknown API paths with HTML, which the migration contract forbids.
+app.use('/api', (req, res) => res.status(404).json({ error: 'not found' }));
+
 // === Startup ===
 // Render the startup banner. The frame width is derived from the contents so the
 // box stays aligned — and nothing is truncated — for any port, refresh interval
@@ -820,7 +916,9 @@ async function start() {
     ['Sweeps:', config.sweep.mode === 'external' ? 'external trigger' : `every ${config.refreshIntervalMinutes} min`],
   ]));
 
-  const server = app.listen(port);
+  // With the dev adapter enabled, bind loopback only so the Vite-backed dev origin is never exposed
+  // on every interface; production keeps the existing default bind.
+  const server = DEV_UI && !process.env.HOST ? app.listen(port, '127.0.0.1') : app.listen(port);
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

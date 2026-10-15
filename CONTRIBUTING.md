@@ -19,11 +19,17 @@ Open an issue before writing code if your change would:
 - change licensing, distribution, or deployment model
 - introduce new dependencies
 
+GitHub Issues are disabled on this repository. The React UI migration is recorded in
+`docs/REACT_MIGRATION_PLAN.md`, merged through its own PR; that document is the issue of record for migration
+PRs, and they reference it in place of an issue.
+
 ## Development Baseline
 
-- Node.js 22+
+- Node.js 22.12+ (Vite requires Node 20.19+ or 22.12+, and the repo enforces the 22.12 floor)
 - Pure ESM
-- Keep the zero-extra-dependency approach unless there is a strong reason not to
+- New dependencies are permitted with a written rationale in the PR and a corresponding entry in
+  `docs/REACT_MIGRATION_PLAN.md` section 3, "Dependency rationale", which is the record now that GitHub
+  Issues are disabled
 - Do not commit secrets, `.env` files, or generated runtime data
 
 ## Adding a New Source

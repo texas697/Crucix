@@ -8,3 +8,9 @@ output
 .claude
 .playwright-cli
 deploy/env.yaml
+# Built by the build stage; never copy a stale local build into the image context.
+dashboard/dist
+# Tests and browser artifacts are not shipped in the runtime image.
+test
+playwright-report
+test-results
