@@ -3,6 +3,7 @@ import { ApiError, type ApiClient } from '../../api/client';
 import type { UserProfile } from '../../api/types';
 import type { HistoryAdapter } from '../../state/history';
 import { parseUrl } from '../../state/url';
+import { NavItem } from '../../app/NavItem';
 import { Reader } from '../reader/Reader';
 
 // The Readers Digest feed, ported from dashboard/public/digest.html. It owns the filter/topic/search
@@ -278,9 +279,9 @@ export function DigestApp(props: DigestAppProps) {
           <img className="brand-logo brand-logo-light" src="/brand/mfb-intelligence-navbar-light-transparent.png" alt="" aria-hidden="true" width={1124} height={160} />
         </a>
         <nav className="mainnav">
-          <a className="nav-tab" href="/">Dashboard</a>
-          <a className="nav-tab active" href="/digest">Readers Digest</a>
-          <a className="nav-tab" href="/media">Live media</a>
+          <NavItem surface="dashboard" href="/" className="nav-tab">Dashboard</NavItem>
+          <NavItem surface="digest" href="/digest" className="nav-tab active">Readers Digest</NavItem>
+          <NavItem surface="media" href="/media" className="nav-tab">Live media</NavItem>
         </nav>
         <div className="spacer" />
         <div className="nav">

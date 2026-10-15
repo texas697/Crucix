@@ -18,6 +18,7 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       input: {
+        app: join(reactRoot, 'entries', 'app.tsx'),
         dashboard: join(reactRoot, 'entries', 'dashboard.tsx'),
         digest: join(reactRoot, 'entries', 'digest.tsx'),
         media: join(reactRoot, 'entries', 'media.tsx'),

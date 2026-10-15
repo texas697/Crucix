@@ -8,7 +8,6 @@ import {
   applyTheme as applyThemeClass, persistTheme, readStoredTheme, resolveTheme, toggleTheme as flipTheme,
   type Theme,
 } from '../../shared/theme';
-import { PageShell } from '../../app/PageShell';
 import { createTranslator } from '../../shared/locale';
 import { Row } from './Panel';
 import { SensorGrid, NuclearWatch, RiskGauges } from './panels/LeftRail';
@@ -333,7 +332,7 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
   const markers = plot?.points.features.length ?? 0;
 
   return (
-    <PageShell surface="dashboard">
+    <>
       <TopBar
         me={me}
         health={health}
@@ -462,7 +461,7 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
         onClose={closeSettings}
         onProfileChange={onMeChange}
       />
-    </PageShell>
+    </>
   );
 }
 

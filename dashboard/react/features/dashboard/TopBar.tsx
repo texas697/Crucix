@@ -1,4 +1,6 @@
 import type { HealthResponse, SweepMeta, UserProfile } from '../../api/types';
+import { NavItem } from '../../app/NavItem';
+import type { Surface } from '../../app/surfaces';
 
 // Top bar, ported from renderTopbar() in jarvis.html (lines 1298-1334). Brand, cross-page nav,
 // live/source status, theme toggle, the BYOK affordance and the user chip.
@@ -30,10 +32,10 @@ function sweepAge(iso: string | null | undefined, nowMs: number): string {
   return min < 1 ? 'now' : `${min}m ago`;
 }
 
-const NAV_ITEMS: ReadonlyArray<{ label: string; href: string; active: boolean }> = [
-  { label: 'Dashboard', href: '/', active: true },
-  { label: 'Readers Digest', href: '/digest', active: false },
-  { label: 'Live media', href: '/media', active: false },
+const NAV_ITEMS: ReadonlyArray<{ label: string; href: string; surface: Surface; active: boolean }> = [
+  { label: 'Dashboard', href: '/', surface: 'dashboard', active: true },
+  { label: 'Readers Digest', href: '/digest', surface: 'digest', active: false },
+  { label: 'Live media', href: '/media', surface: 'media', active: false },
 ];
 
 export function TopBar({
@@ -62,7 +64,17 @@ export function TopBar({
             const cls = `nav-tab${item.active ? ' active' : ''}`;
             return standalone
               ? <span key={item.href} className={cls} aria-current={item.active ? 'page' : undefined}>{item.label}</span>
-              : <a key={item.href} className={cls} href={`${base}${item.href}`} aria-current={item.active ? 'page' : undefined}>{item.label}</a>;
+              : (
+                <NavItem
+                  key={item.href}
+                  surface={item.surface}
+                  href={`${base}${item.href}`}
+                  className={cls}
+                  ariaCurrent={item.active ? 'page' : undefined}
+                >
+                  {item.label}
+                </NavItem>
+              );
           })}
         </nav>
       </div>
