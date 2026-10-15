@@ -9,7 +9,7 @@
     "test:e2e": "playwright test",
     "test:ui": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.site.config.ts",
     "serve:fixtures": "node test/fixtures/server.mjs",
     "fixtures:build": "node test/scripts/build-fixtures.mjs",
     "dev": "node --trace-warnings server.mjs",

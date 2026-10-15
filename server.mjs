@@ -6,7 +6,7 @@ import express from 'express';
 import { startAisStream, configureAisRelay, aisSnapshotAsync, aisEnabled, AIS_BOXES } from './lib/ais/stream.mjs';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { exec } from 'child_process';
 import config from './crucix.config.mjs';
 import { getLocale, currentLanguage, getSupportedLocales } from './lib/i18n.mjs';
@@ -219,13 +219,26 @@ function renderSitePage({ file, title, docTitle, description, meta = '' }) {
   const body = fillSite(readFileSync(join(ROOT, 'dashboard/site', file), 'utf-8'), siteVars);
   return fillSite(siteLayout, { ...siteVars, TITLE: escHtml(title), DOC_TITLE: escHtml(docTitle), DESCRIPTION: escHtml(description), META: meta, BODY: body });
 }
-const sitePages = {
+// React public pages (P7) render once at import from a separately built server entry
+// (dashboard/dist/site/server.js, produced by vite.site.config.ts); the legacy template filling is
+// the fallback and stays authoritative until every page passes parity.
+let reactSitePages = null;
+if (UI_FLAGS.site === 'react') {
+  try {
+    const mod = await import(pathToFileURL(join(ROOT, 'dashboard', 'dist', 'site', 'server.js')).href);
+    reactSitePages = mod.buildSitePages(config.site);
+  } catch (err) {
+    console.error('[Crucix] UI_SITE=react but dashboard/dist/site/server.js is missing — using legacy templates:', err.message);
+  }
+}
+const legacySitePages = {
   marketing: renderSitePage({ file: 'marketing.html', title: `${site.appName}: policy analysis, briefed`, docTitle: site.appName,
     description: `${site.appName} brings long-form analysis from think tanks, policy journals and global newsrooms into one feed, with AI summaries and cited deep dives.` }),
   support: renderSitePage({ file: 'support.html', title: 'Support', docTitle: `Support — ${site.appName}`, description: `Get help with ${site.appName}: contact support, FAQs and account deletion.` }),
   privacy: renderSitePage({ file: 'privacy.html', title: 'Privacy Policy', docTitle: `Privacy Policy — ${site.appName}`, description: `How ${site.operator} handles your information in ${site.appName}.`, meta: legalMeta }),
   terms: renderSitePage({ file: 'terms.html', title: 'Terms of Service', docTitle: `Terms of Service — ${site.appName}`, description: `Terms of Service for ${site.appName}.`, meta: legalMeta }),
 };
+const sitePages = reactSitePages ?? legacySitePages;
 const sendSitePage = name => (req, res) => res.set('Cache-Control', 'public, max-age=3600').type('html').send(sitePages[name]);
 app.get('/mfb-think-tank', sendSitePage('marketing'));
 app.get('/support', sendSitePage('support'));

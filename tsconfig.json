@@ -19,5 +19,6 @@
     "allowImportingTsExtensions": false,
     "noEmit": true
   },
-  "include": ["dashboard/react", "test/ui", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "test/e2e"]
+  "include": ["dashboard/react", "test/ui", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "test/e2e"],
+  "exclude": ["dashboard/react/site/entry.server.ts", "node_modules", "dashboard/dist"]
 }
