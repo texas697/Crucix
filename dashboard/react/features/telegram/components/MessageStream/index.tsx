@@ -54,7 +54,7 @@ export function MessageStream({ activeDialog, messages, isLoadingMessages }: Mes
           </Box>
         ) : (
           messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
+            <MessageBubble key={message.id} message={message} chatId={activeDialog.id} />
           ))
         )}
       </Box>

@@ -21,7 +21,9 @@ import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
 import { loadManifest, entryAssets, entryForSurface, hasSurface, renderSurfaceDocument, uiFlagsScript } from './dashboard/server/ui.mjs';
 import * as telegramClient from './lib/telegram/client.mjs';
-import { isAllowed, readAllowlist, selectDialogs } from './lib/telegram/selection.mjs';
+import { isAllowed, parseAllowlist, readAllowlist, selectDialogs } from './lib/telegram/selection.mjs';
+import { createTranslator } from './lib/telegram/translate.mjs';
+import { MEDIA_KINDS, createMediaStore } from './lib/telegram/media.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -109,6 +111,8 @@ if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmPr
 
 // === Readers Digest ===
 const DIGEST_OPERATOR_WRITEUPS = (process.env.DIGEST_OPERATOR_WRITEUPS || 'false').toLowerCase() === 'true';
+const telegramMedia = createMediaStore({ runsDir: RUNS_DIR, getClient: telegramClient.getClient });
+const telegramTranslator = createTranslator({ provider: llmProvider?.isConfigured ? llmProvider : null });
 const digest = createDigest({ db: () => authLib.db(), authEnabled: AUTH_ENABLED, operatorProvider: DIGEST_OPERATOR_WRITEUPS && llmProvider?.isConfigured ? llmProvider : null });
 if (llmProvider?.isConfigured && !DIGEST_OPERATOR_WRITEUPS) console.log('[Digest] operator write-ups off (set DIGEST_OPERATOR_WRITEUPS=true to spend the operator key on every ingested article)');
 if (AUTH_ENABLED) digest.init().catch(err => console.error('[Digest] init failed:', err.message));
@@ -812,14 +816,36 @@ app.get('/api/telegram/dialogs', async (req, res) => {
   }
 });
 
+async function publishedDialog(id) {
+  const dialogs = await telegramClient.getTelegramDialogs({ limit: 200 });
+  const dialog = dialogs.find((d) => d.id === String(id));
+  return dialog && isAllowed(dialog, readAllowlist()) ? dialog : null;
+}
+
+app.get('/api/telegram/media/:chatId/:msgId', async (req, res) => {
+  try {
+    const dialog = await publishedDialog(req.params.chatId);
+    const msgId = parseInt(req.params.msgId, 10);
+    if (!dialog || !Number.isFinite(msgId)) return res.status(404).json({ error: 'not found' });
+    const kind = MEDIA_KINDS.includes(req.query.kind) ? req.query.kind : 'photo';
+    const file = await telegramMedia.fetch(dialog.id, msgId, kind);
+    if (!file) return res.status(404).json({ error: 'no such media' });
+    res.set('Cache-Control', 'private, max-age=86400');
+    res.type(file.mime);
+    res.sendFile(file.path);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/telegram/messages/:id', async (req, res) => {
   try {
-    const dialogs = await telegramClient.getTelegramDialogs({ limit: 200 });
-    const dialog = dialogs.find((d) => d.id === String(req.params.id));
-    if (!dialog || !isAllowed(dialog, readAllowlist())) return res.status(404).json({ error: 'chat not published' });
+    const dialog = await publishedDialog(req.params.id);
+    if (!dialog) return res.status(404).json({ error: 'chat not published' });
     const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
-    const messages = await telegramClient.getTelegramMessages(dialog.id, { limit });
-    res.json({ messages });
+    const raw = await telegramClient.getTelegramMessages(dialog.id, { limit });
+    const translate = isAllowed(dialog, parseAllowlist(process.env.TELEGRAM_TRANSLATE));
+    res.json({ messages: translate ? await telegramTranslator.translate(dialog.id, raw) : raw, translated: translate });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

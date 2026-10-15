@@ -5,7 +5,6 @@ import { CLASSES } from './classes';
 import { DialogList } from './components/DialogList';
 import { MessageStream } from './components/MessageStream';
 import { StatusNotice } from './components/StatusNotice';
-import { TelegramHero } from './components/TelegramHero';
 import { useTelegramDialogs } from './hooks/useTelegramDialogs';
 import { useTelegramMessages } from './hooks/useTelegramMessages';
 import { useTelegramRoute } from './hooks/useTelegramRoute';
@@ -31,7 +30,6 @@ export function TelegramApp() {
 
   return (
     <Box className={CLASSES.root} sx={STYLES.root}>
-      <TelegramHero status={status} />
       <StatusNotice status={status} />
       <Box className={CLASSES.layout} sx={STYLES.layout}>
         <DialogList

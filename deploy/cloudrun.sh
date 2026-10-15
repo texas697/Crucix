@@ -56,6 +56,7 @@ UI_MEDIA: "$UI_MEDIA"
 UI_LOGIN: "$UI_LOGIN"
 UI_SITE: "$UI_SITE"
 TELEGRAM_CHATS: "${TELEGRAM_CHATS:-}"
+TELEGRAM_TRANSLATE: "${TELEGRAM_TRANSLATE:-}"
 YAML
 # Operator LLM (shared key for digest write-ups, deep dives and map area briefs when a user has not saved their
 # own). Default is DeepSeek Flash through the OpenAI-compatible provider. The key itself lives in Secret Manager

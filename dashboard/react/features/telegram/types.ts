@@ -15,6 +15,32 @@ export interface TelegramDialog {
   lastMessage: TelegramLastMessage | null;
 }
 
+export interface TelegramTranslation {
+  text: string;
+  from: string | null;
+}
+
+export interface TelegramWebpage {
+  url: string;
+  displayUrl: string;
+  siteName: string | null;
+  title: string | null;
+  description: string | null;
+  hasPhoto: boolean;
+}
+
+export type MediaKind = 'photo' | 'video' | 'audio' | 'document';
+
+export interface TelegramMedia {
+  kind: MediaKind;
+  mime: string;
+  width: number | null;
+  height: number | null;
+  size: number | null;
+  duration: number | null;
+  tooLarge: boolean;
+}
+
 export interface TelegramMessage {
   id: number;
   text: string;
@@ -23,6 +49,9 @@ export interface TelegramMessage {
   out: boolean;
   mediaType: string | null;
   replyToMsgId: number | null;
+  translation?: TelegramTranslation;
+  webpage?: TelegramWebpage | null;
+  media?: TelegramMedia | null;
 }
 
 export interface TelegramStatus {
