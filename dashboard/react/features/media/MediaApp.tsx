@@ -154,9 +154,9 @@ function GridCell({ channel }: { channel: MediaChannel }) {
   }, [channel.hls]);
 
   return (
-    <div className="cell" style={S.cell}>
-      <video ref={ref} data-src={channel.hls} muted playsInline style={S.video} />
-      <span className="cap" style={S.cap}>{channel.name}</span>
+    <div className="cell">
+      <video ref={ref} data-src={channel.hls} muted playsInline />
+      <span className="cap">{channel.name}</span>
     </div>
   );
 }
@@ -374,21 +374,21 @@ export function MediaApp({ history, location }: MediaAppProps) {
   const showOverlay = youTubeSrc === null && phase !== 'ready';
 
   return (
-    <div className="media-app" style={S.page}>
-      <header className="hero" style={S.hero}>
+    <div className="media-app">
+      <header className="hero">
         <div>
-          <h1 style={S.h1}>Live media</h1>
-          <p style={S.heroP}>
+          <h1>Live media</h1>
+          <p>
             Broadcaster feeds from across the world, on the map&apos;s sources. Switch channels, mute,
             go fullscreen or picture-in-picture, or open the grid to watch several at once. Streams
             are the broadcasters&apos; own public HLS feeds.
           </p>
         </div>
-        <span className="status" style={S.status}>{eventCount} channels</span>
+        <span className="status">{eventCount} channels</span>
       </header>
 
-      <div className="layout" style={S.layout}>
-        <div className="channels" id="channels" style={S.channels} role="list">
+      <div className="layout">
+        <div className="channels" id="channels" role="list">
           {CHANNELS.map((c, i) => {
             const active = i === channelIndex;
             return (
@@ -397,15 +397,14 @@ export function MediaApp({ history, location }: MediaAppProps) {
                 type="button"
                 role="listitem"
                 className={`chan${active ? ' active' : ''}`}
-                style={active ? { ...S.chan, ...S.chanActive } : S.chan}
                 aria-pressed={active}
                 onClick={() => selectChannel(i)}
               >
-                <span className="dot" style={{ ...S.dot, background: c.color }} />
+                <span className="dot" style={{ background: c.color }} />
                 <span>
-                  <span className="cname" style={S.cname}>{c.name}</span>
+                  <span className="cname">{c.name}</span>
                   <br />
-                  <span className="cregion" style={S.cregion}>{c.region}</span>
+                  <span className="cregion">{c.region}</span>
                 </span>
               </button>
             );
@@ -413,12 +412,12 @@ export function MediaApp({ history, location }: MediaAppProps) {
         </div>
 
         <div>
-          <div className="stage" id="stage" ref={stageRef} style={S.stage}>
+          <div className="stage" id="stage" ref={stageRef}>
             <video
               id="player"
               ref={videoRef}
               playsInline
-              style={{ ...S.video, display: youTubeSrc ? 'none' : 'block' }}
+              style={{ display: youTubeSrc ? 'none' : 'block' }}
             />
             {youTubeSrc && (
               <iframe
@@ -427,34 +426,33 @@ export function MediaApp({ history, location }: MediaAppProps) {
                 src={youTubeSrc}
                 allow="autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen
-                style={S.iframe}
               />
             )}
             {showOverlay && (
-              <div className="overlay show" id="overlay" role={phase === 'error' ? 'alert' : 'status'} style={S.overlay}>
+              <div className="overlay show" id="overlay" role={phase === 'error' ? 'alert' : 'status'}>
                 {phase === 'loading' && (
                   <>
-                    <div className="spin" style={S.spin} />
-                    <div className="t" style={S.ovTitle}>Loading stream</div>
-                    <div className="s" style={S.ovText}>Connecting to {channel.name}…</div>
+                    <div className="spin" />
+                    <div className="t">Loading stream</div>
+                    <div className="s">Connecting to {channel.name}…</div>
                   </>
                 )}
                 {phase === 'error' && (
                   <>
-                    <div className="t" style={S.ovTitle}>Feed unavailable</div>
-                    <div className="s" style={S.ovText}>{errorMsg}</div>
+                    <div className="t">Feed unavailable</div>
+                    <div className="s">{errorMsg}</div>
                     <div className="ov-actions" style={S.ovActions}>
                       {youTube && (
-                        <button type="button" className="btn primary" style={{ ...S.btn, ...S.btnPrimary }} onClick={playYouTube}>
+                        <button type="button" className="btn primary" onClick={playYouTube}>
                           Play via YouTube
                         </button>
                       )}
                       {openUrl && (
-                        <a className="btn" style={S.btn} href={openUrl} target="_blank" rel="noopener noreferrer">
+                        <a className="btn" href={openUrl} target="_blank" rel="noopener noreferrer">
                           Open broadcaster page ↗
                         </a>
                       )}
-                      <button type="button" className="btn" style={S.btn} onClick={retry}>Retry</button>
+                      <button type="button" className="btn" onClick={retry}>Retry</button>
                     </div>
                   </>
                 )}
@@ -462,12 +460,12 @@ export function MediaApp({ history, location }: MediaAppProps) {
             )}
           </div>
 
-          <div className="bar" style={S.bar}>
-            <span className="now" id="nowName" style={S.now}>{channel.name}</span>
-            <span className="live" id="liveBadge" style={S.live}>
-              <span className="d" style={S.liveDot} />LIVE
+          <div className="bar">
+            <span className="now" id="nowName">{channel.name}</span>
+            <span className="live" id="liveBadge">
+              <span className="d" />LIVE
             </span>
-            <span className="sp" style={S.sp} />
+            <span className="sp" />
             <button
               type="button"
               className={`ctrl${muted ? ' on' : ''}`}
@@ -475,7 +473,6 @@ export function MediaApp({ history, location }: MediaAppProps) {
               title="Mute (m)"
               aria-label="Mute"
               aria-pressed={muted}
-              style={muted ? { ...S.ctrl, ...S.ctrlOn } : S.ctrl}
               onClick={toggleMute}
             >
               {muted ? '🔇' : '🔊'}
@@ -490,37 +487,35 @@ export function MediaApp({ history, location }: MediaAppProps) {
               value={volume}
               title="Volume"
               aria-label="Volume"
-              style={S.vol}
               onChange={onVolumeInput}
             />
-            <button type="button" className="ctrl" id="btnPip" title="Picture in picture" style={S.ctrl} onClick={() => { void togglePip(); }}>▣</button>
-            <button type="button" className="ctrl" id="btnFs" title="Fullscreen (f)" style={S.ctrl} onClick={toggleFullscreen}>⛶</button>
+            <button type="button" className="ctrl" id="btnPip" title="Picture in picture" onClick={() => { void togglePip(); }}>▣</button>
+            <button type="button" className="ctrl" id="btnFs" title="Fullscreen (f)" onClick={toggleFullscreen}>⛶</button>
             <button
               type="button"
               className={`ctrl${gridOn ? ' on' : ''}`}
               id="btnGrid"
               title="Multi-channel grid"
               aria-pressed={gridOn}
-              style={gridOn ? { ...S.ctrl, ...S.ctrlOn } : S.ctrl}
               onClick={toggleGrid}
             >
               ⊞
             </button>
             {openUrl && (
-              <a className="btn" id="btnOpen" style={S.btn} href={openUrl} target="_blank" rel="noopener noreferrer">
+              <a className="btn" id="btnOpen" href={openUrl} target="_blank" rel="noopener noreferrer">
                 Open feed ↗
               </a>
             )}
           </div>
 
-          <div className="foot" style={S.foot}>
+          <div className="foot">
             Live streams are provided by the broadcasters and may be geo-restricted or intermittent.
             If a feed does not play, use “Open feed” or pick another channel. Keyboard: ←/→ change
             channel, m mute, f fullscreen.
           </div>
 
           {gridOn && (
-            <div className="gridmode" id="grid" style={S.gridmode}>
+            <div className="gridmode" id="grid">
               {CHANNELS.slice(0, 4).map((c) => <GridCell key={c.id} channel={c} />)}
             </div>
           )}
@@ -530,40 +525,10 @@ export function MediaApp({ history, location }: MediaAppProps) {
   );
 }
 
-// The legacy page ships its layout in an inline <style>; styling here is inline for the same reason
-// (only PageShell's shared stylesheets are available to this surface). Token values match tokens.css.
+// The legacy page ships its layout in a <style> block; that CSS now lives in styles/media.css
+// (imported by PageShell) and the matching class names carry it. The one inline style kept is the
+// overlay action row, whose layout the legacy also injected as an inline style (there was no CSS
+// rule for #ovActions). The per-channel dot colour stays inline as data.
 const S: Record<string, CSSProperties> = {
-  page: { padding: '20px 24px 40px' },
-  hero: { display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', margin: '22px 0 16px' },
-  h1: { fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em' },
-  heroP: { fontSize: 14.5, color: 'var(--sub)', maxWidth: 680, lineHeight: 1.55, marginTop: 8 },
-  status: { fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--dim-2)' },
-  layout: { display: 'grid', gridTemplateColumns: '300px minmax(0,1fr)', gap: 16, alignItems: 'start' },
-  channels: { background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' },
-  chan: { display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid transparent', textAlign: 'left', width: '100%', color: 'var(--text)', fontFamily: 'var(--sans)' },
-  chanActive: { background: 'var(--raised-2)', borderColor: 'var(--border-bright)' },
-  dot: { width: 8, height: 8, borderRadius: '50%', flex: 'none' },
-  cname: { fontSize: 13.5, fontWeight: 500 },
-  cregion: { fontSize: 11.5, color: 'var(--dim-2)' },
-  stage: { background: '#000', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', position: 'relative', aspectRatio: '16 / 9', width: '100%' },
-  video: { width: '100%', height: '100%', background: '#000', display: 'block', objectFit: 'contain' },
-  iframe: { width: '100%', height: '100%', border: 0, background: '#000' },
-  overlay: { position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'rgba(5,7,11,0.86)', textAlign: 'center', padding: 20 },
-  spin: { width: 30, height: 30, border: '2px solid rgba(220,226,236,0.2)', borderTopColor: 'var(--accent)', borderRadius: '50%' },
-  ovTitle: { fontSize: 15, fontWeight: 600 },
-  ovText: { fontSize: 13, color: 'var(--sub)', maxWidth: 420 },
   ovActions: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' },
-  bar: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 12 },
-  now: { fontSize: 13.5, fontWeight: 500 },
-  live: { display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--danger)', padding: '4px 9px', border: '1px solid rgba(240,90,80,0.3)', borderRadius: 5, background: 'rgba(240,90,80,0.08)' },
-  liveDot: { width: 6, height: 6, borderRadius: '50%', background: 'var(--red)' },
-  sp: { flex: 1 },
-  ctrl: { width: 38, height: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--raised)', color: 'var(--text-2)', cursor: 'pointer', fontSize: 15 },
-  ctrlOn: { background: 'var(--accent)', borderColor: 'var(--accent)', color: 'var(--on-accent)' },
-  vol: { width: 110 },
-  btn: { display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 12.5, fontWeight: 500, padding: '8px 13px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--raised)', color: 'var(--text)', textDecoration: 'none' },
-  btnPrimary: { background: 'var(--accent)', borderColor: 'var(--accent)', color: 'var(--on-accent)' },
-  gridmode: { display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8, marginTop: 12 },
-  cell: { position: 'relative', background: '#000', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden', aspectRatio: '16 / 9' },
-  cap: { position: 'absolute', left: 6, bottom: 6, fontSize: 11, color: '#fff', textShadow: '0 1px 3px #000' },
 };

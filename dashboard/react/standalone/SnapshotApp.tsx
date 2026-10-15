@@ -272,6 +272,8 @@ export function SnapshotApp({ snapshot, now = Date.now }: SnapshotAppProps) {
         onOpenSettings={() => { /* snapshot: accounts are not available */ }}
         onLogout={() => { /* snapshot: no session */ }}
         now={now}
+        assetBase="./"
+        standalone
       />
       {!data || !plot
         ? <StartupState health={health} now={now} />

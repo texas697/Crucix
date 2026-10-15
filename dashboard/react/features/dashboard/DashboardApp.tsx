@@ -30,6 +30,7 @@ import { LAYER_DEFS, LAYER_INFO, type TimeWindow } from '../map/layerDefs';
 import { REGION_LABEL, clampRegion, inRegionBox, textInRegion, type RegionKey } from '../map/regions';
 import { plotData, type TrackRow, type QuakeRow, type MapPoint } from '../map/plot';
 import { runSelection, nearestMapPoint, circleFeature, rectFeature, polyFeature, type DrawTool, type DrawFeature } from '../map/selection';
+import { createSpaceLive, groundTrack, type SpaceStation } from '../map/spaceLive';
 import { MapPopup } from '../map/MapPopup';
 import { SelectionPanel } from '../map/SelectionPanel';
 import { AreaBrief, loadAreaBrief, markersPayload, EMPTY_AREA_BRIEF, type AreaBriefState } from '../map/AreaBrief';
@@ -92,6 +93,9 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
   const seenMarkersRef = useRef<Set<string> | null>(null);
   const pinRestoredRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
+  const [spaceTrack, setSpaceTrack] = useState<GeoJSON.FeatureCollection>(
+    () => ({ type: 'FeatureCollection', features: [] }),
+  );
 
   // Theme: apply to <html> and persist on change.
   useEffect(() => {
@@ -170,6 +174,13 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
 
   // Live feeds with the legacy cadences (tracks 15s, alerts 45s, quakes 60s, markets 60s).
   const { tracks, alerts, quakes, markets } = useLiveFeeds(api, { enabled: panelData !== null });
+
+  // The sweep's `space.stations[]`, when present. Stable across renders of the same payload so the
+  // live-space effect below re-arms only when the station set actually changes.
+  const spaceStations = useMemo<SpaceStation[] | null>(() => {
+    const stations = panelData?.space?.stations;
+    return Array.isArray(stations) ? (stations as SpaceStation[]) : null;
+  }, [panelData]);
 
   // Marker plotting: pure data → GeoJSON + labels + counts; `seenMarkers` drives the "new" flag.
   const plot = useMemo(() => {
@@ -286,6 +297,32 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
     if (point) showPointPopup(point);
   }, [mapReady, plot, location, showPointPopup]);
 
+  // Live SGP4 ground tracks for the primary stations (legacy `startSpaceLive`/`spaceTick`): once the
+  // map is mounted and the sweep carries stations, arm a 5s interval that re-propagates each primary
+  // station and publishes its ground track as a FeatureCollection for MapView's `spaceTrack`. The
+  // effect cleans the timer up on unmount and re-arms (stopping the old one first) whenever the
+  // station set changes, so no interval leaks and no stale closure tracks an old payload. No stations
+  // and no map -> a no-op; the timer only ever exists client-side after the map reports ready.
+  useEffect(() => {
+    if (!mapReady || !spaceStations || spaceStations.length === 0) return;
+    const live = createSpaceLive({
+      getStations: () => spaceStations,
+      onTick: (ticks) => {
+        const features: GeoJSON.Feature[] = [];
+        for (const { station } of ticks) {
+          if (!station.primary) continue;
+          for (const segment of groundTrack(station)) {
+            features.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: segment } });
+          }
+        }
+        setSpaceTrack({ type: 'FeatureCollection', features });
+      },
+      intervalMs: 5000,
+    });
+    live.start();
+    return () => live.stop();
+  }, [mapReady, spaceStations]);
+
   const selectedFC = useMemo(() => ({
     type: 'FeatureCollection',
     features: selected.map((p) => ({
@@ -332,6 +369,7 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
                     labels={mapLabels}
                     rings={plot.rings}
                     trails={plot.trails}
+                    spaceTrack={spaceTrack}
                     region={region}
                     selected={selectedFC}
                     drawTool={drawTool}

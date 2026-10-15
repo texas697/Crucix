@@ -4,6 +4,7 @@ import '../styles/tokens.css';
 import '../styles/shell.css';
 import '../styles/dashboard.css';
 import '../styles/reader.css';
+import '../styles/media.css';
 
 export interface PageShellProps {
   surface: Surface;
