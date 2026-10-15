@@ -57,6 +57,12 @@ jobs:
           LLM_PROVIDER: ${{ vars.LLM_PROVIDER }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+          # Access policy: an empty AUTH_ALLOWED_EMAILS/DOMAINS means the server allows EVERY identity
+          # (see lib/auth/firebase.mjs isEmailAllowed). Always set AUTH_ALLOWED_EMAILS per target — the
+          # staging service shares production's Firebase project, so leaving it empty exposes staging.
+          AUTH_ALLOWED_EMAILS: ${{ vars.AUTH_ALLOWED_EMAILS }}
+          AUTH_ALLOWED_DOMAINS: ${{ vars.AUTH_ALLOWED_DOMAINS }}
+          AUTH_ALLOW_SIGNUP: ${{ vars.AUTH_ALLOW_SIGNUP }}
           UI_DASHBOARD: ${{ vars.UI_DASHBOARD }}
           UI_DIGEST: ${{ vars.UI_DIGEST }}
           UI_MEDIA: ${{ vars.UI_MEDIA }}
