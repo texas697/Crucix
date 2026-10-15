@@ -13,6 +13,8 @@ export interface TelegramDialog {
   type: DialogType;
   date: string | null;
   lastMessage: TelegramLastMessage | null;
+  group?: string | null;
+  hasPhoto?: boolean;
 }
 
 export interface TelegramTranslation {

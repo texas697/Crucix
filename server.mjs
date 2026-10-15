@@ -21,7 +21,7 @@ import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
 import { loadManifest, entryAssets, entryForSurface, hasSurface, renderSurfaceDocument, uiFlagsScript } from './dashboard/server/ui.mjs';
 import * as telegramClient from './lib/telegram/client.mjs';
-import { isAllowed, parseAllowlist, readAllowlist, selectDialogs } from './lib/telegram/selection.mjs';
+import { groupDialogs, isAllowed, parseAllowlist, readAllowlist, readGroups } from './lib/telegram/selection.mjs';
 import { createTranslator } from './lib/telegram/translate.mjs';
 import { MEDIA_KINDS, createMediaStore } from './lib/telegram/media.mjs';
 
@@ -810,7 +810,7 @@ app.get('/api/telegram/dialogs', async (req, res) => {
   try {
     const limit = Math.min(200, parseInt(req.query.limit, 10) || 100);
     const dialogs = await telegramClient.getTelegramDialogs({ limit });
-    res.json({ dialogs: selectDialogs(dialogs, readAllowlist()) });
+    res.json({ dialogs: groupDialogs(dialogs, readGroups()) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -821,6 +821,19 @@ async function publishedDialog(id) {
   const dialog = dialogs.find((d) => d.id === String(id));
   return dialog && isAllowed(dialog, readAllowlist()) ? dialog : null;
 }
+
+app.get('/api/telegram/avatar/:chatId', async (req, res) => {
+  try {
+    const dialog = await publishedDialog(req.params.chatId);
+    const file = dialog ? await telegramMedia.avatar(dialog.id) : null;
+    if (!file) return res.status(404).json({ error: 'no avatar' });
+    res.set('Cache-Control', 'private, max-age=86400');
+    res.type(file.mime);
+    res.sendFile(file.path);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get('/api/telegram/media/:chatId/:msgId', async (req, res) => {
   try {

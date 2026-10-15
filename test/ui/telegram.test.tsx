@@ -22,6 +22,8 @@ function createMockApi(overrides: Partial<ApiClient> = {}): ApiClient {
               title: 'OSINT Wire',
               unreadCount: 3,
               type: 'channel',
+              group: 'Iran',
+              hasPhoto: true,
               date: '2026-10-15T12:00:00Z',
               lastMessage: { id: 1, text: 'Breaking news update', date: '2026-10-15T12:00:00Z' },
             },
@@ -30,6 +32,8 @@ function createMockApi(overrides: Partial<ApiClient> = {}): ApiClient {
               title: 'Maritime Intel Group',
               unreadCount: 0,
               type: 'group',
+              group: 'Ukraine',
+              hasPhoto: false,
               date: '2026-10-15T11:30:00Z',
               lastMessage: { id: 2, text: 'Vessel tracking active', date: '2026-10-15T11:30:00Z' },
             },
@@ -217,5 +221,32 @@ describe('TelegramApp', () => {
     expect(video).toHaveAttribute('poster', '/api/telegram/media/1001/105?kind=thumb');
     const preview = container.querySelector('img.crucix-telegram-webpage-image');
     expect(preview).toHaveAttribute('src', '/api/telegram/media/1001/104?kind=webpage');
+  });
+
+  it('renders a header per server-defined group and hides empty groups when filtering', async () => {
+    render(
+      <AppHarness api={createMockApi()} href="/telegram">
+        <TelegramApp />
+      </AppHarness>,
+    );
+
+    await screen.findAllByText('OSINT Wire');
+    const titles = () => [...document.querySelectorAll('.crucix-telegram-dialog-group-title')].map((el) => el.textContent);
+    expect(titles()).toEqual(['Iran', 'Ukraine']);
+    fireEvent.change(screen.getByPlaceholderText('Filter chats & channels...'), { target: { value: 'Maritime' } });
+    expect(titles()).toEqual(['Ukraine']);
+  });
+
+  it('shows the real channel photo when there is one and no placeholder otherwise', async () => {
+    render(
+      <AppHarness api={createMockApi()} href="/telegram">
+        <TelegramApp />
+      </AppHarness>,
+    );
+
+    await screen.findAllByText('OSINT Wire');
+    const avatars = [...document.querySelectorAll('.crucix-telegram-dialog-item img')].map((img) => img.getAttribute('src'));
+    expect(avatars).toEqual(['/api/telegram/avatar/1001']);
+    expect(document.querySelectorAll('.crucix-telegram-dialog-item .MuiAvatar-root')).toHaveLength(1);
   });
 });

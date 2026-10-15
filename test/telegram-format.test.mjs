@@ -13,6 +13,9 @@ test('formatDialog maps GramJS dialog fields to the API shape', () => {
   assert.equal(formatDialog({ id: 1, isUser: true }).type, 'user');
   assert.equal(formatDialog({ id: 1 }).title, 'Untitled');
   assert.equal(formatDialog({ id: 1 }).lastMessage, null);
+  assert.equal(formatDialog({ id: 1 }).hasPhoto, false);
+  assert.equal(formatDialog({ id: 1, entity: { photo: { className: 'ChatPhotoEmpty' } } }).hasPhoto, false);
+  assert.equal(formatDialog({ id: 1, entity: { photo: { className: 'ChatPhoto' } } }).hasPhoto, true);
 });
 
 test('resolveMediaType classifies photos, documents by mime, and others', () => {

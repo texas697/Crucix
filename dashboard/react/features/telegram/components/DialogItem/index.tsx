@@ -1,9 +1,10 @@
 import Avatar from '@mui/material/Avatar';
-import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
 import { CLASSES } from '../../classes';
+import { useAvatar } from '../../hooks/useAvatar';
 import { STYLES } from '../../styles';
 import type { TelegramDialog } from '../../types';
 
@@ -15,12 +16,11 @@ export interface DialogItemProps {
 
 function formatTime(dateStr: string | null): string {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export function DialogItem({ dialog, isSelected, onSelect }: DialogItemProps) {
-  const initials = dialog.title ? dialog.title.slice(0, 2).toUpperCase() : 'TG';
+  const { avatarSrc, onAvatarError } = useAvatar(dialog);
 
   return (
     <Box
@@ -30,21 +30,17 @@ export function DialogItem({ dialog, isSelected, onSelect }: DialogItemProps) {
       role="button"
       tabIndex={0}
     >
-      <Badge
-        badgeContent={dialog.unreadCount}
-        color="primary"
-        max={99}
-        className={CLASSES.badge}
-      >
-        <Avatar className={CLASSES.dialogAvatar} sx={STYLES.dialogAvatar}>
-          {initials}
-        </Avatar>
-      </Badge>
+      {avatarSrc && (
+        <Avatar className={CLASSES.dialogAvatar} sx={STYLES.dialogAvatar} src={avatarSrc} alt="" imgProps={{ onError: onAvatarError, loading: 'lazy' }} />
+      )}
       <Box className={CLASSES.dialogInfo} sx={STYLES.dialogInfo}>
         <Box sx={STYLES.dialogTitleRow}>
           <Typography className={CLASSES.dialogTitle} sx={STYLES.dialogTitle}>
             {dialog.title}
           </Typography>
+          {dialog.unreadCount > 0 && (
+            <Chip size="small" color="primary" className={CLASSES.dialogUnread} sx={STYLES.dialogUnread} label={dialog.unreadCount > 99 ? '99+' : dialog.unreadCount} />
+          )}
           <Typography className={CLASSES.dialogMeta} sx={STYLES.dialogMeta}>
             {formatTime(dialog.lastMessage?.date || dialog.date)}
           </Typography>

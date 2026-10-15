@@ -29,6 +29,8 @@ export const STYLES = {
   },
   searchField: { width: '100%' },
   dialogList: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' },
+  dialogGroup: { display: 'flex', flexDirection: 'column', gap: '4px' },
+  dialogGroupTitle: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'text.secondary', p: '10px 10px 4px', fontFamily: FONT_MONO },
   dialogItem: (theme: Theme) => ({
     display: 'flex', alignItems: 'flex-start', gap: '10px', p: '10px', borderRadius: '6px',
     border: '1px solid transparent', textAlign: 'left', width: '100%', color: 'text.primary',
@@ -36,7 +38,8 @@ export const STYLES = {
     '&:hover': { bgcolor: theme.palette.crucix.raised },
     '&.Mui-selected, &.Mui-selected:hover': { bgcolor: theme.palette.crucix.raised2, borderColor: theme.palette.crucix.borderBright },
   }),
-  dialogAvatar: { width: 36, height: 36, fontSize: 14, fontWeight: 600, flex: 'none', bgcolor: (theme: Theme) => theme.palette.crucix.raised },
+  dialogAvatar: { width: 36, height: 36, flex: 'none', bgcolor: 'transparent' },
+  dialogUnread: { height: 18, fontSize: 10.5, fontFamily: FONT_MONO, flex: 'none', '& .MuiChip-label': { px: '6px' } },
   dialogInfo: { flex: 1, minWidth: 0 },
   dialogTitleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' },
   dialogTitle: { fontSize: 13.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
