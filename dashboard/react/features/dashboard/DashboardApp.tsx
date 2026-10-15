@@ -17,6 +17,7 @@ import { RowC } from './panels/RowC';
 import { MarketsPanel } from './panels/RowE';
 import { HealthWatchPanel } from './panels/HealthWatch';
 import { RowD } from './panels/RowD';
+import { SignalGuide } from './SignalGuide';
 import { useLiveFeeds } from './useLiveFeeds';
 import { StartupState } from './StartupState';
 import { TopBar } from './TopBar';
@@ -81,6 +82,7 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
   const [layerVisible, setLayerVisible] = useState<Record<string, boolean>>(allLayersVisible);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('all');
   const [layerInfoKey, setLayerInfoKey] = useState<string | null>(null);
+  const [guideOpen, setGuideOpen] = useState(() => parseUrl(location.href).q.guide === '1');
   const [drawTool, setDrawTool] = useState<DrawTool | null>(null);
   const [selected, setSelected] = useState<MapPoint[]>([]);
   const [brief, setBrief] = useState<AreaBriefState>(EMPTY_AREA_BRIEF);
@@ -321,6 +323,7 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
                   <button type="button" className={`mc${drawTool === 'rect' ? ' on' : ''}`} aria-label="Draw rectangle" aria-pressed={drawTool === 'rect'} onClick={() => setDrawTool(drawTool === 'rect' ? null : 'rect')}>▭</button>
                   <button type="button" className={`mc${drawTool === 'poly' ? ' on' : ''}`} aria-label="Draw polygon" aria-pressed={drawTool === 'poly'} onClick={() => setDrawTool(drawTool === 'poly' ? null : 'poly')}>⬠</button>
                   <button type="button" className="mc" aria-label="Clear selection" onClick={clearSelection}>✕</button>
+                  <button type="button" className="mc" aria-label="Signal guide" onClick={() => setGuideOpen(true)}>?</button>
                 </div>
                 {popup && (
                   <MapPopup
@@ -390,6 +393,7 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
             </main>
           </>
         )}
+      <SignalGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
       <SettingsOverlay
         open={settingsOpen}
         me={me}
