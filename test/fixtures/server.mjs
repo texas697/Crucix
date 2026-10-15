@@ -156,7 +156,18 @@ app.get(['/digest', '/digest/:id'], (req, res) => {
     .replace('</head>', `<script>window.__HAS_TAVILY__=false;</script>\n</head>`);
   res.type('html').send(html);
 });
-app.get(['/media', '/media/:id'], (req, res) => res.sendFile('media.html', { root: publicDir }));
+app.get(['/media', '/media/:id'], (req, res) => {
+  if (reactSurface('media')) {
+    const html = renderSurfaceDocument({
+      surface: 'media',
+      title: 'Live media',
+      assets: entryAssets(reactManifest, 'media'),
+      navigation: true,
+    });
+    return res.type('html').send(html);
+  }
+  res.sendFile('media.html', { root: publicDir });
+});
 
 // ─── Data API ──────────────────────────────────────────────────────────────
 app.get('/api/data', (req, res) => {
