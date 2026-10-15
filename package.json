@@ -36,6 +36,7 @@
   "dependencies": {
     "express": "^5.1.0",
     "firebase-admin": "^13.10.0",
+    "maplibre-gl": "^4.7.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "satellite.js": "^6.0.1"

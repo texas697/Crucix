@@ -14,6 +14,38 @@ vi.mock('../../dashboard/react/api/transport', () => ({
   },
 }));
 
+// jsdom has no WebGL; MapView constructs a real maplibregl.Map, so stub it (see mapview.test.tsx).
+vi.mock('maplibre-gl', () => {
+  class Map {
+    dragPan = { enable: () => {}, disable: () => {} };
+    constructor(_options: unknown) {}
+    on() { return this; }
+    once() { return this; }
+    off() { return this; }
+    addSource() {}
+    addLayer() {}
+    getSource() { return { setData: () => {} }; }
+    getLayer() { return {}; }
+    setStyle() {}
+    flyTo() {}
+    fitBounds() {}
+    resize() {}
+    remove() {}
+    project() { return { x: 0, y: 0 }; }
+    queryRenderedFeatures() { return []; }
+    getContainer() { return document.createElement('div'); }
+    getZoom() { return 1.35; }
+  }
+  class Marker {
+    constructor(_options?: unknown) {}
+    setLngLat() { return this; }
+    addTo() { return this; }
+    remove() {}
+    getElement() { return document.createElement('div'); }
+  }
+  return { default: { Map, Marker }, Map, Marker };
+});
+
 import { DashboardApp } from '../../dashboard/react/features/dashboard/DashboardApp';
 
 const api = { get: async () => ({}), post: async () => ({}), put: async () => ({}), del: async () => ({}), request: async () => ({}) } as unknown as ApiClient;

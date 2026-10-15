@@ -23,6 +23,14 @@ export default defineConfig({
         media: join(reactRoot, 'entries', 'media.tsx'),
         login: join(reactRoot, 'entries', 'login.tsx'),
       },
+      output: {
+        // Keep MapLibre (and satellite.js) in their own chunk so the dashboard shell and the other
+        // surfaces never pay for the map bundle.
+        manualChunks(id: string) {
+          if (id.includes('node_modules/maplibre-gl') || id.includes('node_modules/satellite.js')) return 'map';
+          return undefined;
+        },
+      },
     },
   },
   server: {
