@@ -27,7 +27,7 @@ import { type MapViewHandle, type MapLabel } from '../map/MapView';
 import { RegionBar } from '../map/RegionBar';
 import { MapLegend, LayerInfoOverlay } from '../map/MapLegend';
 import { LAYER_DEFS, LAYER_INFO, type TimeWindow } from '../map/layerDefs';
-import { REGION_LABEL, clampRegion, type RegionKey } from '../map/regions';
+import { REGION_LABEL, clampRegion, inRegionBox, textInRegion, type RegionKey } from '../map/regions';
 import { plotData, type TrackRow, type QuakeRow, type MapPoint } from '../map/plot';
 import { runSelection, nearestMapPoint, circleFeature, rectFeature, polyFeature, type DrawTool, type DrawFeature } from '../map/selection';
 import { MapPopup } from '../map/MapPopup';
@@ -90,6 +90,8 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
   const settingsOpenedRef = useRef(false);
   const mapRef = useRef<MapViewHandle>(null);
   const seenMarkersRef = useRef<Set<string> | null>(null);
+  const pinRestoredRef = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
 
   // Theme: apply to <html> and persist on change.
   useEffect(() => {
@@ -196,6 +198,12 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
     [plot],
   );
 
+  // Panels show the active region's slice (world = everything); the map already filters via `pass`.
+  const viewData = useMemo<SweepData | null>(
+    () => (panelData ? filterByRegion(panelData, region) : null),
+    [panelData, region],
+  );
+
   const setRegion = useCallback((r: RegionKey) => {
     setRegionState(r);
     try { localStorage.setItem('crucix_region', r); } catch { /* storage denied */ }
@@ -245,24 +253,38 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
     if (point) mapRef.current?.flyToPoint(point.lng, point.lat, 5);
   }, [selected]);
 
-  const handleCanvasClick = useCallback((info: { lng: number; lat: number }) => {
-    if (!plot) return;
-    const point = nearestMapPoint(info.lat, info.lng, plot.mapPoints);
-    if (!point) return;
+  const showPointPopup = useCallback((point: MapPoint) => {
     let left = 50;
     let top = 50;
     const map = mapRef.current?.getMap();
     if (map) {
       const projected = map.project([point.lng, point.lat]);
-      const container = map.getContainer();
-      const rect = container.getBoundingClientRect();
+      const rect = map.getContainer().getBoundingClientRect();
       if (rect.width && rect.height) {
         left = (projected.x / rect.width) * 100;
         top = (projected.y / rect.height) * 100;
       }
     }
     setPopup({ head: point.popHead, text: point.popText, meta: point.popMeta, url: point.url, isNew: point._new, lng: point.lng, lat: point.lat, left, top });
-  }, [plot]);
+  }, []);
+
+  const handleCanvasClick = useCallback((info: { lng: number; lat: number }) => {
+    if (!plot) return;
+    const point = nearestMapPoint(info.lat, info.lng, plot.mapPoints);
+    if (point) showPointPopup(point);
+  }, [plot, showPointPopup]);
+
+  // Restore a shared ?pin= once the map and data are ready (legacy nearestMapPoint + showPopup).
+  useEffect(() => {
+    if (pinRestoredRef.current || !mapReady || !plot) return;
+    pinRestoredRef.current = true;
+    const pin = parseUrl(location.href).q.pin;
+    if (!pin) return;
+    const [lat, lng] = pin.split(',').map(Number);
+    if (lat === undefined || lng === undefined || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    const point = nearestMapPoint(lat, lng, plot.mapPoints);
+    if (point) showPointPopup(point);
+  }, [mapReady, plot, location, showPointPopup]);
 
   const selectedFC = useMemo(() => ({
     type: 'FeatureCollection',
@@ -316,6 +338,7 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
                     onDrawComplete={completeDraw}
                     onDrawCancel={() => setDrawTool(null)}
                     onCanvasClick={handleCanvasClick}
+                    onReady={() => setMapReady(true)}
                   />
                 </Suspense>
                 <div className="map-controls">
@@ -369,26 +392,26 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
             </div>
             <main className="dashboard-main" id="main">
               <Row name="a">
-                <SensorGrid data={panelData} t={t} />
+                <SensorGrid data={viewData ?? panelData} t={t} />
                 <NewsTicker items={tickerItems} now={now} />
-                <HealthWatchPanel data={panelData} t={t} />
+                <HealthWatchPanel data={viewData ?? panelData} t={t} />
               </Row>
               <Row name="b">
-                <SignalCore data={panelData} t={t} />
-                <NuclearWatch data={panelData} t={t} />
-                <RiskGauges data={panelData} t={t} />
-                <SweepDelta data={panelData} t={t} />
-                <DisastersPanel data={panelData} t={t} quakes={quakes ?? undefined} />
-                <OutagesPanel data={panelData} t={t} />
+                <SignalCore data={viewData ?? panelData} t={t} />
+                <NuclearWatch data={viewData ?? panelData} t={t} />
+                <RiskGauges data={viewData ?? panelData} t={t} />
+                <SweepDelta data={viewData ?? panelData} t={t} />
+                <DisastersPanel data={viewData ?? panelData} t={t} quakes={quakes ?? undefined} />
+                <OutagesPanel data={viewData ?? panelData} t={t} />
               </Row>
               <Row name="c">
-                <RowC data={panelData} t={t} me={me} onGenerateIdeas={generateIdeas} />
+                <RowC data={viewData ?? panelData} t={t} me={me} onGenerateIdeas={generateIdeas} />
               </Row>
               <Row name="d">
-                <RowD data={panelData} t={t} alerts={alerts ?? undefined} tracks={tracks ?? undefined} markets={markets ?? undefined} />
+                <RowD data={viewData ?? panelData} t={t} alerts={alerts ?? undefined} tracks={tracks ?? undefined} markets={markets ?? undefined} />
               </Row>
               <Row name="e">
-                <MarketsPanel data={panelData} t={t} />
+                <MarketsPanel data={viewData ?? panelData} t={t} />
               </Row>
             </main>
           </>
@@ -428,6 +451,29 @@ function shapeToFeature(shape: Shape): DrawFeature {
     return rectFeature({ lng: shape.sw.lng, lat: shape.sw.lat }, { lng: shape.ne.lng, lat: shape.ne.lat });
   }
   return polyFeature(shape.ring.map((p) => [p.lng, p.lat] as [number, number]));
+}
+
+/** Region slice of the sweep payload for the panels (legacy textInRegion / inRegionBox filters). */
+function filterByRegion(data: SweepData, region: RegionKey): SweepData {
+  if (region === 'world') return data;
+  const out = { ...data };
+  const news = data.news as Array<Record<string, unknown>> | undefined;
+  if (Array.isArray(news)) {
+    out.news = news.filter((n) => inRegionBox(Number(n.lat), Number(n.lon), region) || textInRegion(n.title, region));
+  }
+  const feed = data.newsFeed as Array<Record<string, unknown>> | undefined;
+  if (Array.isArray(feed)) {
+    out.newsFeed = feed.filter((n) => textInRegion(`${n.region ?? ''} ${n.headline ?? ''}`, region));
+  }
+  const disasters = data.disasters as { events?: Array<Record<string, unknown>> } | undefined;
+  if (disasters?.events) {
+    out.disasters = { ...disasters, events: disasters.events.filter((e) => inRegionBox(Number(e.lat), Number(e.lon), region)) };
+  }
+  const outages = data.outages as { countries?: Array<Record<string, unknown>> } | undefined;
+  if (outages?.countries) {
+    out.outages = { ...outages, countries: outages.countries.filter((c) => inRegionBox(Number(c.lat), Number(c.lon), region)) };
+  }
+  return out;
 }
 
 function locationHost(): string {
