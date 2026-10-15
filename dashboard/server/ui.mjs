@@ -29,6 +29,10 @@ export function loadManifest(root) {
 /**
  * Resolve the script and stylesheet URLs for a surface entry (entries/<surface>.tsx).
  * Returns null when the manifest has no such entry.
+ *
+ * CSS is NOT always on the entry's own `css` array: Vite attaches imported CSS to the shared chunk
+ * that imports it (e.g. the PageShell chunk), leaving the entry's `css` empty. So walk the entry's
+ * `imports` graph and collect every referenced chunk's CSS, or the pages ship unstyled.
  */
 export function entryAssets(manifest, surface) {
   if (!manifest) return null;
@@ -36,9 +40,20 @@ export function entryAssets(manifest, surface) {
   if (!key) return null;
   const entry = manifest[key];
   if (!entry?.file) return null;
-  // Vite's runtime loads the entry's imports itself, so only the entry file and its CSS are needed.
-  const css = Array.isArray(entry.css) ? entry.css : [];
-  return { js: [entry.file], css };
+  const css = new Set();
+  const seen = new Set();
+  const visit = (name) => {
+    if (seen.has(name)) return;
+    seen.add(name);
+    const chunk = manifest[name];
+    if (!chunk) return;
+    for (const file of chunk.css || []) css.add(file);
+    // Vite's runtime loads the entry's imports itself, so only the entry JS is emitted here; the
+    // imports are walked solely to pick up their CSS.
+    for (const dep of chunk.imports || []) visit(dep);
+  };
+  visit(key);
+  return { js: [entry.file], css: [...css] };
 }
 
 /** True when the surface can be served from the React build. */
