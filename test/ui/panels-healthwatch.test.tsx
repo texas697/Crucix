@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '../../dashboard/react/theme';
 import type { SweepData } from '../../dashboard/react/api/types';
+import { CLASSES, HW_LEVEL_CLASSES } from '../../dashboard/react/features/dashboard/classes';
 import { HealthWatchPanel } from '../../dashboard/react/features/dashboard/components/HealthWatchPanel';
 import minimal from '../fixtures/synthesized/minimal.json';
 import partial from '../fixtures/synthesized/partial.json';
@@ -9,11 +13,17 @@ import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
+const theme = createAppTheme('dark');
+
+function renderThemed(ui: ReactElement) {
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+}
+
 // The synthesized fixtures are the authoritative payload shape; the component reads them loosely.
 const asSweep = (value: unknown): SweepData => value as unknown as SweepData;
 
 function renderPanel(data: unknown): HTMLElement {
-  return render(<HealthWatchPanel data={asSweep(data)} />).container;
+  return renderThemed(<HealthWatchPanel data={asSweep(data)} />).container;
 }
 
 function panel(container: HTMLElement): HTMLElement {
@@ -26,9 +36,9 @@ describe('HealthWatchPanel', () => {
   it('renders the legacy Health watch panel with id pOsint', () => {
     const p = panel(renderPanel(minimal));
     expect(p).toBeInTheDocument();
-    expect(p.querySelector('.card-head h3')?.textContent).toBe('Health watch');
-    expect(p.querySelector('.card-body')?.className).toContain('pad-sm');
-    expect(p.querySelector('.hw-list')).not.toBeNull();
+    expect(p.querySelector(`.${CLASSES.cardHead} h3`)?.textContent).toBe('Health watch');
+    expect(p.querySelector(`.${CLASSES.cardBody}`)?.className).toContain(CLASSES.cardBodyPadSm);
+    expect(p.querySelector(`.${CLASSES.hwList}`)).not.toBeNull();
   });
 
   it('renders WHO outbreak rows, the risk tag and the source links', () => {
@@ -49,9 +59,9 @@ describe('HealthWatchPanel', () => {
 
     // WHO risk tag: the fixture carries a bare "High" string; the tag is coloured from HEALTH_RISK_COL.
     const risk = within(p).getByText('High');
-    expect(risk).toHaveClass('hw-risk');
+    expect(risk).toHaveClass(CLASSES.hwRisk);
     expect(risk).toHaveAttribute('title', 'WHO assessment');
-    expect(risk.getAttribute('style')).toMatch(/rgba\(245, ?154, ?94/);
+    expect(getComputedStyle(risk).color).toMatch(/rgba?\(245, ?154, ?94/);
 
     // Section headings.
     expect(within(p).getByText('WHO outbreaks')).toBeInTheDocument();
@@ -60,7 +70,7 @@ describe('HealthWatchPanel', () => {
 
     // CDC travel row, level label and link.
     const travelTitle = within(p).getByText('Cholera in Haiti');
-    expect(within(p).getByText('L2')).toHaveClass('hw-lvl', 'l2');
+    expect(within(p).getByText('L2')).toHaveClass(CLASSES.hwLevel, HW_LEVEL_CLASSES['2']!);
     expect(travelTitle.closest('a')).toHaveAttribute(
       'href',
       'https://wwwnc.cdc.gov/travel/notices/level2/cholera-haiti',
@@ -104,7 +114,7 @@ describe('HealthWatchPanel', () => {
     const base = minimal.healthWatch as Record<string, unknown>;
     const p = panel(renderPanel({ ...minimal, healthWatch: { ...base, error: 'WHO feed down' } }));
     const banner = within(p).getByText(/WHO feed down/);
-    expect(banner).toHaveClass('nuke-ok', 'anom');
+    expect(banner).toHaveClass(CLASSES.statusBanner, CLASSES.statusBannerAnom);
   });
 
   it('never uses dangerouslySetInnerHTML', () => {

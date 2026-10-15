@@ -32,7 +32,7 @@ export function useDigestView({ onLoad }: UseDigestViewArgs): DigestViewActions 
     history.set(
       ['digest', next.openArticleId || ''],
       { filter: next.filter !== 'all' ? next.filter : '', topic: next.topic, q: next.q, settings: settingsParam(hrefRef.current) },
-      { push: isPush, state: { k: next.openArticleId ? 'read' : 'list' } },
+      { isPush, state: { k: next.openArticleId ? 'read' : 'list' } },
     );
   }, [history]);
 

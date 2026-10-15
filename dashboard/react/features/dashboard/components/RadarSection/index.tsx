@@ -1,5 +1,7 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asArr, asRec, type Rec } from '../../coerce';
+import { ROW_STYLES } from '../../styles';
 import { DdosLine } from '../DdosLine';
 import { groupAnnotations } from '../OutagesPanel/outages';
 import { RadarAnnotationRow } from '../RadarAnnotationRow';
@@ -17,10 +19,10 @@ export function RadarSection({ radar }: RadarSectionProps) {
   const anomalies = asArr(radar.anomalies);
   return (
     <>
-      <div className={CLASSES.sectionHead}>
+      <Box className={CLASSES.sectionHead} sx={ROW_STYLES.sectionHead}>
         Cloudflare Radar
         {anomalies.length ? ` · ${anomalies.length} verified anomal${anomalies.length === 1 ? 'y' : 'ies'} 24h` : ''}
-      </div>
+      </Box>
       {annotations.map((a, i) => <RadarAnnotationRow key={`ann-${i}`} annotation={a} />)}
       <DdosLine attacks={attacks} />
     </>

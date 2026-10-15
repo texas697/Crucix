@@ -34,6 +34,8 @@ function resolveVendor(url: URL): string | null {
   if (host.endsWith('unpkg.com')) {
     if (/\/maplibre-gl@4\.7\.1\/dist\/maplibre-gl\.js$/.test(path)) return 'maplibre-gl-4.7.1/maplibre-gl.js';
     if (/\/maplibre-gl@4\.7\.1\/dist\/maplibre-gl\.css$/.test(path)) return 'maplibre-gl-4.7.1/maplibre-gl.css';
+    if (/\/maplibre-gl@6\.14\.0\/dist\/maplibre-gl\.m?js$/.test(path)) return 'maplibre-gl-6.14.0/maplibre-gl.js';
+    if (/\/maplibre-gl@6\.14\.0\/dist\/maplibre-gl\.css$/.test(path)) return 'maplibre-gl-6.14.0/maplibre-gl.css';
   }
   if (host.endsWith('cdnjs.cloudflare.com')) {
     if (path.includes('/gsap/3.12.5/gsap.min.js')) return 'gsap-3.12.5/gsap.min.js';

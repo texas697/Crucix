@@ -73,6 +73,7 @@ export function uiFlagsScript(flags) {
   return `<script>window.__CRUCIX_UI__=${escapeInlineJson(flags)};</script>`;
 }
 
+const LOGIN_FONT_LINK = '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
 const HEAD_LINKS = `<link rel="icon" href="/brand/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
@@ -98,7 +99,7 @@ export function renderSurfaceDocument({ surface, title, assets, head = '', body 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
-  ${HEAD_LINKS}
+  ${HEAD_LINKS}${surface === 'login' ? `\n  ${LOGIN_FONT_LINK}` : ''}
 ${css ? css + '\n' : ''}${head ? '  ' + head + '\n' : ''}</head>
 <body data-surface="${escapeHtml(surface)}">
   <div id="root">${body}</div>

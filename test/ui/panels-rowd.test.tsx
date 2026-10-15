@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '../../dashboard/react/theme';
 import type { SweepData } from '../../dashboard/react/api/types';
+import { CLASSES } from '../../dashboard/react/features/dashboard/classes';
 import { RowD, type RowDProps } from '../../dashboard/react/features/dashboard/components/RowD';
 import minimal from '../fixtures/synthesized/minimal.json';
 import partial from '../fixtures/synthesized/partial.json';
@@ -9,13 +13,19 @@ import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
+const theme = createAppTheme('dark');
+
+function renderThemed(ui: ReactElement) {
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+}
+
 // The synthesized fixtures are the authoritative payload shape; the component reads them loosely.
 const asSweep = (value: unknown): SweepData => value as unknown as SweepData;
 
 type RowDInput = Partial<Omit<RowDProps, 'data'>>;
 
 function renderRowD(data: unknown, props: RowDInput = {}): HTMLElement {
-  return render(<RowD data={asSweep(data)} {...props} />).container;
+  return renderThemed(<RowD data={asSweep(data)} {...props} />).container;
 }
 
 /** Scope a query to one of the four legacy panel ids. */
@@ -79,7 +89,7 @@ describe('RowD', () => {
     const now = new Date().toISOString();
     const alert = panel(renderRowD(minimal, { alerts: [{ time: now, cities: ['Kyiv', 'Lviv', 'Odesa', 'Kharkiv'] }] }), 'pAlerts');
     expect(within(alert).getByText('Kyiv, Lviv, Odesa +1')).toBeInTheDocument();
-    expect(alert.querySelectorAll('.alert-row')).toHaveLength(1);
+    expect(alert.querySelectorAll(`.${CLASSES.alertRow}`)).toHaveLength(1);
   });
 
   it('renders track rows with type, locality/region and meta', () => {
@@ -98,7 +108,7 @@ describe('RowD', () => {
     expect(within(market).getByText('Will a ceasefire hold through Q4?')).toBeInTheDocument();
     expect(within(market).getByText('62%')).toBeInTheDocument();
     expect(within(market).getByText(/\$125k 24h/)).toBeInTheDocument();
-    const link = market.querySelector('a.poly-item');
+    const link = market.querySelector(`a.${CLASSES.marketItem}`);
     expect(link?.getAttribute('href')).toBe('https://polymarket.com/event/ceasefire-q4');
   });
 

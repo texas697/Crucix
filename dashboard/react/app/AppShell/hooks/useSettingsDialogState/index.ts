@@ -15,13 +15,13 @@ export function useSettingsDialogState(): SettingsDialogValue {
 
   const onOpen = useCallback(() => {
     const { path, q } = parseUrl(location.href);
-    history.set(path, { ...q, settings: '1' }, { push: true, state: { k: 'settings' } });
+    history.set(path, { ...q, settings: '1' }, { isPush: true, state: { k: 'settings' } });
   }, [history, location.href]);
 
   const onClose = useCallback(() => {
     if (history.afterClose('settings') === 'rewrite') {
       const { path, q } = parseUrl(location.href);
-      history.set(path, { ...q, settings: '' }, { push: false });
+      history.set(path, { ...q, settings: '' }, { isPush: false });
     }
   }, [history, location.href]);
 

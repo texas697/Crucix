@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import Box from '@mui/material/Box';
 import { safeExternalUrl } from '../../shared/safeUrl';
 import { CHANNEL_COUNT, channelAt } from './channels';
 import { CLASSES } from './classes';
@@ -7,12 +8,12 @@ import { ControlBar } from './components/ControlBar';
 import { MediaFoot } from './components/MediaFoot';
 import { MediaGrid } from './components/MediaGrid';
 import { MediaHero } from './components/MediaHero';
-import { MediaLegacyStyles } from './components/MediaLegacyStyles';
 import { MediaStage } from './components/MediaStage';
 import { useMediaControls } from './hooks/useMediaControls';
 import { useMediaKeys } from './hooks/useMediaKeys';
 import { useMediaPlayer } from './hooks/useMediaPlayer';
 import { useMediaRoute } from './hooks/useMediaRoute';
+import { STYLES } from './styles';
 import { youTubeEmbed } from './youTubeEmbed';
 
 export function MediaApp() {
@@ -27,19 +28,18 @@ export function MediaApp() {
   useMediaKeys({ onStepChannel: route.onStepChannel, onToggleMute: controls.onToggleMute, onToggleFullscreen: controls.onToggleFullscreen });
 
   return (
-    <div className={CLASSES.root}>
-      <MediaLegacyStyles />
+    <Box className={CLASSES.root} sx={STYLES.root}>
       <MediaHero channelCount={CHANNEL_COUNT} />
-      <div className={CLASSES.layout}>
+      <Box className={CLASSES.layout} sx={STYLES.layout}>
         <ChannelList channelIndex={route.channelIndex} onSelectChannel={route.onSelectChannel} />
-        <div className={CLASSES.stageColumn}>
+        <Box className={CLASSES.stageColumn}>
           <MediaStage stageRef={controls.stageRef} videoRef={controls.videoRef} player={player} channelName={channel.name} youTubeUrl={youTubeUrl} openUrl={openUrl} />
           <ControlBar channelName={channel.name} controls={controls} isGridOn={route.isGridOn} openUrl={openUrl} onToggleGrid={route.onToggleGrid} />
           <MediaFoot />
           {route.isGridOn && <MediaGrid />}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 

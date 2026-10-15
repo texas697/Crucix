@@ -17,7 +17,7 @@ const MIN = minimal as unknown as SweepData;
 const PARTIAL = partial as unknown as SweepData;
 
 function allVisible(): Record<string, boolean> {
-  return Object.fromEntries(LAYER_DEFS.map((l) => [l.key, true]));
+  return { ...Object.fromEntries(LAYER_DEFS.map((l) => [l.key, true])), militaryAir: true };
 }
 
 function base(data: SweepData, over: Partial<PlotInput> = {}): PlotInput {
@@ -51,6 +51,7 @@ describe('plotData', () => {
     const types = pointTypes(r);
     for (const key of [
       'air',
+      'militaryAir',
       'thermal',
       'maritime',
       'nuke',
@@ -69,7 +70,8 @@ describe('plotData', () => {
 
     // layerCounts counts available points by type, independent of visibility/region/time.
     expect(r.layerCounts).toEqual({
-      air: 2, // 1 air hotspot + 1 military aircraft
+      air: 1,
+      militaryAir: 1,
       thermal: 2,
       maritime: 2,
       nuke: 2, // site + one Safecast sensor
@@ -110,9 +112,9 @@ describe('plotData', () => {
 
   it('filters to the active region', () => {
     const r = plotData(base(MIN, { region: 'europe' }));
-    // Military aircraft (Kyiv), the watched SDR receiver and the GDELT cluster all sit in the box.
+    // The military aircraft, the watched SDR receiver and the GDELT cluster all sit in the box.
     expect(r.mapPoints).toHaveLength(3);
-    expect(r.mapPoints.map((p) => p.type).sort()).toEqual(['air', 'gdelt', 'sdr']);
+    expect(r.mapPoints.map((p) => p.type).sort()).toEqual(['gdelt', 'militaryAir', 'sdr']);
   });
 
   it('drops stale points for the 1h time window (with exact-1h boundary survivors)', () => {
@@ -212,6 +214,39 @@ describe('plotData', () => {
 
     const hidden = plotData(base(MIN, { tracks: { tracks }, layerVisible: { ...allVisible(), track: false } }));
     expect(hidden.trails.features).toHaveLength(0);
+  });
+
+  it('plots every military aircraft as a militaryAir point with heading and label', () => {
+    const milAir = [
+      { hex: 'ae1234', cs: 'RCH123', type: 'C-17', country: 'United States', lat: 49.53, lon: 8.42, alt: 31000, gs: 452, trk: 92, reg: '07-7177', sq: '4213' },
+      { hex: 'ae5678', cs: '', type: 'KC-135', country: 'United States', lat: 35.1, lon: 33.3, alt: 0, gs: 0, trk: null },
+      { hex: '3f9a12', cs: 'GAF001', type: '', country: 'Germany', lat: 52.4, lon: 13.5, alt: 12000, gs: 300, trk: 270.5 },
+    ];
+    const data = { ...(MIN as unknown as Record<string, unknown>), milAir } as unknown as SweepData;
+
+    const r = plotData(base(data));
+    const mil = r.mapPoints.filter((p) => p.type === 'militaryAir');
+    expect(mil).toHaveLength(milAir.length);
+    expect(r.layerCounts.militaryAir).toBe(milAir.length);
+    expect(r.layerCounts.air).toBe(1);
+    expect(r.mapPoints.filter((p) => p.type === 'air')).toHaveLength(1);
+
+    expect(mil.map((p) => p.heading)).toEqual([92, null, 270.5]);
+    expect(mil.map((p) => p.label)).toEqual(['RCH123 C-17', 'AE5678 KC-135', 'GAF001']);
+    expect(mil[0]!.popHead).toBe('RCH123 · C-17');
+    expect(mil[0]!.popMeta).toBe('Military aircraft · United States · FL310');
+    expect(mil[0]!.popText).toContain('Reg 07-7177 · 452 kt · hdg 92° · squawk 4213');
+    expect(mil[0]!.popText).toContain('ICAO ae1234');
+    expect(mil[1]!.popMeta).toContain('on ground');
+
+    const feats = r.points.features.filter((f) => f.properties!.type === 'militaryAir');
+    expect(feats).toHaveLength(milAir.length);
+    expect(feats.map((f) => f.properties!.heading)).toEqual([92, 0, 270.5]);
+    expect(feats[0]!.properties!.label).toBe('RCH123 C-17');
+
+    const hidden = plotData(base(data, { layerVisible: { ...allVisible(), militaryAir: false } }));
+    expect(hidden.mapPoints.some((p) => p.type === 'militaryAir')).toBe(false);
+    expect(hidden.layerCounts.militaryAir).toBe(milAir.length);
   });
 
   it('plots live ships and quakes from the separate live feeds', () => {

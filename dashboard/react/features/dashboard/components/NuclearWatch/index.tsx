@@ -1,8 +1,9 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asArr, asRec, num, str } from '../../coerce';
 import { relTime } from '../../format';
 import { makeLabel } from '../../label';
-import { STYLES } from '../../styles';
+import { ROW_STYLES, TONE_STYLES } from '../../styles';
 import type { PanelDataProps } from '../../types';
 import { NukeSiteRow } from '../NukeSiteRow';
 import { Panel } from '../Panel';
@@ -33,17 +34,15 @@ export function NuclearWatch({ data, t }: PanelDataProps) {
       badge={`${nukeSensorsN} sensors${nukeNewest ? ` · ${relTime(nukeNewest)}` : ''}`}
       flex="1 1 240px"
     >
-      <StatusBanner tone={tone} note={<span className={CLASSES.statusBannerNote} style={STYLES.bannerNote}>median · CPM</span>}>
-        {nukeStatus}
-      </StatusBanner>
+      <StatusBanner tone={tone} note="median · CPM">{nukeStatus}</StatusBanner>
       {liveSites.map((s, i) => <NukeSiteRow key={`${str(s.site)}-${i}`} site={s} />)}
       {darkSites.length ? (
-        <div className={CLASSES.siteRow} style={STYLES.dimRow}>
-          <span className={CLASSES.siteName}>
+        <Box className={CLASSES.siteRow} sx={[ROW_STYLES.siteRow, TONE_STYLES.dimRow]}>
+          <Box component="span" className={CLASSES.siteName}>
             {tr('nuclear.noSensors', 'No public sensors')}:{' '}
             {darkSites.map((s) => str(s.site).replace(/ \(.*\)$/, '')).join(', ')}
-          </span>
-        </div>
+          </Box>
+        </Box>
       ) : null}
     </Panel>
   );

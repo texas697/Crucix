@@ -6,6 +6,5 @@ export const POLYMARKET_URL =
 export const MARKET_KEYWORDS =
   /(iran|israel|russia|ukrain|war|ceasefire|strike|nuclear|nato|china|taiwan|gaza|hezbollah|houthi|\boil\b|gold|recession|invasion|missile)/i;
 export const ALERT_WINDOW_MS = 3_600_000;
-export const ALERT_LIMIT = 10;
 export const MARKET_LIMIT = 6;
 export const DEFAULT_INTERVALS = { tracks: 15000, alerts: 45000, quakes: 60000, markets: 60000 } as const;

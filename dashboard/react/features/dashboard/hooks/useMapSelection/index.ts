@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState, type RefObject } from 'react';
 import type { ApiClient } from '../../../../api/client';
 import type { HistoryAdapter } from '../../../../state/history';
-import { shapeToUrl, type Shape } from '../../../../state/url';
+import { parseUrl, shapeToUrl, type Shape } from '../../../../state/url';
 import { EMPTY_AREA_BRIEF, loadAreaBrief, markersPayload, type AreaBriefState } from '../../../map/AreaBrief';
 import type { MapViewHandle } from '../../../map/MapView';
 import type { MapPoint, PlotResult } from '../../../map/plot';
@@ -13,14 +13,14 @@ export interface UseMapSelectionArgs {
   api: ApiClient;
   mapRef: RefObject<MapViewHandle | null>;
   plot: PlotResult | null;
+  href: string;
   history: HistoryAdapter;
 }
 
-export function useMapSelection({ api, mapRef, plot, history }: UseMapSelectionArgs): MapSelectionState {
+export function useMapSelection({ api, mapRef, plot, href, history }: UseMapSelectionArgs): MapSelectionState {
   const [drawTool, setDrawTool] = useState<DrawTool | null>(null);
   const [selected, setSelected] = useState<MapPoint[]>([]);
   const [brief, setBrief] = useState<AreaBriefState>(EMPTY_AREA_BRIEF);
-  const [briefError, setBriefError] = useState<string | null>(null);
 
   const selectedFC = useMemo(() => ({
     type: 'FeatureCollection',
@@ -33,10 +33,12 @@ export function useMapSelection({ api, mapRef, plot, history }: UseMapSelectionA
     setSelected([]);
     setBrief(EMPTY_AREA_BRIEF);
     setDrawTool(null);
-  }, []);
+    const { path, q } = parseUrl(href);
+    if (!q.shape) return;
+    if (history.afterClose('shape') === 'rewrite') history.set(path, { ...q, shape: '' }, { isPush: false });
+  }, [href, history]);
 
   const onDrawComplete = useCallback((shape: Shape) => {
-    setDrawTool(null);
     setBrief(EMPTY_AREA_BRIEF);
     if (plot) {
       setSelected(runSelection(shapeToFeature(shape), plot.mapPoints));
@@ -44,10 +46,9 @@ export function useMapSelection({ api, mapRef, plot, history }: UseMapSelectionA
         shape,
         markers: markersPayload(plot.mapPoints),
         onUpdate: (patch) => setBrief((cur) => ({ ...cur, ...patch })),
-        onError: (err) => setBriefError(err.message),
       });
     }
-    history.set('/', { shape: shapeToUrl(shape) }, { push: true, state: { k: 'shape' } });
+    history.set('/', { shape: shapeToUrl(shape) }, { isPush: true, state: { k: 'shape' } });
   }, [plot, api, history]);
 
   const onDrawCancel = useCallback(() => setDrawTool(null), []);
@@ -58,6 +59,6 @@ export function useMapSelection({ api, mapRef, plot, history }: UseMapSelectionA
   }, [selected, mapRef]);
 
   return useMemo(() => ({
-    drawTool, selected, selectedFC, brief, briefError, setDrawTool, onDrawComplete, onDrawCancel, onClearSelection, onFocusSelection,
-  }), [drawTool, selected, selectedFC, brief, briefError, onDrawComplete, onDrawCancel, onClearSelection, onFocusSelection]);
+    drawTool, selected, selectedFC, brief, setDrawTool, onDrawComplete, onDrawCancel, onClearSelection, onFocusSelection,
+  }), [drawTool, selected, selectedFC, brief, onDrawComplete, onDrawCancel, onClearSelection, onFocusSelection]);
 }

@@ -1,6 +1,8 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import type { AlertItem } from '../../types';
 import { alertMs } from './alerts';
+import { STYLES } from './styles';
 
 export interface AlertRowProps {
   alert: AlertItem;
@@ -12,10 +14,10 @@ export function AlertRow({ alert: a }: AlertRowProps) {
   const ms = alertMs(a.time);
   const timeText = ms != null ? new Date(ms).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
   return (
-    <div className={CLASSES.alertRow}>
-      <span className={CLASSES.alertTime}>{timeText}</span>
-      <span className={CLASSES.alertCities}>{cities.slice(0, 3).join(', ')}{extra > 0 ? ` +${extra}` : ''}</span>
-      {a.drill ? <span className={CLASSES.alertDrill}>drill</span> : null}
-    </div>
+    <Box className={CLASSES.alertRow} sx={STYLES.alertRow}>
+      <Box component="span" className={CLASSES.alertTime} sx={STYLES.alertTime}>{timeText}</Box>
+      <Box component="span" className={CLASSES.alertCities} sx={STYLES.alertCities}>{cities.slice(0, 3).join(', ')}{extra > 0 ? ` +${extra}` : ''}</Box>
+      {a.drill ? <Box component="span" className={CLASSES.alertDrill} sx={STYLES.alertDrill}>drill</Box> : null}
+    </Box>
   );
 }

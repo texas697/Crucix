@@ -1,42 +1,38 @@
-/* Public site pages (marketing / support / privacy / terms).
- *
- * These styles come from dashboard/site/layout.html and are scoped under `.site-page`
- * (the class carried by the site <body>) so they can never collide with the dashboard or
- * reader design tokens. Values are preserved verbatim; only the selectors are prefixed. */
-.site-page,.site-page *,.site-page *::before,.site-page *::after{box-sizing:border-box;margin:0;padding:0}
-.site-page{--bg:#05070b;--panel:rgba(10,13,20,0.82);--border:rgba(220,226,236,0.12);--text:#e9ecf2;--body:#c8cedb;--dim:#8a94a8;--accent:#dce2ec;--accent2:#c2cbd8;--mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.site-page{background:var(--bg);color:var(--body);font-family:var(--sans);font-size:15px;line-height:1.65;padding:32px 16px 64px}
-.site-page main{max-width:760px;margin:0 auto}
-.site-page .brand{text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:0.22em;color:var(--accent);text-transform:uppercase}
-.site-page h1{color:var(--text);font-size:28px;font-weight:600;line-height:1.25;margin:12px 0 6px}
-.site-page .meta{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:28px}
-.site-page h2{color:var(--text);font-size:18px;font-weight:600;margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
-.site-page h3{color:var(--text);font-size:15px;font-weight:600;margin:20px 0 6px}
-.site-page p,.site-page ul,.site-page ol,.site-page table{margin:0 0 12px}
-.site-page ul,.site-page ol{padding-left:22px}
-.site-page li{margin:4px 0}
-.site-page strong{color:var(--text)}
-.site-page a{color:var(--accent2)}
-.site-page .caps{text-transform:uppercase;font-size:13px}
-.site-page .toc{background:var(--panel);border:1px solid var(--border);padding:14px 18px;margin-bottom:8px}
-.site-page .toc ol{margin:0}
-.site-page table{width:100%;border-collapse:collapse;font-size:14px;display:block;overflow-x:auto}
-.site-page th,.site-page td{text-align:left;vertical-align:top;padding:8px 10px;border:1px solid var(--border)}
-.site-page th{color:var(--text);font-weight:600;background:var(--panel)}
-.site-page .lead{font-size:18px;line-height:1.6;color:var(--text);margin:4px 0 22px}
-.site-page .card{background:var(--panel);border:1px solid var(--border);padding:16px 18px;margin:0 0 12px}
-.site-page .card h3{margin-top:0}
-.site-page .card p:last-child{margin-bottom:0}
-.site-page .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:22px 0 8px}
-.site-page .features .card{margin:0}
-.site-page .stores{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 8px}
-.site-page .store{display:inline-block;padding:11px 18px;border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-.site-page .store:hover{background:rgba(220,226,236,0.10)}
-.site-page .soon{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-.site-page details{border:1px solid var(--border);background:var(--panel);padding:10px 14px;margin:0 0 8px}
-.site-page summary{cursor:pointer;color:var(--text);font-weight:600}
-.site-page details p{margin:8px 0 2px}
-.site-page .fine{font-size:12px;color:var(--dim);margin-top:26px}
-.site-page footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--dim)}
-.site-page footer a{margin-right:14px}
-@media print{.site-page{background:#fff;color:#000}.site-page h1,.site-page h2,.site-page h3,.site-page strong,.site-page th{color:#000}.site-page a{color:#000}.site-page .toc,.site-page th,.site-page .card,.site-page details{background:none}}
+.crucix-site-page,.crucix-site-page *,.crucix-site-page *::before,.crucix-site-page *::after{box-sizing:border-box;margin:0;padding:0}
+.crucix-site-page{--bg:#05070b;--panel:rgba(10,13,20,0.82);--border:rgba(220,226,236,0.12);--text:#e9ecf2;--body:#c8cedb;--dim:#8a94a8;--accent:#dce2ec;--accent2:#c2cbd8;--mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.crucix-site-page{background:var(--bg);color:var(--body);font-family:var(--sans);font-size:15px;line-height:1.65;padding:32px 16px 64px}
+.crucix-site-main{max-width:760px;margin:0 auto}
+.crucix-site-title{color:var(--text);font-size:28px;font-weight:600;line-height:1.25;margin:12px 0 6px}
+.crucix-site-heading{color:var(--text);font-size:18px;font-weight:600;margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+.crucix-site-subheading{color:var(--text);font-size:15px;font-weight:600;margin:20px 0 6px}
+.crucix-site-text,.crucix-site-list,.crucix-site-ordered-list,.crucix-site-table{margin:0 0 12px}
+.crucix-site-list,.crucix-site-ordered-list{padding-left:22px}
+.crucix-site-item{margin:4px 0}
+.crucix-site-strong{color:var(--text)}
+.crucix-site-link{color:var(--accent2)}
+.crucix-site-table{width:100%;border-collapse:collapse;font-size:14px;display:block;overflow-x:auto}
+.crucix-site-header-cell,.crucix-site-cell{text-align:left;vertical-align:top;padding:8px 10px;border:1px solid var(--border)}
+.crucix-site-header-cell{color:var(--text);font-weight:600;background:var(--panel)}
+.crucix-site-brand{text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:0.22em;color:var(--accent);text-transform:uppercase}
+.crucix-site-meta,.crucix-site-page .meta{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:28px}
+.crucix-site-caps{text-transform:uppercase;font-size:13px}
+.crucix-site-toc{background:var(--panel);border:1px solid var(--border);padding:14px 18px;margin-bottom:8px}
+.crucix-site-toc .crucix-site-ordered-list{margin:0}
+.crucix-site-lead{font-size:18px;line-height:1.6;color:var(--text);margin:4px 0 22px}
+.crucix-site-card{background:var(--panel);border:1px solid var(--border);padding:16px 18px;margin:0 0 12px}
+.crucix-site-card .crucix-site-subheading{margin-top:0}
+.crucix-site-card .crucix-site-text:last-child{margin-bottom:0}
+.crucix-site-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:22px 0 8px}
+.crucix-site-features .crucix-site-card{margin:0}
+.crucix-site-stores,.crucix-site-page .stores{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 8px}
+.crucix-site-store,.crucix-site-page .store{display:inline-block;padding:11px 18px;border:1px solid var(--accent);color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.crucix-site-store:hover,.crucix-site-page .store:hover{background:rgba(220,226,236,0.10)}
+.crucix-site-soon,.crucix-site-page .soon{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.crucix-site-details{border:1px solid var(--border);background:var(--panel);padding:10px 14px;margin:0 0 8px}
+.crucix-site-summary{cursor:pointer;color:var(--text);font-weight:600}
+.crucix-site-details .crucix-site-text{margin:8px 0 2px}
+.crucix-site-fine{font-size:12px;color:var(--dim);margin-top:26px}
+.crucix-site-footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--dim)}
+.crucix-site-footer-link{margin-right:14px}
+.crucix-site-footer-copy{margin-top:8px}
+@media print{.crucix-site-page{background:#fff;color:#000}.crucix-site-title,.crucix-site-heading,.crucix-site-subheading,.crucix-site-strong,.crucix-site-header-cell{color:#000}.crucix-site-link{color:#000}.crucix-site-toc,.crucix-site-header-cell,.crucix-site-card,.crucix-site-details{background:none}}

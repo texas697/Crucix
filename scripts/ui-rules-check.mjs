@@ -28,12 +28,10 @@ const DEFAULT_EXPORT_RE = /^\s*export\s+default\b/;
 const INLINE_CLASS_RE = /className=(["'][^"']+["']|\{\s*["'`])/;
 const CSS_IMPORT_RE = /^\s*import\s+['"][^'"]+\.css['"]/;
 const CSS_INLINE_RE = /^\s*import\s+\w+\s+from\s+['"][^'"]+\.css\?inline['"]/;
-// Legacy stylesheet bridges (docs/UI_CONVENTIONS.md, "Legacy stylesheet bridge"): the only files
-// allowed to pull a styles/*.css file through GlobalStyles until that feature is on MUI styled().
+// Stylesheet bridges (docs/UI_CONVENTIONS.md, "Stylesheet bridges"): the only file allowed to pull
+// a third-party stylesheet through GlobalStyles is the MapLibre one; app surfaces never import CSS.
 const LEGACY_STYLE_BRIDGES = new Set([
-  'dashboard/react/features/dashboard/components/DashboardLegacyStyles/index.tsx',
-  'dashboard/react/features/digest/components/DigestLegacyStyles/index.tsx',
-  'dashboard/react/features/media/components/MediaLegacyStyles/index.tsx',
+  'dashboard/react/features/map/components/MapLibreStyles/index.tsx',
 ]);
 
 const errors = [];

@@ -1,14 +1,14 @@
 import { createElement, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Layout, type SiteVars } from './Layout';
+import { Layout } from './Layout';
 import { MarketingPage } from './MarketingPage';
-import { SupportPage } from './SupportPage';
 import { PrivacyPage } from './PrivacyPage';
+import { SupportPage } from './SupportPage';
 import { TermsPage } from './TermsPage';
+import type { SiteKind, SiteVars } from './types';
 
-export type { SiteVars } from './Layout';
-
-export type SiteKind = 'marketing' | 'support' | 'privacy' | 'terms';
+export { CLASSES } from './classes';
+export type { PageProps, SiteKind, SiteVars } from './types';
 
 const PAGES = {
   marketing: MarketingPage,
@@ -17,16 +17,13 @@ const PAGES = {
   terms: TermsPage,
 } as const;
 
-/** Legacy pages begin with a doctype that React does not emit itself. */
 export const DOCTYPE = '<!DOCTYPE html>\n';
 
-/** The full document element (layout + page body) for a site page. */
 export function siteElement(kind: SiteKind, vars: SiteVars): ReactElement {
   const Page = PAGES[kind];
   return createElement(Layout, { vars }, createElement(Page, { vars }));
 }
 
-/** Render one public site page to a complete HTML string, once, at build/start time. */
 export function renderSitePage(kind: SiteKind, vars: SiteVars): string {
   return DOCTYPE + renderToStaticMarkup(siteElement(kind, vars));
 }

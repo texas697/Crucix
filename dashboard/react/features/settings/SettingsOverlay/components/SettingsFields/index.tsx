@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import type { LlmProvider } from '../../../../../api/types';
 import { CLASSES } from '../../../classes';
@@ -15,6 +16,7 @@ export interface SettingsFieldsProps {
 }
 
 const SHRINK = { shrink: true };
+const SELECT_PROPS = { className: CLASSES.fieldProviderSelect, MenuProps: { className: CLASSES.fieldProviderMenu } };
 
 export function SettingsFields({ form, hints, providers }: SettingsFieldsProps) {
   const handlers = useSettingsFieldHandlers({ form });
@@ -29,10 +31,10 @@ export function SettingsFields({ form, hints, providers }: SettingsFieldsProps) 
         sx={STYLES.field}
         value={form.provider}
         onChange={handlers.onProviderChange}
-        SelectProps={{ native: true }}
+        SelectProps={SELECT_PROPS}
         InputLabelProps={SHRINK}
       >
-        {providers.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+        {providers.map((p) => <MenuItem key={p.id} value={p.id} className={CLASSES.fieldProviderOption} sx={STYLES.fieldProviderOption}>{p.label}</MenuItem>)}
       </TextField>
       <TextField
         id="llmKey"

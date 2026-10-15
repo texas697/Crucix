@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asArr, asRec, num, type Rec } from '../../coerce';
 import { makeLabel } from '../../label';
-import { STYLES } from '../../styles';
+import { ROW_STYLES } from '../../styles';
 import type { PanelDataProps, QuakeItem } from '../../types';
 import { GdacsRow } from '../GdacsRow';
 import { Panel } from '../Panel';
@@ -12,6 +13,8 @@ import { QuakeRow } from '../QuakeRow';
 export interface DisastersPanelProps extends PanelDataProps {
   quakes?: QuakeItem[];
 }
+
+const SECTION_HEAD_TIGHT = { pt: '2px' };
 
 export function DisastersPanel({ data, t, quakes }: DisastersPanelProps) {
   const tr = makeLabel(t);
@@ -23,11 +26,11 @@ export function DisastersPanel({ data, t, quakes }: DisastersPanelProps) {
 
   const gdacsHead = hasGdacs ? (
     <>
-      <div className={CLASSES.sectionHead} style={STYLES.sectionHeadTight}>
+      <Box className={CLASSES.sectionHead} sx={[ROW_STYLES.sectionHead, SECTION_HEAD_TIGHT]}>
         GDACS · {num(counts.red)} red · {num(counts.orange)} orange
-      </div>
+      </Box>
       {events.slice(0, 6).map((e, i) => <GdacsRow key={`gdacs-${i}`} event={e} />)}
-      <div className={CLASSES.sectionHead}>Earthquakes · USGS</div>
+      <Box className={CLASSES.sectionHead} sx={ROW_STYLES.sectionHead}>Earthquakes · USGS</Box>
     </>
   ) : null;
 

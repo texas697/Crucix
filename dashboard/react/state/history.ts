@@ -1,9 +1,5 @@
 import { buildUrl } from './url';
 
-// History ownership for in-page filters and dialogs. Ports the legacy UrlState.set / urlAfterClose
-// rules: opening a dialog pushes an entry the Back button can undo; adjusting a filter replaces in
-// place; closing only calls Back when the current entry was opened by that dialog.
-
 export type HistoryKind =
   | 'region' | 'shape' | 'pin' | 'info' | 'guide' | 'settings' | 'read'
   | 'list' | 'channel';
@@ -11,11 +7,10 @@ export type HistoryKind =
 export interface HistoryEntryState { k?: HistoryKind }
 
 export interface SetOptions {
-  push?: boolean;
+  isPush?: boolean;
   state?: HistoryEntryState | null;
 }
 
-/** Minimal shapes so tests can inject fakes. */
 export interface HistoryLike {
   state: unknown;
   length: number;
@@ -25,12 +20,11 @@ export interface HistoryLike {
 }
 export interface LocationLike { href: string; pathname: string; search: string }
 
+export type AfterCloseAction = 'back' | 'rewrite';
+
 export interface HistoryAdapter {
-  /** Returns true when the URL changed. */
   set(path: string | string[], q: Record<string, unknown>, opts?: SetOptions): boolean;
-  /** 'back' when the current entry is owned by `kind` (Back was invoked); 'rewrite' otherwise. */
-  afterClose(kind: HistoryKind): 'back' | 'rewrite';
-  /** The full current location, for the login `next` round-trip. */
+  afterClose(kind: HistoryKind): AfterCloseAction;
   here(): string;
 }
 
@@ -41,18 +35,18 @@ export function createHistoryAdapter(
   const current = () => location.pathname + location.search;
 
   function set(path: string | string[], q: Record<string, unknown>, opts: SetOptions = {}): boolean {
-    const { push = false, state = null } = opts;
+    const { isPush = false, state = null } = opts;
     const url = buildUrl(path, q);
     if (url === current()) {
-      if (state && push) history.replaceState(state, '', url);
+      if (state && isPush) history.replaceState(state, '', url);
       return false;
     }
-    if (push) history.pushState(state ?? {}, '', url);
+    if (isPush) history.pushState(state ?? {}, '', url);
     else history.replaceState(state ?? history.state ?? {}, '', url);
     return true;
   }
 
-  function afterClose(kind: HistoryKind): 'back' | 'rewrite' {
+  function afterClose(kind: HistoryKind): AfterCloseAction {
     const state = history.state as HistoryEntryState | null;
     if (state && state.k === kind && history.length > 1) {
       history.back();

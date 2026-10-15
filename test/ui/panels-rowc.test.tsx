@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '../../dashboard/react/theme';
 import type { SweepData } from '../../dashboard/react/api/types';
 import { RowC } from '../../dashboard/react/features/dashboard/components/RowC';
 import minimal from '../fixtures/synthesized/minimal.json';
@@ -10,13 +13,19 @@ import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
+const theme = createAppTheme('dark');
+
+function renderThemed(ui: ReactElement) {
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+}
+
 // The synthesized fixtures are the authoritative payload shape; the component reads them loosely.
 const asSweep = (value: unknown): SweepData => value as unknown as SweepData;
 
 type RowCProps = Parameters<typeof RowC>[0];
 
 function renderRowC(data: unknown, props: Partial<Omit<RowCProps, 'data'>> = {}): HTMLElement {
-  return render(<RowC data={asSweep(data)} {...props} />).container;
+  return renderThemed(<RowC data={asSweep(data)} {...props} />).container;
 }
 
 /** Scope a query to one of the three legacy panel ids. */

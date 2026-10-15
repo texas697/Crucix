@@ -1,6 +1,8 @@
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import { CLASSES } from '../../classes';
 import { getAge } from '../../format';
-import { STYLES } from '../../styles';
+import { STYLES } from '../IdeasPanel/styles';
 
 export interface IdeasActionsProps {
   isSignedIn: boolean;
@@ -13,22 +15,22 @@ export interface IdeasActionsProps {
 export function IdeasActions({ isSignedIn, hasLlm, hasIdeas, generatedAt, onGenerateIdeas }: IdeasActionsProps) {
   if (isSignedIn && !hasLlm) {
     return (
-      <span className={CLASSES.ideasActions} style={STYLES.headActions}>
-        <button type="button" className={CLASSES.ideasGen} title="Enter your LLM API key for AI-generated ideas">
+      <Box component="span" className={CLASSES.ideasActions} sx={[STYLES.ideasActions, STYLES.headActions]}>
+        <Button variant="outlined" className={CLASSES.ideasGen} sx={STYLES.ideasGen} title="Enter your LLM API key for AI-generated ideas">
           {'⚡'} Add AI key
-        </button>
-      </span>
+        </Button>
+      </Box>
     );
   }
   if (!hasLlm) return null;
   return (
-    <span className={CLASSES.ideasActions} style={STYLES.headActions}>
-      <span className={CLASSES.ideasActions}>
-        {generatedAt ? <span className={CLASSES.ideasMeta}>{getAge(generatedAt)}</span> : null}
-        <button type="button" className={CLASSES.ideasGen} id="ideasGenBtn" onClick={onGenerateIdeas}>
+    <Box component="span" className={CLASSES.ideasActions} sx={[STYLES.ideasActions, STYLES.headActions]}>
+      <Box component="span" className={CLASSES.ideasActionsInner} sx={STYLES.ideasActions}>
+        {generatedAt ? <Box component="span" className={CLASSES.ideasMeta} sx={STYLES.ideasMeta}>{getAge(generatedAt)}</Box> : null}
+        <Button variant="outlined" className={CLASSES.ideasGen} sx={STYLES.ideasGen} id="ideasGenBtn" onClick={onGenerateIdeas}>
           {hasIdeas ? 'Regenerate' : 'Generate'}
-        </button>
-      </span>
-    </span>
+        </Button>
+      </Box>
+    </Box>
   );
 }

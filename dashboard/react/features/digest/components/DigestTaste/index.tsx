@@ -1,6 +1,8 @@
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import { CLASSES } from '../../classes';
-import { STYLES } from '../../styles';
 import type { DigestTaste as DigestTasteValue } from '../../types';
+import { STYLES } from './styles';
 
 export interface DigestTasteProps {
   taste: DigestTasteValue;
@@ -9,10 +11,10 @@ export interface DigestTasteProps {
 export function DigestTaste({ taste }: DigestTasteProps) {
   if (taste.likes.length === 0 && taste.dislikes.length === 0) return null;
   return (
-    <div className={CLASSES.taste}>
-      <span className={CLASSES.tasteLabel}>YOUR TASTE:</span>
-      {taste.likes.map((t) => <b key={`like:${t}`} className={CLASSES.tasteLike}>+{t}</b>)}
-      {taste.dislikes.map((t) => <span key={`dislike:${t}`} className={CLASSES.tasteDislike} style={STYLES.tasteDislike}>−{t}</span>)}
-    </div>
+    <Stack direction="row" className={CLASSES.taste} sx={STYLES.taste}>
+      <Box component="span" className={CLASSES.tasteLabel}>YOUR TASTE:</Box>
+      {taste.likes.map((t) => <Box component="b" key={`like:${t}`} className={CLASSES.tasteLike} sx={STYLES.tasteLike}>+{t}</Box>)}
+      {taste.dislikes.map((t) => <Box component="span" key={`dislike:${t}`} className={CLASSES.tasteDislike} sx={STYLES.tasteDislike}>−{t}</Box>)}
+    </Stack>
   );
 }

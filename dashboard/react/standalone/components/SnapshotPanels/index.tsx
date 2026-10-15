@@ -32,7 +32,7 @@ export function SnapshotPanels({ data, tickerItems, t, now }: SnapshotPanelsProp
     <Box component="main" className={CLASSES.main} sx={STYLES.main} id="main">
       <PanelRow name="a">
         <SensorGrid data={data} t={t} />
-        <NewsTicker items={tickerItems} now={now} />
+        <NewsTicker items={tickerItems} now={now} t={t} />
         <HealthWatchPanel data={data} t={t} />
       </PanelRow>
       <PanelRow name="b">

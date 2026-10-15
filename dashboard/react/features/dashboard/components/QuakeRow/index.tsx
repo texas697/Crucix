@@ -1,25 +1,28 @@
+import { useMemo } from 'react';
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asText, num, type Rec } from '../../coerce';
 import { magColor } from '../../format';
-import { STYLES } from '../../styles';
+import { ROW_STYLES, TONE_STYLES } from '../../styles';
+import { quakeMagSx } from '../../stylesRows';
 
 export interface QuakeRowProps {
   quake: Rec;
 }
 
 export function QuakeRow({ quake }: QuakeRowProps) {
-  const mc = magColor(num(quake.mag));
+  const magSx = useMemo(() => quakeMagSx(magColor(num(quake.mag))), [quake.mag]);
   const depth = quake.depth;
   return (
-    <a className={CLASSES.quakeRow} href={asText(quake.url) || '#'} target="_blank" rel="noopener">
-      <span className={CLASSES.quakeMag} style={{ background: `${mc}22`, color: mc, borderColor: `${mc}66` }}>
+    <Box component="a" className={CLASSES.quakeRow} sx={ROW_STYLES.quakeRow} href={asText(quake.url) || '#'} target="_blank" rel="noopener">
+      <Box component="span" className={CLASSES.quakeMag} sx={magSx}>
         {num(quake.mag).toFixed(1)}
-      </span>
-      <span className={CLASSES.quakePlace}>{asText(quake.place)}</span>
-      <span className={CLASSES.quakeMeta}>
+      </Box>
+      <Box component="span" className={CLASSES.quakePlace} sx={ROW_STYLES.quakePlace}>{asText(quake.place)}</Box>
+      <Box component="span" className={CLASSES.quakeMeta} sx={ROW_STYLES.quakeMeta}>
         {depth != null ? `${Math.round(num(depth))} km` : ''}
-        {quake.tsunami ? <span className={CLASSES.quakeTsunami} style={STYLES.orange}> tsunami</span> : null}
-      </span>
-    </a>
+        {quake.tsunami ? <Box component="span" className={CLASSES.quakeTsunami} sx={TONE_STYLES.orange}> tsunami</Box> : null}
+      </Box>
+    </Box>
   );
 }

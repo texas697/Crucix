@@ -13,20 +13,22 @@ export interface UseSnapshotViewArgs {
   region: RegionKey;
 }
 
+function feedOf(data: SweepData | null): TickerItem[] {
+  const feed = (data?.newsFeed as TickerItem[] | undefined) ?? (data?.news as TickerItem[] | undefined) ?? [];
+  return Array.isArray(feed) ? feed : [];
+}
+
 export function useSnapshotView({ snapshot, region }: UseSnapshotViewArgs): SnapshotView {
   const t = useMemo(() => {
     const dict = readLocaleDict();
     return dict ? createTranslator(dict) : undefined;
   }, []);
 
-  const tickerItems = useMemo<TickerItem[]>(() => {
-    const feed = (snapshot?.newsFeed as TickerItem[] | undefined) ?? (snapshot?.news as TickerItem[] | undefined) ?? [];
-    return Array.isArray(feed) ? feed : [];
-  }, [snapshot]);
-
+  const tickerItems = useMemo(() => feedOf(snapshot), [snapshot]);
   const health = useMemo(() => healthFromSnapshot(snapshot), [snapshot]);
   const viewData = useMemo(() => (snapshot ? filterByRegion(snapshot, region) : null), [snapshot, region]);
+  const tickerFeed = useMemo(() => feedOf(viewData), [viewData]);
   const meta = snapshot?.meta ?? null;
 
-  return useMemo(() => ({ t, tickerItems, meta, health, viewData }), [t, tickerItems, meta, health, viewData]);
+  return useMemo(() => ({ t, tickerItems, tickerFeed, meta, health, viewData }), [t, tickerItems, tickerFeed, meta, health, viewData]);
 }

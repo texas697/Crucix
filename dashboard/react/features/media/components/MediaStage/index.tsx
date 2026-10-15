@@ -1,4 +1,6 @@
 import type { RefObject } from 'react';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import { CLASSES } from '../../classes';
 import { STYLES } from '../../styles';
 import type { MediaPlayerState } from '../../types';
@@ -14,19 +16,23 @@ export interface MediaStageProps {
 }
 
 export function MediaStage({ stageRef, videoRef, player, channelName, youTubeUrl, openUrl }: MediaStageProps) {
-  const showOverlay = player.youTubeSrc === null && player.phase !== 'ready';
+  const isYouTube = player.youTubeSrc !== null;
+  const showOverlay = !isYouTube && player.phase !== 'ready';
   return (
-    <div className={CLASSES.stage} id="stage" ref={stageRef}>
-      <video
+    <Paper className={CLASSES.stage} sx={STYLES.stage} id="stage" ref={stageRef}>
+      <Box
+        component="video"
         id="player"
         className={CLASSES.video}
+        sx={[STYLES.video, isYouTube && STYLES.videoHidden]}
         ref={videoRef}
         playsInline
-        style={player.youTubeSrc ? STYLES.videoHidden : STYLES.videoShown}
       />
       {player.youTubeSrc && (
-        <iframe
+        <Box
+          component="iframe"
           className={CLASSES.frame}
+          sx={STYLES.frame}
           title={channelName}
           src={player.youTubeSrc}
           allow="autoplay; encrypted-media; picture-in-picture"
@@ -44,6 +50,6 @@ export function MediaStage({ stageRef, videoRef, player, channelName, youTubeUrl
           onRetry={player.onRetry}
         />
       )}
-    </div>
+    </Paper>
   );
 }

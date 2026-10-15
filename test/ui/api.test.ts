@@ -122,18 +122,24 @@ describe('client', () => {
 
 interface FakeTimers {
   size: () => number;
+  timeouts: () => number[];
+  fire: () => void;
   setIntervalImpl: (handler: () => void, timeout: number) => unknown;
   clearIntervalImpl: (id: unknown) => void;
 }
 
 function makeTimers(): FakeTimers {
-  const timers = new Map<number, () => void>();
+  const timers = new Map<number, { handler: () => void; timeout: number }>();
   let next = 1;
   return {
     size: () => timers.size,
-    setIntervalImpl: (handler) => {
+    timeouts: () => [...timers.values()].map((t) => t.timeout),
+    fire: () => {
+      for (const { handler } of [...timers.values()]) handler();
+    },
+    setIntervalImpl: (handler, timeout) => {
       const id = next++;
-      timers.set(id, handler);
+      timers.set(id, { handler, timeout });
       return id;
     },
     clearIntervalImpl: (id) => {
@@ -308,6 +314,102 @@ describe('transport', () => {
     transport.start();
     await vi.waitFor(() => expect(get).toHaveBeenCalled());
     expect(FakeEventSource.instances).toHaveLength(0);
+    transport.stop();
+  });
+
+  it('retries /api/data every 5 s while the server answers 503 starting', async () => {
+    let isReady = false;
+    const get = vi.fn(async (path: string) => {
+      if (path === '/api/health') return { ...HEALTH, lastSweep: null };
+      if (!isReady) throw new ApiError('starting', 503, 'No data yet');
+      return minimal;
+    });
+    const onData = vi.fn();
+    const onSweepError = vi.fn();
+    const timers = makeTimers();
+    const transport = createTransport({
+      client: fakeClient(get),
+      onData,
+      onSweepError,
+      sseEnabled: false,
+      setIntervalImpl: timers.setIntervalImpl,
+      clearIntervalImpl: timers.clearIntervalImpl,
+      now: () => 1,
+    });
+
+    transport.start();
+    await vi.waitFor(() => expect(timers.timeouts()).toEqual([60000, 5000]));
+    expect(onSweepError).not.toHaveBeenCalled();
+    const dataCallsBefore = get.mock.calls.filter(([path]) => path === '/api/data').length;
+
+    timers.fire();
+    await vi.waitFor(() => expect(get.mock.calls.filter(([path]) => path === '/api/data').length).toBeGreaterThan(dataCallsBefore));
+    expect(onData).not.toHaveBeenCalled();
+    expect(timers.timeouts()).toEqual([60000, 5000]);
+
+    isReady = true;
+    timers.fire();
+    await vi.waitFor(() => expect(onData).toHaveBeenCalledWith(minimal));
+    expect(timers.timeouts()).toEqual([60000]);
+    transport.stop();
+    expect(timers.size()).toBe(0);
+  });
+
+  it('refetches /api/data on an SSE connected frame while starting', async () => {
+    let isReady = false;
+    const get = vi.fn(async (path: string) => {
+      if (path === '/api/health') return { ...HEALTH, lastSweep: null };
+      if (!isReady) throw new ApiError('starting', 503, 'No data yet');
+      return minimal;
+    });
+    const onData = vi.fn();
+    const timers = makeTimers();
+    const transport = createTransport({
+      client: fakeClient(get),
+      onData,
+      sseEnabled: true,
+      EventSourceImpl: FakeEventSource as unknown as typeof EventSource,
+      setIntervalImpl: timers.setIntervalImpl,
+      clearIntervalImpl: timers.clearIntervalImpl,
+      now: () => 1,
+    });
+
+    transport.start();
+    await vi.waitFor(() => expect(timers.timeouts()).toEqual([60000, 5000]));
+    isReady = true;
+    FakeEventSource.instances[0]?.emit('message', { data: '{"type":"connected"}' });
+    await vi.waitFor(() => expect(onData).toHaveBeenCalledWith(minimal));
+    expect(timers.timeouts()).toEqual([60000]);
+    transport.stop();
+  });
+
+  it('applies update frames sent as unnamed SSE messages and as named events', async () => {
+    const get = vi.fn(async (path: string) => (path === '/api/health' ? HEALTH : minimal));
+    const onData = vi.fn();
+    const onSweepError = vi.fn();
+    const timers = makeTimers();
+    const transport = createTransport({
+      client: fakeClient(get),
+      onData,
+      onSweepError,
+      sseEnabled: true,
+      EventSourceImpl: FakeEventSource as unknown as typeof EventSource,
+      setIntervalImpl: timers.setIntervalImpl,
+      clearIntervalImpl: timers.clearIntervalImpl,
+      now: () => 1,
+    });
+
+    transport.start();
+    await vi.waitFor(() => expect(onData).toHaveBeenCalledWith(minimal));
+    const stream = FakeEventSource.instances[0];
+    stream?.emit('message', { data: JSON.stringify({ type: 'update', data: partial }) });
+    expect(onData).toHaveBeenLastCalledWith(partial);
+    stream?.emit('update', { data: JSON.stringify({ type: 'update', data: minimal }) });
+    expect(onData).toHaveBeenLastCalledWith(minimal);
+    stream?.emit('message', { data: 'not json' });
+    stream?.emit('message', { data: JSON.stringify({ type: 'sweep_error', error: 'boom' }) });
+    expect(onSweepError).toHaveBeenCalledWith(expect.objectContaining({ message: 'boom' }));
+    expect(onData).toHaveBeenCalledTimes(3);
     transport.stop();
   });
 

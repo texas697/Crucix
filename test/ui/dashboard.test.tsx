@@ -14,36 +14,39 @@ vi.mock('../../dashboard/react/api/transport', () => ({
   },
 }));
 
-// jsdom has no WebGL; MapView constructs a real maplibregl.Map, so stub it (see mapview.test.tsx).
-vi.mock('maplibre-gl', () => {
-  class Map {
-    dragPan = { enable: () => {}, disable: () => {} };
-    constructor(_options: unknown) {}
-    on() { return this; }
-    once() { return this; }
-    off() { return this; }
-    addSource() {}
-    addLayer() {}
-    getSource() { return { setData: () => {} }; }
-    getLayer() { return {}; }
-    setStyle() {}
-    flyTo() {}
-    fitBounds() {}
-    resize() {}
-    remove() {}
-    project() { return { x: 0, y: 0 }; }
-    queryRenderedFeatures() { return []; }
-    getContainer() { return document.createElement('div'); }
-    getZoom() { return 1.35; }
-  }
-  class Marker {
-    constructor(_options?: unknown) {}
-    setLngLat() { return this; }
-    addTo() { return this; }
-    remove() {}
-    getElement() { return document.createElement('div'); }
-  }
-  return { default: { Map, Marker }, Map, Marker };
+// jsdom has no WebGL; MapView renders through react-map-gl, so its MapLibre surface is faked (see mapview.test.tsx).
+vi.mock('react-map-gl/maplibre', async () => {
+  const React = await import('react');
+  const instance = {
+    getMap: () => instance,
+    on: () => instance,
+    off: () => instance,
+    hasImage: () => true,
+    addImage: () => undefined,
+    getZoom: () => 1.35,
+    getLayer: () => undefined,
+    queryRenderedFeatures: () => [],
+    project: () => ({ x: 0, y: 0 }),
+    getContainer: () => document.createElement('div'),
+    flyTo: () => undefined,
+    fitBounds: () => undefined,
+    resize: () => undefined,
+    dragPan: { enable: () => undefined, disable: () => undefined },
+  };
+  const Map = React.forwardRef((props: any, ref) => {
+    React.useImperativeHandle(ref, () => instance, []);
+    return React.createElement('div', { id: props.id }, props.children);
+  });
+  return {
+    default: Map,
+    Map,
+    Source: (props: any) => props.children ?? null,
+    Layer: () => null,
+    Marker: (props: any) => React.createElement('div', null, props.children),
+    Popup: (props: any) => React.createElement('div', null, props.children),
+    NavigationControl: () => null,
+    useMap: () => ({ current: instance }),
+  };
 });
 
 import { DashboardApp } from '../../dashboard/react/features/dashboard';
@@ -99,7 +102,7 @@ describe('DashboardApp shell', () => {
   it('shows the region sources status from the sweep meta', async () => {
     renderApp();
     captured.options?.onData(sweep as unknown as Parameters<NonNullable<TransportOptions['onData']>>[0]);
-    await waitFor(() => expect(document.querySelector('.map-bar-meta')?.textContent).toContain('29/30 sources'));
+    await waitFor(() => expect(document.querySelector('.crucix-map-bar-meta')?.textContent).toContain('29/30 sources'));
   });
 
   it('renders no top bar of its own (the shell owns it)', async () => {

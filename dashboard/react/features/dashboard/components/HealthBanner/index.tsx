@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
 import { asText, type Rec } from '../../coerce';
-import { HEALTH_RISK_CSS, riskMax } from '../HealthWatchPanel/health';
+import { riskMax } from '../HealthWatchPanel/health';
+import { RISK_STYLES } from '../HealthWatchPanel/styles';
 import { StatusBanner } from '../StatusBanner';
 
 export interface HealthBannerProps {
@@ -11,11 +11,10 @@ export interface HealthBannerProps {
 
 export function HealthBanner({ error, worst, hasOutbreaks }: HealthBannerProps) {
   const worstRisk = worst ? riskMax(worst.risk) : '';
-  const style = useMemo(() => ({ color: HEALTH_RISK_CSS[worstRisk.toLowerCase()] }), [worstRisk]);
   if (error) return <StatusBanner tone="anom">{'⚠'} {error}</StatusBanner>;
   if (worst) {
     return (
-      <StatusBanner tone="anom" style={style}>
+      <StatusBanner tone="anom" sx={RISK_STYLES[worstRisk.toLowerCase()]}>
         {'⚠'} WHO risk {worstRisk} {'·'}{' '}
         {asText(worst.disease).replace(/ disease caused by /i, ' · ')}
       </StatusBanner>

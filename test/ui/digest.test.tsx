@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import type { ApiClient } from '../../dashboard/react/api/client';
 import { DigestApp, type DigestCardItem } from '../../dashboard/react/features/digest';
+import { CLASSES } from '../../dashboard/react/features/digest/classes';
 import { AppHarness, createRouterProbe } from './helpers/appHarness';
 
 const card: DigestCardItem = {
@@ -146,7 +147,7 @@ describe('DigestApp', () => {
     await screen.findByText('Card one');
     const before = listCalls(h.get).length;
 
-    const cardEl = screen.getByText('Card one').closest('.dg-card') as HTMLElement;
+    const cardEl = screen.getByText('Card one').closest(`.${CLASSES.card}`) as HTMLElement;
     await userEvent.click(within(cardEl).getByLabelText('More like this'));
 
     await waitFor(() => expect(h.post).toHaveBeenCalledWith('/api/digest/a1/feedback', { rating: 1 }));

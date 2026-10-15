@@ -8,8 +8,7 @@ import { PanelSource } from '../PanelSource';
 import { RadarSection } from '../RadarSection';
 import { StatusBanner } from '../StatusBanner';
 import { nationalOutages, regionalOutages } from './outages';
-
-const NATIONAL_BANNER = { color: '#c084fc', background: 'rgba(192,132,252,0.08)' };
+import { STYLES } from './styles';
 
 export function OutagesPanel({ data, t }: PanelDataProps) {
   const tr = makeLabel(t);
@@ -44,7 +43,7 @@ export function OutagesPanel({ data, t }: PanelDataProps) {
       flex="1 1 240px"
     >
       {first ? (
-        <StatusBanner tone="anom" style={NATIONAL_BANNER}>
+        <StatusBanner tone="anom" sx={STYLES.nationalBanner}>
           ⚠ {asText(first.name)}{' '}
           {first.drop != null ? `−${num(first.drop)}% connectivity` : 'national alert'}
           {nat.length > 1 ? ` +${nat.length - 1} more` : ''}

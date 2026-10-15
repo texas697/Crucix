@@ -9,9 +9,9 @@ file and the rules file disagree, the rules file wins.
 - React 19, TypeScript strict, Vite (root `dashboard/react`, output `dashboard/dist`).
 - **MUI 5** (`@mui/material` 5.18, `@mui/icons-material`, Emotion). Every visual element is an
   MUI component or a `styled()` primitive from `@mui/material/styles`. No hand-written global
-  stylesheets for app surfaces; the legacy `styles/*.css` files are deleted as their consumers
-  migrate. The only permitted plain CSS is for third-party DOM MUI cannot wrap (MapLibre canvas,
-  popups, HLS video), delivered through `GlobalStyles` in the theme.
+  stylesheets for app surfaces (the legacy `styles/*.css` files are deleted). The only permitted
+  plain CSS is for third-party DOM MUI cannot wrap (MapLibre canvas, popups, HLS video), delivered
+  through `GlobalStyles` in the theme.
 - `react-router-dom` 7 for client-side routing. `clsx` for classname modifiers.
 - Icons: `import XIcon from '@mui/icons-material/X'`. `vite.config.ts` aliases that path to the
   package's ESM copy because rolldown's CommonJS interop hands the default export back as an object
@@ -99,11 +99,10 @@ Routing rules:
      in `app/classes.ts` with prefix `crucix-app-`. When the dictionary outgrows the file-size
      rule it is composed from `classes<Area>.ts` parts and a `classModifiers.ts` (dynamic
      modifier maps such as layer dots or CDC levels); `classes.ts` stays the single import.
-   - A feature still on the legacy stylesheet bridge (see below) carries the legacy selector as
-     the **second token** of the dictionary value (`card: 'crucix-dashboard-card col-card'`),
-     and legacy modifiers get their own keys (`cardBodyPadSm: '... pad-sm'`). The first token is
-     the DevTools locator; the second is deleted together with the stylesheet when the feature
-     moves to `styled()`. Never write the legacy token anywhere except the dictionary.
+   - Every value is a single token. The legacy selectors that used to ride along as a second
+     token (`col-card`, `pad-sm`, ...) were deleted with the legacy stylesheets; a modifier is its
+     own key (`cardBodyPadSm: 'crucix-dashboard-card-body--pad-sm'`) backed by `sx`, never a
+     legacy class.
    - Always `className={CLASSES.x}`; never an inline string literal. Modifiers:
      `clsx(CLASSES.tab, isActive && \`${CLASSES.tab}--active\`)`.
    - A class with no style rule behind it is fine: it is the DevTools locator.
@@ -115,19 +114,22 @@ Routing rules:
 9. Every behavior ported from the legacy page keeps its API calls, URL contract and text; visual
    design matches the legacy dark theme (tokens in `theme/palette.ts`).
 
-## Legacy stylesheet bridge (temporary)
+## Stylesheet bridges
 
-`features/dashboard`, `features/digest` and `features/media` are rule-compliant React trees that
-still render the legacy markup contract, so their `styles/*.css` files are delivered through MUI
-`GlobalStyles` by exactly three files:
+The legacy `styles/*.css` files (`dashboard`, `digest`, `media`, `reader`, `placeholder`, `tokens`)
+and the three temporary `*LegacyStyles` bridges are gone: every rule they carried lives in the
+feature's `styles.ts` (or its `styles<Area>.ts` parts) as `styled()` primitives and `sx` objects,
+and the design tokens are exposed by `theme/globalStyles.ts` as CSS variables on `:root` for the
+few HTML strings (map popups) that still read `var(--danger)` / `var(--sky)`.
 
-- `features/dashboard/components/DashboardLegacyStyles/index.tsx` (`styles/dashboard.css`)
-- `features/digest/components/DigestLegacyStyles/index.tsx` (`styles/digest.css`, `styles/reader.css`)
-- `features/media/components/MediaLegacyStyles/index.tsx` (`styles/media.css`)
-
-`scripts/ui-rules-check.mjs` rejects a `.css?inline` import anywhere else. When a feature's
-visuals move to `styled()`/`sx`, delete its bridge file, its stylesheet and the second token of
-every value in its `classes.ts`.
+Exactly one bridge remains, and it is permanent: MapLibre's own stylesheet (canvas, markers,
+popups, controls) is third-party DOM that MUI cannot wrap, so
+`features/map/components/MapLibreStyles/index.tsx` delivers `maplibre-gl/dist/maplibre-gl.css?inline`
+through `GlobalStyles`; `MapFrame` renders it once above the map. Nothing else under
+`dashboard/react` may import CSS (`scripts/ui-rules-check.mjs` rejects any `.css` import and any
+`.css?inline` outside that file). The public site keeps `site/site.css` (read through `?raw` and
+inlined into the server-rendered document) because those pages must be readable without
+JavaScript; it defines its own tokens and never depends on the app theme.
 
 ## Verification before reporting done
 
@@ -152,6 +154,32 @@ component is reachable from the SPA without a document reload.
 - Keep every existing layer, selection shape, popup, area brief, region bar and legend
   behaviour; only the plumbing changes. The vendored test copies under `test/fixtures/vendor`
   must be re-pinned to the new version for the e2e routing.
+- Shape of the React map (`features/map`): `MapView.tsx`, `MapLegend.tsx`, `MapPopup.tsx`,
+  `RegionBar.tsx`, `SelectionPanel.tsx` and `AreaBrief.tsx` at the feature root are import shims
+  only; the components live under `components/<Name>/` (`MapCanvas` owns the `<Map>`, `MapLayers`
+  nests each legacy layer inside its `<Source>` in legacy z-order, `MapLabels` renders the
+  aggregate labels as `<Marker>`s) and the behaviour under `hooks/useX/` (`useDrawTools`,
+  `useCanvasClick`, `useMapHandle`, `usePlaneIcon`, `useZoomedIn`, `useMapInstance`). The
+  `MapViewHandle` imperative API (`resize`, `flyToRegion`, `flyToPoint`, `getMap`, `project`,
+  `enableDragPan`) is kept for the dashboard and standalone hooks.
+- The map is uncontrolled (`initialViewState` only, no `viewState` prop) so panning never
+  re-renders React; the region bar's live dot is static (no always-on animation) and the brief's
+  shimmer/pulse only run while a brief is loading, keeping the idle-CPU fix from PR #15.
+- The `militaryAir` symbol layer uses the basemap's own glyph stack
+  (`Montserrat Regular, Open Sans Regular, …`): Carto's glyph server has no monospace face, and
+  that stack is already vendored for the e2e routing.
+- Worker: maplibre 6 ships its worker as a separate ES module and resolves it relative to its own
+  bundle URL, which does not exist in the Vite output (the map chunk is `assets/map-*.js`).
+  `features/map/mapWorker.ts` imports `maplibre-gl/dist/maplibre-gl-worker.mjs?url` and calls
+  `setWorkerUrl()` once; `MapCanvas` triggers it through `hooks/useMapWorker` during the first
+  render, before the `<Map>` effect constructs the map. The app build emits the worker as an asset
+  under `assets/`; the standalone (library) build inlines it as a `data:` URL. On a `file://` page
+  maplibre sees that `data:` URL as cross-origin and wraps it in a blob `import` that Chromium
+  refuses for module workers, so `standalone/fileWorkerShim.ts` swaps such blob module workers back
+  to the registered URL (file:// only; every other worker is untouched).
+- e2e vendoring: `test/fixtures/vendor/maplibre-gl-6.14.0/` holds the 6.14.0 stylesheet and the
+  ESM bundle (6.x ships no UMD `maplibre-gl.js`; the ESM file is stored under that name and served
+  for both `.js` and `.mjs` requests). The 4.7.1 copy stays for the legacy page.
 
 ## Military aircraft on the React map (required, 2026-10-15)
 

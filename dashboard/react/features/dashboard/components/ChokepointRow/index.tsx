@@ -1,20 +1,21 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asArr, asRec, num, str, type Rec } from '../../coerce';
-import { STYLES } from '../../styles';
+import { ROW_STYLES, TONE_STYLES } from '../../styles';
 import { DailySpark } from '../DailySpark';
 
 export interface ChokepointRowProps {
   chokepoint: Rec;
 }
 
-function pctStyle(n: number) {
-  return n <= -40 ? STYLES.danger : n <= -20 ? STYLES.warn : n >= 30 ? STYLES.mint : STYLES.text2;
+function pctSx(n: number) {
+  return n <= -40 ? TONE_STYLES.danger : n <= -20 ? TONE_STYLES.warn : n >= 30 ? TONE_STYLES.mint : TONE_STYLES.text2;
 }
 
 function statusDot(status: string) {
-  if (status === 'disrupted') return <span className={CLASSES.chokepointDot} style={STYLES.danger}>{'●'}</span>;
-  if (status === 'reduced') return <span className={CLASSES.chokepointDot} style={STYLES.warn}>{'●'}</span>;
-  if (status === 'watch') return <span className={CLASSES.chokepointDot} style={STYLES.warnFaded}>{'○'}</span>;
+  if (status === 'disrupted') return <Box component="span" className={CLASSES.chokepointDot} sx={TONE_STYLES.danger}>{'●'}</Box>;
+  if (status === 'reduced') return <Box component="span" className={CLASSES.chokepointDot} sx={TONE_STYLES.warn}>{'●'}</Box>;
+  if (status === 'watch') return <Box component="span" className={CLASSES.chokepointDot} sx={TONE_STYLES.warnFaded}>{'○'}</Box>;
   return null;
 }
 
@@ -31,22 +32,22 @@ export function ChokepointRow({ chokepoint: c }: ChokepointRowProps) {
   const vessels = num(asRec(c.live).vessels);
   const pct = c.pct == null ? null : num(c.pct);
   return (
-    <div className={CLASSES.siteRow} title={rowTitle(c)}>
-      <span className={CLASSES.siteName} style={STYLES.ellipsis}>
+    <Box className={CLASSES.siteRow} sx={ROW_STYLES.siteRow} title={rowTitle(c)}>
+      <Box component="span" className={CLASSES.siteName} sx={TONE_STYLES.ellipsis}>
         {dot ? <>{dot}{' '}</> : null}
         {str(c.label).replace(' Strait', '').replace('Strait of ', '').replace(' Canal', '')}
-      </span>
-      <span className={CLASSES.siteValue} style={STYLES.nowrap}>
+      </Box>
+      <Box component="span" className={CLASSES.siteValue} sx={[ROW_STYLES.siteValue, TONE_STYLES.nowrap]}>
         {vessels ? (
-          <span className={CLASSES.chokepointLive} style={STYLES.liveBadge} title={`${vessels} ships on AIS in the last hour`}>
-            {'●'} {vessels} <span className={CLASSES.chokepointLiveNow} style={STYLES.faded}>now</span>
-          </span>
+          <Box component="span" className={CLASSES.chokepointLive} sx={TONE_STYLES.liveBadge} title={`${vessels} ships on AIS in the last hour`}>
+            {'●'} {vessels} <Box component="span" className={CLASSES.chokepointLiveNow} sx={TONE_STYLES.faded}>now</Box>
+          </Box>
         ) : null}
         <DailySpark values={c.daily} />
         {c.perDay != null ? Math.round(num(c.perDay)) : '--'}
-        <span className={CLASSES.chokepointUnit} style={STYLES.faded}>/d</span>{' '}
-        {pct != null ? <span className={CLASSES.chokepointPct} style={pctStyle(pct)}>{pct > 0 ? '+' : ''}{pct}%</span> : null}
-      </span>
-    </div>
+        <Box component="span" className={CLASSES.chokepointUnit} sx={TONE_STYLES.faded}>/d</Box>{' '}
+        {pct != null ? <Box component="span" className={CLASSES.chokepointPct} sx={pctSx(pct)}>{pct > 0 ? '+' : ''}{pct}%</Box> : null}
+      </Box>
+    </Box>
   );
 }

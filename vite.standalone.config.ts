@@ -1,5 +1,6 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { copyFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 // P8 standalone snapshot build. Emits one self-contained IIFE (styles are injected at runtime by the
@@ -15,11 +16,25 @@ import { join } from 'node:path';
 // `template.html` into `index.html` with the snapshot substituted in.
 const repoRoot = process.cwd();
 const reactRoot = join(repoRoot, 'dashboard', 'react');
+const outDir = join(repoRoot, 'dashboard', 'dist', 'standalone');
+// SnapshotTopBar references the navbar logos by the relative `./brand/` path the server also serves,
+// so the export copies them next to the bundle; without this a `file:` open shows the alt text.
+const BRAND_LOGOS = ['mfb-intelligence-navbar-dark-transparent.png', 'mfb-intelligence-navbar-light-transparent.png'];
+function copyBrandLogos(): Plugin {
+  return {
+    name: 'crucix-copy-brand-logos',
+    closeBundle() {
+      const dir = join(outDir, 'brand');
+      mkdirSync(dir, { recursive: true });
+      for (const file of BRAND_LOGOS) copyFileSync(join(repoRoot, 'dashboard', 'public', 'brand', file), join(dir, file));
+    },
+  };
+}
 
 export default defineConfig({
   root: reactRoot,
   base: './',
-  plugins: [react()],
+  plugins: [react(), copyBrandLogos()],
   resolve: {
     // Same per-icon ESM alias as vite.config.ts (rolldown's CJS interop breaks the icon default export).
     alias: [{ find: /^@mui\/icons-material\/(?!esm\/)([A-Za-z0-9]+)$/, replacement: '@mui/icons-material/esm/$1' }],
@@ -27,7 +42,7 @@ export default defineConfig({
   // Library builds leave `process.env.NODE_ENV` for the consumer; a `file:` page has no consumer.
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   build: {
-    outDir: join(repoRoot, 'dashboard', 'dist', 'standalone'),
+    outDir,
     emptyOutDir: true,
     cssCodeSplit: false,
     sourcemap: false,

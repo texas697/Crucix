@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import type { ApiClient } from '../../../../api/client';
 import type { SweepData } from '../../../../api/types';
 import type { HistoryAdapter } from '../../../../state/history';
+import { useMapSearch } from '../../../map/hooks/useMapSearch';
 import type { MapViewHandle } from '../../../map/MapView';
 import type { QuakeItem, TrackItem } from '../../types';
 import type { DashboardMapState } from '../../stateTypes';
@@ -30,12 +31,13 @@ export function useDashboardMap({ api, data, tracks, quakes, href, history }: Us
   const { plot, mapLabels } = useMarkerPlot({
     data, layerVisible: layers.layerVisible, region: region.region, timeWindow: layers.timeWindow, tracks, quakes,
   });
-  const selection = useMapSelection({ api, mapRef, plot, history });
+  const selection = useMapSelection({ api, mapRef, plot, href, history });
   const popup = useMapPopup({ mapRef, plot, isMapReady: ready.isMapReady, href });
   const spaceTrack = useSpaceTrack({ isMapReady: ready.isMapReady, data });
+  const { onSearch } = useMapSearch({ mapRef, plot, setRegion: region.setRegion, onShowPoint: popup.onShowPoint });
 
   return useMemo(
-    () => ({ mapRef, ready, region, layers, plot, mapLabels, selection, popup, spaceTrack }),
-    [ready, region, layers, plot, mapLabels, selection, popup, spaceTrack],
+    () => ({ mapRef, ready, region, layers, plot, mapLabels, selection, popup, spaceTrack, onSearch }),
+    [ready, region, layers, plot, mapLabels, selection, popup, spaceTrack, onSearch],
   );
 }

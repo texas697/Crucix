@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type RefObject } from 'react';
 import type { MapViewHandle } from '../../../features/map/MapView';
-import { REGION_LABEL, type RegionKey } from '../../../features/map/regions';
+import type { RegionKey } from '../../../features/map/regions';
 import type { SnapshotRegionState } from '../../types';
 
 export interface UseSnapshotRegionArgs {
@@ -15,13 +15,7 @@ export function useSnapshotRegion({ mapRef }: UseSnapshotRegionArgs): SnapshotRe
     mapRef.current?.flyToRegion(next);
   }, [mapRef]);
 
-  const onSearchRegion = useCallback((query: string) => {
-    const needle = query.trim().toLowerCase();
-    const hit = (Object.entries(REGION_LABEL) as [RegionKey, string][]).find(([, label]) => label.toLowerCase() === needle);
-    if (hit) setRegion(hit[0]);
-  }, [setRegion]);
-
   const onClearRegion = useCallback(() => setRegion('world'), [setRegion]);
 
-  return useMemo(() => ({ region, setRegion, onSearchRegion, onClearRegion }), [region, setRegion, onSearchRegion, onClearRegion]);
+  return useMemo(() => ({ region, setRegion, onClearRegion }), [region, setRegion, onClearRegion]);
 }

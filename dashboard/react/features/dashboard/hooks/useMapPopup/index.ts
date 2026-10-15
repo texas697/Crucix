@@ -63,5 +63,8 @@ export function useMapPopup({ mapRef, plot, isMapReady, href }: UseMapPopupArgs)
     if (popup) copyToClipboard(`${popup.lng.toFixed(4)},${popup.lat.toFixed(4)}`);
   }, [popup]);
 
-  return useMemo(() => ({ popup, onCanvasClick, onClosePopup, onCopyPopup }), [popup, onCanvasClick, onClosePopup, onCopyPopup]);
+  return useMemo(
+    () => ({ popup, onShowPoint, onCanvasClick, onClosePopup, onCopyPopup }),
+    [popup, onShowPoint, onCanvasClick, onClosePopup, onCopyPopup],
+  );
 }

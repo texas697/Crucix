@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import clsx from 'clsx';
 import { CLASSES } from '../../classes';
 import type { DigestTopicCount } from '../../types';
+import { STYLES } from './styles';
 
 export interface DigestTopicsProps {
   topics: DigestTopicCount[];
@@ -19,24 +22,24 @@ interface TopicChipProps {
 function TopicChip({ topic, count, isActive, onToggle }: TopicChipProps) {
   const onClick = useCallback(() => onToggle(topic), [onToggle, topic]);
   return (
-    <button
-      type="button"
+    <Chip
+      clickable
       className={clsx(CLASSES.topic, isActive && CLASSES.topicActive)}
+      sx={[STYLES.topic, isActive && STYLES.topicActive]}
       data-topic={topic}
       aria-pressed={isActive}
       onClick={onClick}
-    >
-      {topic} <span className={CLASSES.topicCount}>{count}</span>
-    </button>
+      label={<>{topic} <Box component="span" className={CLASSES.topicCount} sx={STYLES.topicCount}>{count}</Box></>}
+    />
   );
 }
 
 export function DigestTopics({ topics, activeTopic, onToggleTopic }: DigestTopicsProps) {
   return (
-    <div className={CLASSES.topics}>
+    <Box className={CLASSES.topics} sx={STYLES.topics}>
       {topics.map((t) => (
         <TopicChip key={t.topic} topic={t.topic} count={t.count} isActive={activeTopic === t.topic} onToggle={onToggleTopic} />
       ))}
-    </div>
+    </Box>
   );
 }

@@ -1,6 +1,6 @@
 import { num, str, type Rec } from '../../coerce';
 import { relTime } from '../../format';
-import { STYLES } from '../../styles';
+import { TONE_STYLES } from '../../styles';
 import { EconRow } from '../EconRow';
 
 export interface IssRowProps {
@@ -14,5 +14,5 @@ export function IssRow({ iss }: IssRowProps) {
     + (iss.epoch ? ` · elements ${relTime(str(iss.epoch))}` : '');
   const value = `${iss.altitude != null ? `${num(iss.altitude)} km` : '--'}`
     + `${iss.lat != null ? ` · ${num(iss.lat).toFixed(1)}°, ${num(iss.lon).toFixed(1)}°` : ''}`;
-  return <EconRow label="ISS" value={value} title={title} valueId="issLive" valueStyle={STYLES.accent} />;
+  return <EconRow label="ISS" value={value} title={title} valueId="issLive" valueSx={TONE_STYLES.accent} />;
 }

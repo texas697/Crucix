@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '../../dashboard/react/theme';
 import type { SweepData } from '../../dashboard/react/api/types';
+import { CLASSES } from '../../dashboard/react/features/dashboard/classes';
 import { MarketsPanel } from '../../dashboard/react/features/dashboard/components/MarketsPanel';
 import { RowE } from '../../dashboard/react/features/dashboard/components/RowE';
 import { createTranslator } from '../../dashboard/react/shared/locale';
@@ -11,11 +15,17 @@ import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
+const theme = createAppTheme('dark');
+
+function renderThemed(ui: ReactElement) {
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+}
+
 // The synthesized fixtures are the authoritative payload shape; the component reads them loosely.
 const asSweep = (value: unknown): SweepData => value as unknown as SweepData;
 
 function renderMarkets(data: unknown, t?: Parameters<typeof MarketsPanel>[0]['t']): HTMLElement {
-  return render(<MarketsPanel data={asSweep(data)} t={t} />).container;
+  return renderThemed(<MarketsPanel data={asSweep(data)} t={t} />).container;
 }
 
 /** Scope a query to the legacy pMarkets panel id. */
@@ -29,7 +39,7 @@ describe('RowE / MarketsPanel', () => {
   it('renders the pMarkets panel, both directly and via the RowE wrapper', () => {
     expect(renderMarkets(minimal).querySelector('#pMarkets')).not.toBeNull();
     cleanup();
-    expect(render(<RowE data={asSweep(minimal)} />).container.querySelector('#pMarkets')).not.toBeNull();
+    expect(renderThemed(<RowE data={asSweep(minimal)} />).container.querySelector('#pMarkets')).not.toBeNull();
   });
 
   it('badges Live with a live timestamp and Delayed without one', () => {
@@ -87,16 +97,16 @@ describe('RowE / MarketsPanel', () => {
 
   it('renders the WTI sparkline SVG when energy.wtiRecent has values', () => {
     const m = panel(renderMarkets(minimal), 'pMarkets');
-    const spark = m.querySelector('.spark');
+    const spark = m.querySelector(`.${CLASSES.spark}`);
     expect(spark).not.toBeNull();
-    expect(spark!.querySelector('svg.spark-svg')).not.toBeNull();
-    expect(spark!.querySelector('polyline.spark-line')).not.toBeNull();
+    expect(spark!.querySelector(`svg.${CLASSES.sparkSvg}`)).not.toBeNull();
+    expect(spark!.querySelector(`polyline.${CLASSES.sparkLine}`)).not.toBeNull();
     expect(within(m).getByText('WTI 5-DAY')).toBeInTheDocument();
   });
 
   it('omits the WTI sparkline when wtiRecent is empty', () => {
     const m = panel(renderMarkets(partial), 'pMarkets');
-    expect(m.querySelector('.spark svg')).toBeNull();
+    expect(m.querySelector(`.${CLASSES.spark} svg`)).toBeNull();
   });
 
   // --- Missing-value fallbacks (partial) ---------------------------------------------------------

@@ -1,6 +1,6 @@
 import { asRec, num } from '../../coerce';
 import type { AlertItem, MarketItem, QuakeItem, TrackItem } from '../../types';
-import { ALERT_LIMIT, ALERT_WINDOW_MS, MARKET_KEYWORDS, MARKET_LIMIT } from './consts';
+import { ALERT_WINDOW_MS, MARKET_KEYWORDS, MARKET_LIMIT } from './consts';
 
 function asList(x: unknown): unknown[] {
   return Array.isArray(x) ? x : [];
@@ -28,7 +28,6 @@ export function reshapeAlerts(payload: unknown, nowMs: number): AlertItem[] {
     const secs = alertSeconds(a.time);
     if (secs == null || nowMs / 1000 - secs >= ALERT_WINDOW_MS / 1000) continue;
     recent.push({ ...(a as AlertItem), time: typeof a.time === 'string' ? a.time : String(a.time) });
-    if (recent.length >= ALERT_LIMIT) break;
   }
   return recent;
 }

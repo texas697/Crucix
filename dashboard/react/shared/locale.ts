@@ -1,8 +1,3 @@
-// Locale adapter. Ports the legacy dashboard `t()`: a dotted-path lookup into the injected locale
-// dictionary with a fallback string, plus `{name}` interpolation. Every page declares lang="en"; only
-// the dashboard uses this, with a server-selected language.
-
-/** Resolve a dotted path (`panels.nuclearWatch`) against a nested object. */
 export function getPath(obj: unknown, path: string): unknown {
   return path.split('.').reduce<unknown>((acc, key) => {
     if (acc && typeof acc === 'object') return (acc as Record<string, unknown>)[key];
@@ -10,7 +5,6 @@ export function getPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
-/** Replace `{name}` placeholders; unknown placeholders are left verbatim. */
 export function interpolate(template: string, vars?: Record<string, unknown>): string {
   if (!vars) return template;
   return template.replace(/\{(\w+)\}/g, (match, key: string) =>
@@ -22,7 +16,6 @@ export interface Translator {
   has(key: string): boolean;
 }
 
-/** Build a translator over `dict`, falling back to `fallbackDict` (e.g. English) and then the key. */
 export function createTranslator(dict: unknown, fallbackDict?: unknown): Translator {
   const lookup = (key: string): unknown => {
     const value = getPath(dict, key);

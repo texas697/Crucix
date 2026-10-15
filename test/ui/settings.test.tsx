@@ -39,6 +39,11 @@ const PROVIDERS: LlmProvider[] = [
   { id: 'openai-compatible', label: 'OpenAI-compatible (custom URL)', needsKey: false, defaultModel: '', needsBaseUrl: true },
 ];
 
+async function selectProvider(user: ReturnType<typeof userEvent.setup>, label: string): Promise<void> {
+  await user.click(screen.getByRole('combobox', { name: /Provider/ }));
+  await user.click(await screen.findByRole('option', { name: label }));
+}
+
 function profile(overrides: Partial<UserProfile> = {}): UserProfile {
   return { uid: 'u', email: 'a@b.c', providers: PROVIDERS, byokEnabled: true, sharedLlm: null, ...overrides };
 }
@@ -85,16 +90,17 @@ describe('SettingsOverlay', () => {
     renderOverlay();
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAccessibleName('Enter your LLM API key');
-    expect(screen.getByRole('option', { name: 'Anthropic (Claude)' })).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: /Provider/ }));
+    expect(await screen.findByRole('option', { name: 'Anthropic (Claude)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'OpenAI' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'OpenAI-compatible (custom URL)' })).toBeInTheDocument();
 
     expect(screen.queryByLabelText('Base URL')).toBeNull();
-    await user.selectOptions(screen.getByLabelText('Provider'), 'openai-compatible');
+    await user.click(screen.getByRole('option', { name: 'OpenAI-compatible (custom URL)' }));
     expect(screen.getByLabelText('Base URL')).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText('Provider'), 'openai');
+    await selectProvider(user, 'OpenAI');
     expect(screen.getByLabelText('Base URL')).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText('Provider'), 'anthropic');
+    await selectProvider(user, 'Anthropic (Claude)');
     expect(screen.queryByLabelText('Base URL')).toBeNull();
   });
 
@@ -109,7 +115,7 @@ describe('SettingsOverlay', () => {
   it('PUTs the expected body and omits apiKey when the key field is blank', async () => {
     const user = userEvent.setup();
     const { calls, onProfileChange } = renderOverlay();
-    await user.selectOptions(screen.getByLabelText('Provider'), 'openai');
+    await selectProvider(user, 'OpenAI');
     await user.type(screen.getByLabelText(/Model/), 'gpt-5.4');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 

@@ -4,26 +4,21 @@ import Box from '@mui/material/Box';
 import { createApiClient } from '../api/client';
 import { AppProviders } from '../app/AppProviders';
 import { CLASSES } from '../app/classes';
-import { createFirebaseAdapter, type FirebaseNamespaceLike } from '../features/auth/firebaseAdapter';
+import { createFirebaseAdapter, readAuthGlobals } from '../features/auth/firebase';
 import { LoginForm } from '../features/auth/LoginForm';
 import { safeNext } from '../features/auth/safeNext';
-
-interface LoginGlobals {
-  firebase?: FirebaseNamespaceLike | null;
-  __FIREBASE_CONFIG__?: unknown;
-  __ALLOW_SIGNUP__?: boolean;
-}
 
 const container = document.getElementById('root');
 if (!container) throw new Error('[crucix] missing #root for the login surface');
 
-const globals = window as unknown as LoginGlobals;
+const globals = readAuthGlobals();
 const params = new URLSearchParams(window.location.search);
 const origin = window.location.origin;
 const reason = params.get('reason');
 const next = safeNext(params.get('next') ?? '/', origin);
 
-const adapter = createFirebaseAdapter(globals.firebase ?? null, {
+const adapter = createFirebaseAdapter({
+  firebase: globals.firebase ?? null,
   config: globals.__FIREBASE_CONFIG__,
   allowSignup: globals.__ALLOW_SIGNUP__ !== false,
 });

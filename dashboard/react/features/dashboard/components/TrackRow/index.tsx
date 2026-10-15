@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { str } from '../../coerce';
 import { getAge } from '../../format';
 import type { TrackItem } from '../../types';
+import { STYLES, trackTypeSx } from './styles';
 
 export interface TrackRowProps {
   track: TrackItem;
@@ -15,13 +17,15 @@ const TRACK_TYPE_COLOR: Record<string, string> = {
 export function TrackRow({ track: x }: TrackRowProps) {
   const type = str(x.type) || 'track';
   const col = TRACK_TYPE_COLOR[type.toLowerCase()] || '#ff9e6b';
-  const typeStyle = useMemo(() => ({ color: col, borderColor: `${col}66` }), [col]);
+  const typeSx = useMemo(() => trackTypeSx(col), [col]);
   const age = x.updatedAt ? getAge(x.updatedAt) : '';
   return (
-    <div className={CLASSES.trackRow}>
-      <span className={CLASSES.trackType} style={typeStyle}>{type.toUpperCase()}</span>
-      <span className={CLASSES.trackLocation}>{str(x.locality)}{x.locality && x.region ? ', ' : ''}{str(x.region)}</span>
-      <span className={CLASSES.trackMeta}>{x.confidence || ''} {'·'} {x.sourceCount || 1} src {'·'} {age}</span>
-    </div>
+    <Box className={CLASSES.trackRow} sx={STYLES.trackRow}>
+      <Box component="span" className={CLASSES.trackType} sx={typeSx}>{type.toUpperCase()}</Box>
+      <Box component="span" className={CLASSES.trackLocation} sx={STYLES.trackLocation}>
+        {str(x.locality)}{x.locality && x.region ? ', ' : ''}{str(x.region)}
+      </Box>
+      <Box component="span" className={CLASSES.trackMeta} sx={STYLES.trackMeta}>{x.confidence || ''} {'·'} {x.sourceCount || 1} src {'·'} {age}</Box>
+    </Box>
   );
 }

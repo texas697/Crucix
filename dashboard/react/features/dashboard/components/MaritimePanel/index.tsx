@@ -1,12 +1,14 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asArr, asRec, num, str } from '../../coerce';
 import type { Label } from '../../label';
-import { STYLES } from '../../styles';
+import { TONE_STYLES } from '../../styles';
 import type { PanelDataProps } from '../../types';
 import { ChokepointRow } from '../ChokepointRow';
 import { Panel } from '../Panel';
 import { PanelSource } from '../PanelSource';
 import { StatusBanner } from '../StatusBanner';
+import { STYLES } from './styles';
 
 export interface MaritimePanelProps extends Pick<PanelDataProps, 'data'> {
   tr: Label;
@@ -30,18 +32,14 @@ export function MaritimePanel({ data, tr }: MaritimePanelProps) {
   const badge = hasSummary ? (
     <>
       {disrupted} disrupted
-      {liveN ? <> {'·'} <span className={CLASSES.maritimeShips} style={STYLES.sky}>{liveN} ships live</span></> : null}
+      {liveN ? <> {'·'} <Box component="span" className={CLASSES.maritimeShips} sx={TONE_STYLES.sky}>{liveN} ships live</Box></> : null}
       {maritimeMeta.asOf ? <> {'·'} to {str(maritimeMeta.asOf).slice(5).replace('-', '/')}</> : null}
     </>
   ) : undefined;
 
   return (
     <Panel id="pMaritime" title={tr('panels.maritimeWatch', 'Maritime watch')} badge={badge} flex="1 1 280px">
-      <StatusBanner
-        tone={hasSummary && disrupted ? 'anom' : 'ok'}
-        style={STYLES.bannerSpaced}
-        note={<span className={CLASSES.statusBannerNote} style={STYLES.bannerNote}>ships/day {'·'} vs 1-yr</span>}
-      >
+      <StatusBanner tone={hasSummary && disrupted ? 'anom' : 'ok'} sx={STYLES.bannerSpaced} note={<>ships/day {'·'} vs 1-yr</>}>
         {hasSummary ? (disrupted ? <>{'⚠'} {disruptedText}</> : <>{'●'} All chokepoints near normal</>) : 'IMF PortWatch'}
       </StatusBanner>
       {rows.length

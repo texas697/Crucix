@@ -14,7 +14,13 @@ export interface UseDashboardViewArgs {
 export interface DashboardView {
   t?: Translator;
   tickerItems: TickerItem[];
+  tickerFeed: TickerItem[];
   viewData: SweepData | null;
+}
+
+function feedOf(data: SweepData | null): TickerItem[] {
+  const feed = (data?.newsFeed as TickerItem[] | undefined) ?? (data?.news as TickerItem[] | undefined) ?? [];
+  return Array.isArray(feed) ? feed : [];
 }
 
 export function useDashboardView({ data, region }: UseDashboardViewArgs): DashboardView {
@@ -23,12 +29,9 @@ export function useDashboardView({ data, region }: UseDashboardViewArgs): Dashbo
     return dict ? createTranslator(dict) : undefined;
   }, []);
 
-  const tickerItems = useMemo<TickerItem[]>(() => {
-    const feed = (data?.newsFeed as TickerItem[] | undefined) ?? (data?.news as TickerItem[] | undefined) ?? [];
-    return Array.isArray(feed) ? feed : [];
-  }, [data]);
-
+  const tickerItems = useMemo(() => feedOf(data), [data]);
   const viewData = useMemo(() => (data ? filterByRegion(data, region) : null), [data, region]);
+  const tickerFeed = useMemo(() => feedOf(viewData), [viewData]);
 
-  return useMemo(() => ({ t, tickerItems, viewData }), [t, tickerItems, viewData]);
+  return useMemo(() => ({ t, tickerItems, tickerFeed, viewData }), [t, tickerItems, tickerFeed, viewData]);
 }

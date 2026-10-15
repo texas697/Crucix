@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import type { SweepData, UserProfile } from '../../../../api/types';
 import type { Translator } from '../../../../shared/locale';
 import { CLASSES } from '../../classes';
@@ -15,6 +16,7 @@ import { RowD } from '../RowD';
 import { SensorGrid } from '../SensorGrid';
 import { SignalCore } from '../SignalCore';
 import { SweepDelta } from '../SweepDelta';
+import { STYLES } from './styles';
 
 export interface DashboardRowsProps {
   data: SweepData;
@@ -28,14 +30,14 @@ export interface DashboardRowsProps {
 
 export function DashboardRows({ data, tickerItems, t, me, feeds, now, onGenerateIdeas }: DashboardRowsProps) {
   return (
-    <main className={CLASSES.main} id="main">
+    <Box component="main" className={CLASSES.main} sx={STYLES.main} id="main">
       <PanelRow name="a">
         <SensorGrid data={data} t={t} />
-        <NewsTicker items={tickerItems} now={now} />
+        <NewsTicker items={tickerItems} now={now} t={t} />
         <HealthWatchPanel data={data} t={t} />
       </PanelRow>
       <PanelRow name="b">
-        <SignalCore data={data} t={t} />
+        <SignalCore data={data} t={t} tracks={feeds.tracks} />
         <NuclearWatch data={data} t={t} />
         <RiskGauges data={data} t={t} />
         <SweepDelta data={data} t={t} />
@@ -51,6 +53,6 @@ export function DashboardRows({ data, tickerItems, t, me, feeds, now, onGenerate
       <PanelRow name="e">
         <MarketsPanel data={data} t={t} />
       </PanelRow>
-    </main>
+    </Box>
   );
 }

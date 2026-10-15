@@ -1,5 +1,7 @@
+import Box from '@mui/material/Box';
 import clsx from 'clsx';
 import { CLASSES } from '../../classes';
+import { STYLES } from './styles';
 
 export interface SparkSvgProps {
   values: number[];
@@ -23,9 +25,16 @@ export function SparkSvg({ values, isGood }: SparkSvgProps) {
   const tone = isGood ? CLASSES.sparkGood : CLASSES.sparkBad;
   const [lastX, lastY] = pts[pts.length - 1]!.split(',');
   return (
-    <svg className={CLASSES.sparkSvg} viewBox={`0 0 ${W} ${H}`}>
-      <polyline className={clsx(CLASSES.sparkLine, tone)} points={pts.join(' ')} />
-      <circle className={clsx(tone, CLASSES.sparkDot)} cx={lastX} cy={lastY} r={2} fill={isGood ? 'var(--accent)' : 'var(--danger)'} />
-    </svg>
+    <Box component="svg" className={CLASSES.sparkSvg} sx={STYLES.sparkSvg} viewBox={`0 0 ${W} ${H}`}>
+      <Box component="polyline" className={clsx(CLASSES.sparkLine, tone)} sx={[STYLES.sparkLine, isGood ? STYLES.sparkGood : STYLES.sparkBad]} points={pts.join(' ')} />
+      <Box
+        component="circle"
+        className={clsx(tone, CLASSES.sparkDot)}
+        sx={[STYLES.sparkDot, isGood ? STYLES.sparkGood : STYLES.sparkBad, isGood ? STYLES.sparkDotGood : STYLES.sparkDotBad]}
+        cx={lastX}
+        cy={lastY}
+        r={2}
+      />
+    </Box>
   );
 }

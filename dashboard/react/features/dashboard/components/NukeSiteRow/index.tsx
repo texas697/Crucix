@@ -1,7 +1,8 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asRec, num, str, type Rec } from '../../coerce';
 import { relTime } from '../../format';
-import { STYLES } from '../../styles';
+import { ROW_STYLES, TONE_STYLES } from '../../styles';
 
 export interface NukeSiteRowProps {
   site: Rec;
@@ -22,20 +23,20 @@ export function NukeSiteRow({ site }: NukeSiteRowProps) {
   const cpm = site.cpm != null ? `${Math.round(num(site.cpm))} CPM` : '--';
   const hot = num(site.hot);
   const flag = site.anom
-    ? <span className={CLASSES.siteFlag} style={STYLES.danger}>▲</span>
+    ? <Box component="span" className={CLASSES.siteFlag} sx={TONE_STYLES.danger}>▲</Box>
     : hot
-      ? <span className={CLASSES.siteFlag} style={STYLES.warn} title={`${hot} sensor${hot > 1 ? 's' : ''} above ${num(site.alertUsvh)} µSv/h`}>▲</span>
+      ? <Box component="span" className={CLASSES.siteFlag} sx={TONE_STYLES.warn} title={`${hot} sensor${hot > 1 ? 's' : ''} above ${num(site.alertUsvh)} µSv/h`}>▲</Box>
       : null;
   return (
-    <div className={CLASSES.siteRow} title={siteTitle(site, siteName, usvh, n)}>
-      <span className={CLASSES.siteName} style={STYLES.ellipsis}>
+    <Box className={CLASSES.siteRow} sx={ROW_STYLES.siteRow} title={siteTitle(site, siteName, usvh, n)}>
+      <Box component="span" className={CLASSES.siteName} sx={TONE_STYLES.ellipsis}>
         {siteName.replace(/ \(.*\)$/, '').replace('Exclusion Zone', 'zone')}
-        <span className={CLASSES.siteCount} style={STYLES.dimInline}> · {n}</span>
-      </span>
-      <span className={CLASSES.siteValue} style={STYLES.nowrap}>
+        <Box component="span" className={CLASSES.siteCount} sx={TONE_STYLES.dimInline}> · {n}</Box>
+      </Box>
+      <Box component="span" className={CLASSES.siteValue} sx={[ROW_STYLES.siteValue, TONE_STYLES.nowrap]}>
         {cpm}
         {flag ? <>{' '}{flag}</> : null}
-      </span>
-    </div>
+      </Box>
+    </Box>
   );
 }

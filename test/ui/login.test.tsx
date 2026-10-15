@@ -5,7 +5,7 @@ import type { ApiClient } from '../../dashboard/react/api/client';
 import type {
   FirebaseAdapter,
   FirebaseCredentialLike,
-} from '../../dashboard/react/features/auth/firebaseAdapter';
+} from '../../dashboard/react/features/auth/firebase';
 import { friendlyError, LoginForm } from '../../dashboard/react/features/auth/LoginForm';
 import { loginRedirectHref, safeNext } from '../../dashboard/react/features/auth/safeNext';
 

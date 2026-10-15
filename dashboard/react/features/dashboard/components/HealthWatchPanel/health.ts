@@ -7,13 +7,6 @@ export const HEALTH_RISK_COL: Record<string, string> = {
   low: 'rgba(127,224,192,0.7)',
 };
 
-export const HEALTH_RISK_CSS: Record<string, string> = {
-  'very high': 'var(--danger)',
-  high: '#f59a5e',
-  moderate: '#f2c879',
-  low: 'var(--mint)',
-};
-
 export const CDC_LEVEL_LABEL: Record<string, string> = {
   1: 'Usual precautions',
   2: 'Enhanced precautions',

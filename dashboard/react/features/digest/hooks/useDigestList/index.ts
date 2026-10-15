@@ -19,11 +19,13 @@ export function useDigestList({ api }: UseDigestListArgs): DigestListState {
   const [topics, setTopics] = useState<DigestTopicCount[]>([]);
   const [taste, setTaste] = useState<DigestTaste>(EMPTY_TASTE);
   const [status, setStatus] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const loadSeqRef = useRef(0);
 
   const onLoad = useCallback(async (filter: DigestFilter, topic: string, q: string) => {
     const seq = ++loadSeqRef.current;
     setStatus('LOADING…');
+    setIsLoading(true);
     const params = new URLSearchParams({ filter, topic, q }).toString();
     try {
       const r = await api.get<DigestListResponse>(`/api/digest/list?${params}`);
@@ -40,8 +42,13 @@ export function useDigestList({ api }: UseDigestListArgs): DigestListState {
       if (!isUnauthenticated(err)) {
         setStatus(`ERROR: ${err instanceof Error ? err.message : String(err)}`);
       }
+    } finally {
+      if (seq === loadSeqRef.current) setIsLoading(false);
     }
   }, [api]);
 
-  return useMemo(() => ({ items, topics, taste, status, setItems, onLoad }), [items, topics, taste, status, onLoad]);
+  return useMemo(
+    () => ({ items, topics, taste, status, isLoading, setItems, onLoad }),
+    [items, topics, taste, status, isLoading, onLoad],
+  );
 }

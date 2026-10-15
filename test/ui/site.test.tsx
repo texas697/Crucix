@@ -6,12 +6,15 @@ import marketingHtml from '../../dashboard/site/marketing.html?raw';
 import supportHtml from '../../dashboard/site/support.html?raw';
 import privacyHtml from '../../dashboard/site/privacy.html?raw';
 import termsHtml from '../../dashboard/site/terms.html?raw';
-import { renderSitePage, type SiteKind } from '../../dashboard/react/site/index';
+import { CLASSES, renderSitePage, type SiteKind } from '../../dashboard/react/site/index';
 // site.mjs is plain ESM with no type declarations; the surface it exports is asserted below.
 // @ts-expect-error - TS7016: no declaration file for the JS server module
 import { buildSitePages, buildSiteVars } from '../../dashboard/server/site.mjs';
 
 const KINDS: SiteKind[] = ['marketing', 'support', 'privacy', 'terms'];
+
+/** Classes still emitted by dashboard/server/site.mjs for the raw-HTML fragments (store links, legal meta). */
+const LEGACY_FRAGMENT_CLASSES = ['meta', 'stores', 'store', 'soon'];
 
 /** Fixed site config with values chosen to avoid HTML-entity differences. */
 const config = {
@@ -107,7 +110,9 @@ function legacyPage(kind: SiteKind): string {
 
 // React and the legacy templates serialize the same DOM differently (void-element slashes,
 // attribute casing, `charSet` vs `charset`, entity choices, JSX whitespace). Normalize both
-// sides to the same canonical string; the scoped stylesheet is compared separately.
+// sides to the same canonical string; the scoped stylesheet is compared separately. Class and
+// style attributes are dropped on both sides: the React tree carries the crucix-site- dictionary
+// classes (asserted below) where the legacy templates used bare names or an inline style.
 function decodeEntities(s: string): string {
   return s
     .replace(/&#x([0-9a-fA-F]+);/g, (_, h: string) => String.fromCodePoint(parseInt(h, 16)))
@@ -121,7 +126,7 @@ function decodeEntities(s: string): string {
 function normalize(html: string): string {
   const s = html
     .replace(/<style>[\s\S]*?<\/style>/g, '<style></style>')
-    .replace(/<body class="site-page">/g, '<body>')
+    .replace(/\s(?:class|style)="[^"]*"/g, '')
     .replace(/\sopen=""/g, ' open')
     .replace(/\/>/g, '>')
     .replace(/charSet=/g, 'charset=')
@@ -181,7 +186,7 @@ describe('public site pages', () => {
     const pages = buildSitePages(config, '2026') as Record<SiteKind, string>;
     const support = pages.support;
     // React serializes the boolean attribute as open=""; both it and the legacy bare `open` match.
-    expect(support).toMatch(/<details open(?:="")?>/);
+    expect(support).toMatch(/<details open(?:="")? class="[^"]*">/);
     expect((support.match(/<details open/g) || []).length).toBe(1);
     expect((support.match(/<details/g) || []).length).toBe(8);
   });
@@ -231,11 +236,38 @@ describe('public site pages', () => {
     const here = (import.meta as ImportMeta & { dirname: string }).dirname;
     const siteCss = readFileSync(join(here, '../../dashboard/react/site/site.css'), 'utf8');
     const pages = buildSitePages(config, '2026') as Record<SiteKind, string>;
-    expect(siteCss).toContain('.site-page');
+    expect(siteCss).toContain(`.${CLASSES.page}`);
     expect(siteCss).toContain('--bg:#05070b');
     expect(siteCss).toContain('@media print');
     expect(pages.support).toContain('<style>');
-    expect(pages.support).toContain('<footer>');
-    expect(pages.support).toContain('<body class="site-page">');
+    expect(pages.support).toContain(`<footer class="${CLASSES.footer}">`);
+    expect(pages.support).toContain(`<body class="${CLASSES.page}">`);
+  });
+
+  it('puts a crucix-site- dictionary class on every rendered element', () => {
+    const pages = buildSitePages(config, '2026') as Record<SiteKind, string>;
+    const known = new Set<string>([...Object.values(CLASSES), ...LEGACY_FRAGMENT_CLASSES]);
+    const skip = new Set(['html', 'head', 'meta', 'title', 'link', 'style', 'br']);
+    for (const kind of KINDS) {
+      const body = pages[kind].replace(/<style>[\s\S]*?<\/style>/, '');
+      for (const [tag, name, attrs] of body.matchAll(/<([a-z][a-z0-9]*)([^>]*)>/g)) {
+        if (skip.has(name as string)) continue;
+        const classAttr = /\sclass="([^"]*)"/.exec(attrs as string);
+        expect(classAttr, `${kind}: ${tag}`).not.toBeNull();
+        for (const token of (classAttr as RegExpExecArray)[1]!.split(/\s+/)) {
+          expect(known.has(token), `${kind}: ${tag} has unknown class ${token}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('styles only classes that exist in the dictionary', () => {
+    const here = (import.meta as ImportMeta & { dirname: string }).dirname;
+    const siteCss = readFileSync(join(here, '../../dashboard/react/site/site.css'), 'utf8');
+    const values = new Set<string>(Object.values(CLASSES));
+    const selectors = [...siteCss.matchAll(/\.(crucix-site-[\w-]+)/g)].map(([, name]) => name as string);
+    expect(selectors.length).toBeGreaterThan(0);
+    for (const name of selectors) expect(values.has(name), name).toBe(true);
+    for (const name of LEGACY_FRAGMENT_CLASSES) expect(siteCss).toContain(`.${CLASSES.page} .${name}`);
   });
 });

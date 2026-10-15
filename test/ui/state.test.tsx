@@ -72,7 +72,7 @@ describe('history ownership', () => {
   it('pushes on open and replaces on filter change', () => {
     const history = fakeHistory();
     const adapter = createHistoryAdapter(history, loc);
-    expect(adapter.set('/', { region: 'europe' }, { push: true, state: { k: 'region' } })).toBe(true);
+    expect(adapter.set('/', { region: 'europe' }, { isPush: true, state: { k: 'region' } })).toBe(true);
     expect(history.calls).toEqual(['push']);
     adapter.set('/', { region: 'europe', time: '24h' });
     expect(history.calls).toEqual(['push', 'replace']);
@@ -125,9 +125,9 @@ describe('markdown', () => {
 
   it('renders inline strong/em/code and safe links only', () => {
     const html = renderToHtml(renderMarkdown('**b** *i* `c` [ok](https://e.test/x) [bad](javascript:alert(1))')).innerHTML;
-    expect(html).toContain('<strong>b</strong>');
-    expect(html).toContain('<em>i</em>');
-    expect(html).toContain('<code>c</code>');
+    expect(html).toMatch(/<strong class="crucix-markdown-strong[^"]*">b<\/strong>/);
+    expect(html).toMatch(/<em class="crucix-markdown-em[^"]*">i<\/em>/);
+    expect(html).toMatch(/<code class="crucix-markdown-code[^"]*">c<\/code>/);
     expect(html).toContain('href="https://e.test/x"');
     expect(html).not.toContain('href="javascript');
     expect(html).toContain('bad');

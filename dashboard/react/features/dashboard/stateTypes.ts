@@ -12,7 +12,6 @@ import type { PopupInfo } from './types';
 export interface DashboardRegionState {
   region: RegionKey;
   setRegion: (region: RegionKey) => void;
-  onSearchRegion: (query: string) => void;
   onClearRegion: () => void;
 }
 
@@ -37,7 +36,6 @@ export interface MapSelectionState {
   selected: MapPoint[];
   selectedFC: GeoJSON.FeatureCollection;
   brief: AreaBriefState;
-  briefError: string | null;
   setDrawTool: Dispatch<SetStateAction<DrawTool | null>>;
   onDrawComplete: (shape: Shape) => void;
   onDrawCancel: () => void;
@@ -47,6 +45,7 @@ export interface MapSelectionState {
 
 export interface MapPopupState {
   popup: PopupInfo | null;
+  onShowPoint: (point: MapPoint) => void;
   onCanvasClick: (info: { lng: number; lat: number }) => void;
   onClosePopup: () => void;
   onCopyPopup: () => void;
@@ -78,4 +77,5 @@ export interface DashboardMapState {
   selection: MapSelectionState;
   popup: MapPopupState;
   spaceTrack: GeoJSON.FeatureCollection;
+  onSearch: (query: string) => void;
 }

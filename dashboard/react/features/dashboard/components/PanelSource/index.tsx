@@ -1,11 +1,19 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import Box from '@mui/material/Box';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { CLASSES } from '../../classes';
+import { withSx } from '../../sx';
+import { STYLES } from './styles';
 
 export interface PanelSourceProps {
   children: ReactNode;
-  style?: CSSProperties;
+  sx?: SxProps<Theme>;
 }
 
-export function PanelSource({ children, style }: PanelSourceProps) {
-  return <div className={CLASSES.panelSource} style={style}>{children}</div>;
+export function PanelSource({ children, sx }: PanelSourceProps) {
+  return (
+    <Box className={CLASSES.panelSource} sx={withSx(STYLES.panelSource, sx)}>
+      {children}
+    </Box>
+  );
 }

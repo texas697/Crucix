@@ -1,44 +1,7 @@
-import type { CSSProperties } from 'react';
+import { ROW_STYLES } from './stylesRows';
+import { TONE_STYLES } from './stylesTone';
 
-export const STYLES = {
-  ellipsis: { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  nowrap: { whiteSpace: 'nowrap' },
-  bannerNote: { marginLeft: 'auto', fontSize: '11px', opacity: 0.75 },
-  bannerSpaced: { marginBottom: 6 },
-  dimRow: { color: 'var(--text-2)', fontSize: '11.5px' },
-  dimInline: { color: 'var(--text-2)', fontSize: '11px' },
-  dimCause: { color: 'var(--dim-2)', fontSize: 11 },
-  faded: { opacity: 0.6 },
-  softFaded: { opacity: 0.7 },
-  fadedSpaced: { opacity: 0.6, marginLeft: 8 },
-  fadedTight: { opacity: 0.4 },
-  halfFaded: { opacity: 0.5 },
-  danger: { color: 'var(--danger)' },
-  warn: { color: 'var(--warn)' },
-  warnFaded: { color: 'var(--warn)', opacity: 0.7 },
-  accent: { color: 'var(--accent)' },
-  accent2: { color: 'var(--accent2)' },
-  sky: { color: 'var(--sky)' },
-  orange: { color: '#ff8a5c' },
-  violet: { color: '#c084fc' },
-  violetFaded: { color: '#c084fc', opacity: 0.5 },
-  scoreMuted: { opacity: 0.55, fontWeight: 400 },
-  emptyBlock: { padding: 12, textAlign: 'center', color: 'var(--dim)', fontFamily: 'var(--sans)', fontSize: 12 },
-  emptyIdeas: { padding: 24, textAlign: 'center', color: 'var(--dim)', fontFamily: 'var(--sans)', fontSize: 12 },
-  emptyIdeasIcon: { fontSize: 24, marginBottom: 8, opacity: 0.3 },
-  emptyIdeasSub: { fontSize: 11, marginTop: 6, opacity: 0.6 },
-  emptyIdeasAction: { marginTop: 12 },
-  emptyHealth: { padding: '16px 10px', color: 'var(--dim)', fontFamily: 'var(--sans)', fontSize: 12 },
-  headActions: { marginLeft: 'auto' },
-  liveBadge: { color: 'var(--sky)', fontSize: 11, marginRight: 10 },
-  maritimeSpark: { verticalAlign: 'middle', marginRight: 8, opacity: 0.8 },
-  sectionSpaced: { marginBottom: 8 },
-  sectionTop: { marginTop: 6 },
-  sectionHeadTight: { paddingTop: 2 },
-  macroCaption: { fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--dim)', marginBottom: 4, letterSpacing: 1 },
-  wtiCaption: { fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--dim)', marginBottom: 4 },
-  visible: { opacity: 1 },
-  dimText: { color: 'var(--dim)' },
-  text2: { color: 'var(--text-2)' },
-  mint: { color: 'var(--mint)' },
-} satisfies Record<string, CSSProperties>;
+export const STYLES = { ...TONE_STYLES, ...ROW_STYLES } as const;
+
+export { ROW_STYLES } from './stylesRows';
+export { TONE_STYLES } from './stylesTone';

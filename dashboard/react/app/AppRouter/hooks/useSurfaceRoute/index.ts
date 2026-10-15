@@ -36,13 +36,13 @@ export function useSurfaceRoute(): SurfaceRoute {
   const history = useMemo<HistoryAdapter>(() => {
     const current = () => locationRef.current.pathname + locationRef.current.search;
     const set = (path: string | string[], q: Record<string, unknown>, opts: SetOptions = {}): boolean => {
-      const { push = false, state = null } = opts;
+      const { isPush = false, state = null } = opts;
       const url = buildUrl(path, q);
       if (url === current()) {
-        if (state && push) navigate(url, { replace: true, state });
+        if (state && isPush) navigate(url, { replace: true, state });
         return false;
       }
-      if (push) navigate(url, { state: state ?? {} });
+      if (isPush) navigate(url, { state: state ?? {} });
       else navigate(url, { replace: true, state: state ?? locationRef.current.state ?? {} });
       return true;
     };

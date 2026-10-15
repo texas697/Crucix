@@ -1,6 +1,11 @@
 import { useCallback, useMemo } from 'react';
+import Box from '@mui/material/Box';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
 import { CLASSES } from '../../classes';
+import { STYLES, channelDotSx } from '../../styles';
 import type { MediaChannel } from '../../types';
 
 export interface ChannelButtonProps {
@@ -12,21 +17,23 @@ export interface ChannelButtonProps {
 
 export function ChannelButton({ channel, index, isActive, onSelect }: ChannelButtonProps) {
   const onClick = useCallback(() => onSelect(index), [onSelect, index]);
-  const dotStyle = useMemo(() => ({ background: channel.color }), [channel.color]);
+  const dotSx = useMemo(() => channelDotSx(channel.color), [channel.color]);
   return (
-    <button
-      type="button"
-      role="listitem"
-      className={clsx(CLASSES.channel, isActive && CLASSES.channelActive)}
-      aria-pressed={isActive}
-      onClick={onClick}
-    >
-      <span className={CLASSES.channelDot} style={dotStyle} />
-      <span className={CLASSES.channelText}>
-        <span className={CLASSES.channelName}>{channel.name}</span>
-        <br />
-        <span className={CLASSES.channelRegion}>{channel.region}</span>
-      </span>
-    </button>
+    <ListItem disablePadding className={CLASSES.channelItem} sx={STYLES.channelItem}>
+      <ListItemButton
+        disableRipple
+        selected={isActive}
+        className={clsx(CLASSES.channel, isActive && CLASSES.channelActive)}
+        sx={STYLES.channel}
+        aria-pressed={isActive}
+        onClick={onClick}
+      >
+        <Box component="span" className={CLASSES.channelDot} sx={dotSx} />
+        <Box className={CLASSES.channelText} sx={STYLES.channelText}>
+          <Typography component="span" className={CLASSES.channelName} sx={STYLES.channelName}>{channel.name}</Typography>
+          <Typography component="span" className={CLASSES.channelRegion} sx={STYLES.channelRegion}>{channel.region}</Typography>
+        </Box>
+      </ListItemButton>
+    </ListItem>
   );
 }

@@ -28,7 +28,6 @@ export function useSnapshotSelection({ mapRef, plot }: UseSnapshotSelectionArgs)
   }, []);
 
   const onDrawComplete = useCallback((shape: Shape) => {
-    setDrawTool(null);
     if (plot) setSelected(runSelection(shapeToFeature(shape), plot.mapPoints));
   }, [plot]);
 

@@ -4,8 +4,8 @@ Pinning record for every third-party browser asset the legacy dashboard loads fr
 Playwright can route each upstream URL to the local copy below so baseline tests are deterministic and offline.
 
 - Generated: 2026-10-15T00:08:57.574Z
-- Files: 41
-- Total bytes: 5653509
+- Files: 43
+- Total bytes: 6815664
 
 Paths are relative to `test/fixtures/vendor/`. All hashes are sha256 of the file **as stored locally**.
 
@@ -54,4 +54,6 @@ Paths are relative to `test/fixtures/vendor/`. All hashes are sha256 of the file
 | `hls-1.5.17/hls.min.js` | 413952 | `484054e8cd03d3f6d1781fb7f402bdc318d8a4c527f933a95c624e27cc9a9470` | https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js |
 | `maplibre-gl-4.7.1/maplibre-gl.css` | 65534 | `576b085fdd9487a65a19215328c1e086c07ce5bf6da09b666b3806d3d008dae9` | https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css |
 | `maplibre-gl-4.7.1/maplibre-gl.js` | 803086 | `be9633c4d870e26fb37f1cfe5c5a77181667114003ea16207ac7850d8da8add1` | https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js |
+| `maplibre-gl-6.14.0/maplibre-gl.css` | 83263 | `bacba6a85a867fcf602f2ff88331b8acf7edf3fbd063a519888cfbff39970193` | https://unpkg.com/maplibre-gl@6.14.0/dist/maplibre-gl.css (copied from node_modules/maplibre-gl@6.14.0/dist) |
+| `maplibre-gl-6.14.0/maplibre-gl.js` | 1078892 | `244d36122c1398da3a8259817cc6d71e04321afe6404f32606b4b6c6cc4f26fb` | https://unpkg.com/maplibre-gl@6.14.0/dist/maplibre-gl.mjs (ESM build; 6.x ships no UMD maplibre-gl.js, so this file is served for both the .js and .mjs request forms) |
 | `satellite-6.0.1/satellite.min.js` | 24040 | `6fd7487abb99bec37ea2c8d1f5739b59143a6130a00b0faa6c44dd44585aebbf` | https://cdnjs.cloudflare.com/ajax/libs/satellite.js/6.0.1/satellite.min.js |

@@ -4,6 +4,7 @@ import type { SweepData } from '../api/types';
 import { AppProviders } from '../app/AppProviders';
 import { safeStorage } from '../app/AppProviders/utils';
 import { applyTheme, readStoredTheme, resolveTheme } from '../shared/theme';
+import { installFileWorkerShim } from './fileWorkerShim';
 import { SnapshotApp } from './SnapshotApp';
 
 interface SnapshotWindow {
@@ -21,6 +22,7 @@ function readEmbeddedSnapshot(): SweepData | null {
 const container = document.getElementById('root');
 if (!container) throw new Error('[crucix] missing #root for the standalone snapshot');
 
+installFileWorkerShim();
 applyTheme(resolveTheme(readStoredTheme(safeStorage())), document.documentElement);
 
 createRoot(container).render(

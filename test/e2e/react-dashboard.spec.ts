@@ -20,7 +20,8 @@ test.describe('React dashboard', () => {
     // The AppShell bar and nav are present from the first paint; the ticker arrives with the data.
     await expect(page.locator('.crucix-app-bar')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('.crucix-app-nav')).toBeVisible();
-    await expect(page.getByText('Live news')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#pNews')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#pNews')).toContainText(/Live News Ticker|Live news/);
 
     routes.assertAllRouted();
   });

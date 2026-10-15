@@ -1,6 +1,7 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { num } from '../../coerce';
-import { STYLES } from '../../styles';
+import { TONE_STYLES } from '../../styles';
 import { EconRow } from '../EconRow';
 import { spaceWeatherView } from './weather';
 
@@ -8,8 +9,8 @@ export interface SpaceWeatherRowsProps {
   spaceWeather: unknown;
 }
 
-function kpStyle(kp: number) {
-  return kp >= 5 ? STYLES.danger : kp >= 4 ? STYLES.warn : STYLES.mint;
+function kpSx(kp: number) {
+  return kp >= 5 ? TONE_STYLES.danger : kp >= 4 ? TONE_STYLES.warn : TONE_STYLES.mint;
 }
 
 export function SpaceWeatherRows({ spaceWeather }: SpaceWeatherRowsProps) {
@@ -19,19 +20,19 @@ export function SpaceWeatherRows({ spaceWeather }: SpaceWeatherRowsProps) {
   const fc = w.forecast;
   const kpValue = (
     <>
-      <span className={CLASSES.spaceKp} style={kpStyle(w.kpNow)}>Kp {w.kpNow.toFixed(1)}</span>
-      {w.kpLabel ? <> <span className={CLASSES.spaceKpLabel} style={STYLES.softFaded}>{w.kpLabel}</span></> : null}
+      <Box component="span" className={CLASSES.spaceKp} sx={kpSx(w.kpNow)}>Kp {w.kpNow.toFixed(1)}</Box>
+      {w.kpLabel ? <> <Box component="span" className={CLASSES.spaceKpLabel} sx={TONE_STYLES.softFaded}>{w.kpLabel}</Box></> : null}
       {(g || r || s)
-        ? <> {'·'} <span className={CLASSES.spaceScales} style={STYLES.danger}>{g ? `G${g}` : ''}{r ? ` R${r}` : ''}{s ? ` S${s}` : ''}</span></>
+        ? <> {'·'} <Box component="span" className={CLASSES.spaceScales} sx={TONE_STYLES.danger}>{g ? `G${g}` : ''}{r ? ` R${r}` : ''}{s ? ` S${s}` : ''}</Box></>
         : fc
-          ? <> {'·'} <span className={CLASSES.spaceForecast} style={STYLES.warn}>{num(fc.G) ? `G${num(fc.G)}` : ''}{num(fc.R) ? ` R${num(fc.R)}` : ''} watch</span></>
+          ? <> {'·'} <Box component="span" className={CLASSES.spaceForecast} sx={TONE_STYLES.warn}>{num(fc.G) ? `G${num(fc.G)}` : ''}{num(fc.R) ? ` R${num(fc.R)}` : ''} watch</Box></>
           : null}
     </>
   );
   const xrayValue = (
     <>
       {w.flareCurrent || '--'}
-      {w.flareMax ? <> <span className={CLASSES.spaceFlarePeak} style={STYLES.faded}>peak {w.flareMax}</span></> : null}
+      {w.flareMax ? <> <Box component="span" className={CLASSES.spaceFlarePeak} sx={TONE_STYLES.faded}>peak {w.flareMax}</Box></> : null}
     </>
   );
   return (

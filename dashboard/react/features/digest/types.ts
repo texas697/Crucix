@@ -68,6 +68,7 @@ export interface DigestListState {
   topics: DigestTopicCount[];
   taste: DigestTaste;
   status: string;
+  isLoading: boolean;
   setItems: Dispatch<SetStateAction<DigestCardItem[]>>;
   onLoad: DigestLoader;
 }

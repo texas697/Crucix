@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
-import { STYLES } from '../../styles';
+import { TONE_STYLES } from '../../styles';
 import { HEALTH_RISK_COL, riskMax, riskTitle } from '../HealthWatchPanel/health';
+import { STYLES, riskTagSx } from './styles';
 
 export interface RiskTagProps {
   risk: unknown;
@@ -9,11 +11,14 @@ export interface RiskTagProps {
 
 export function RiskTag({ risk }: RiskTagProps) {
   const max = riskMax(risk);
-  const style = useMemo(() => ({ color: HEALTH_RISK_COL[max.toLowerCase()] || 'var(--text-2)' }), [max]);
+  const color = HEALTH_RISK_COL[max.toLowerCase()];
+  const toneSx = useMemo(() => riskTagSx(color), [color]);
   if (!risk) {
     return (
-      <span className={CLASSES.hwRisk} style={STYLES.dimText} title="WHO has not published a risk level for this event">unrated</span>
+      <Box component="span" className={CLASSES.hwRisk} sx={[STYLES.hwRisk, TONE_STYLES.dimText]} title="WHO has not published a risk level for this event">
+        unrated
+      </Box>
     );
   }
-  return <span className={CLASSES.hwRisk} style={style} title={riskTitle(risk)}>{max}</span>;
+  return <Box component="span" className={CLASSES.hwRisk} sx={toneSx} title={riskTitle(risk)}>{max}</Box>;
 }

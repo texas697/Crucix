@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { createAppTheme } from '../../dashboard/react/theme';
 import type { SweepData } from '../../dashboard/react/api/types';
+import { CLASSES } from '../../dashboard/react/features/dashboard/classes';
 import { LeftRail } from '../../dashboard/react/features/dashboard/components/LeftRail';
 import { NuclearWatch } from '../../dashboard/react/features/dashboard/components/NuclearWatch';
 import { RiskGauges } from '../../dashboard/react/features/dashboard/components/RiskGauges';
@@ -12,11 +16,17 @@ import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
+const theme = createAppTheme('dark');
+
+function renderThemed(ui: ReactElement) {
+  return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
+}
+
 // The synthesized fixtures are the authoritative payload shape; the component reads them loosely.
 const asSweep = (value: unknown): SweepData => value as unknown as SweepData;
 
 function rail(data: unknown): HTMLElement {
-  return render(<LeftRail data={asSweep(data)} />).container;
+  return renderThemed(<LeftRail data={asSweep(data)} />).container;
 }
 
 describe('LeftRail', () => {
@@ -30,7 +40,7 @@ describe('LeftRail', () => {
   it('renders the eleven sensor-grid layers, including the air count', () => {
     const container = rail(minimal);
     const sensor = container.querySelector('#pSensor') as HTMLElement;
-    expect(sensor.querySelectorAll('.layer-item')).toHaveLength(11);
+    expect(sensor.querySelectorAll(`.${CLASSES.layerItem}`)).toHaveLength(11);
     expect(within(sensor).getByText('Air Activity')).toBeInTheDocument();
     // Legacy passes the raw air total (no locale separator); only thermal/conflict use toLocaleString.
     expect(within(sensor).getByText('1240')).toBeInTheDocument();
@@ -41,7 +51,7 @@ describe('LeftRail', () => {
   it('keeps all eleven layers for the degraded payload too', () => {
     const container = rail(partial);
     const sensor = container.querySelector('#pSensor') as HTMLElement;
-    expect(sensor.querySelectorAll('.layer-item')).toHaveLength(11);
+    expect(sensor.querySelectorAll(`.${CLASSES.layerItem}`)).toHaveLength(11);
     expect(within(sensor).getByText('GDELT · no events')).toBeInTheDocument();
   });
 
@@ -95,7 +105,7 @@ describe('LeftRail', () => {
 // The legacy layout spreads the rail across two rows, so each card must render on its own.
 describe('LeftRail cards', () => {
   it('exports SensorGrid, NuclearWatch and RiskGauges standalone', () => {
-    const container = render(
+    const container = renderThemed(
       <>
         <SensorGrid data={asSweep(minimal)} />
         <NuclearWatch data={asSweep(minimal)} />
@@ -108,16 +118,16 @@ describe('LeftRail cards', () => {
   });
 
   it('renders only its own card when mounted alone', () => {
-    const sensor = render(<SensorGrid data={asSweep(minimal)} />).container;
+    const sensor = renderThemed(<SensorGrid data={asSweep(minimal)} />).container;
     expect(sensor.querySelector('#pSensor')).not.toBeNull();
     expect(sensor.querySelector('#pNuclear')).toBeNull();
     expect(sensor.querySelector('#pRisk')).toBeNull();
 
-    const nuclear = render(<NuclearWatch data={asSweep(minimal)} />).container;
+    const nuclear = renderThemed(<NuclearWatch data={asSweep(minimal)} />).container;
     expect(nuclear.querySelector('#pNuclear')).not.toBeNull();
     expect(nuclear.querySelector('#pSensor')).toBeNull();
 
-    const risk = render(<RiskGauges data={asSweep(partial)} />).container;
+    const risk = renderThemed(<RiskGauges data={asSweep(partial)} />).container;
     expect(risk.querySelector('#pRisk')).not.toBeNull();
     expect(risk.querySelector('#pSensor')).toBeNull();
   });

@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asArr, asRec, asText, num } from '../../coerce';
 import { relTime } from '../../format';
 import { makeLabel } from '../../label';
-import { STYLES } from '../../styles';
+import { ROW_STYLES, TONE_STYLES } from '../../styles';
 import type { PanelDataProps } from '../../types';
 import { HealthBanner } from '../HealthBanner';
 import { OutbreakRow } from '../OutbreakRow';
@@ -11,9 +12,10 @@ import { Panel } from '../Panel';
 import { TravelRow } from '../TravelRow';
 import { UsOutbreakRow } from '../UsOutbreakRow';
 import { riskMax } from './health';
+import { STYLES } from './styles';
 
 function section(label: string, rows: ReactNode[]): ReactNode {
-  return rows.length ? <><div className={CLASSES.sectionHead}>{label}</div>{rows}</> : null;
+  return rows.length ? <><Box className={CLASSES.sectionHead} sx={ROW_STYLES.sectionHead}>{label}</Box>{rows}</> : null;
 }
 
 export function HealthWatchPanel({ data, t }: PanelDataProps) {
@@ -36,14 +38,14 @@ export function HealthWatchPanel({ data, t }: PanelDataProps) {
   const badge = (
     <>
       {outbreaks.length} outbreak{outbreaks.length === 1 ? '' : 's'}
-      {l34 ? <>{' '}{'·'} <span className={CLASSES.hwBadgeWarn} style={STYLES.warn}>{l34} CDC L3+</span></> : null}
+      {l34 ? <>{' '}{'·'} <Box component="span" className={CLASSES.hwBadgeWarn} sx={TONE_STYLES.warn}>{l34} CDC L3+</Box></> : null}
       {hw.asOf ? <>{' '}{'·'} {relTime(asText(hw.asOf))}</> : null}
     </>
   );
 
   return (
     <Panel id="pOsint" title={tr('panels.osintStream', 'Health watch')} badge={badge} isPadSm flex="1 1 300px">
-      <div className={CLASSES.hwList}>
+      <Box className={CLASSES.hwList} sx={STYLES.hwList}>
         {hasRows || error ? (
           <>
             <HealthBanner error={error} worst={worst} hasOutbreaks={outbreaks.length > 0} />
@@ -52,11 +54,11 @@ export function HealthWatchPanel({ data, t }: PanelDataProps) {
             {section(tr('health.cdcInvestigations', 'CDC investigations'), usRows)}
           </>
         ) : (
-          <div className={CLASSES.hwEmpty} style={STYLES.emptyHealth}>
+          <Box className={CLASSES.hwEmpty} sx={STYLES.hwEmpty}>
             {tr('health.noNotices', 'No WHO or CDC health notices')} in the last {num(hw.activeDays) || 90} days.
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     </Panel>
   );
 }

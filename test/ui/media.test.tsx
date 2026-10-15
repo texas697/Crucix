@@ -78,14 +78,14 @@ afterEach(() => {
 describe('MediaApp routing', () => {
   it('seeds the selected channel from the URL path', () => {
     const { container } = setup('https://x.test/media/rt');
-    expect(container.querySelector('.chan.active .cname')?.textContent).toBe('RT');
+    expect(container.querySelector('.crucix-media-channel--active .crucix-media-channel-name')?.textContent).toBe('RT');
     expect(container.querySelector('#nowName')?.textContent).toBe('RT');
-    expect(container.querySelector('.chan.active')).toHaveAttribute('aria-pressed', 'true');
+    expect(container.querySelector('.crucix-media-channel--active')).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('falls back to the first channel for an unknown id', () => {
     const { container } = setup('https://x.test/media/not-a-channel');
-    expect(container.querySelector('.chan.active .cname')?.textContent).toBe('Al Jazeera English');
+    expect(container.querySelector('.crucix-media-channel--active .crucix-media-channel-name')?.textContent).toBe('Al Jazeera English');
   });
 
   it('seeds grid mode from ?grid=1 and renders four lazy cells', () => {
@@ -94,7 +94,7 @@ describe('MediaApp routing', () => {
     expect(grid).not.toBeNull();
     expect(grid?.querySelectorAll('video')).toHaveLength(4);
     expect(grid?.querySelector('video')?.getAttribute('data-src')).toContain('.m3u8');
-    expect(container.querySelector('#btnGrid')).toHaveClass('on');
+    expect(container.querySelector('#btnGrid')).toHaveClass('crucix-media-control--on');
   });
 
   it('pushes a history entry on channel change and destroys the previous player', async () => {
@@ -102,7 +102,7 @@ describe('MediaApp routing', () => {
     expect(hls.instances).toHaveLength(1);
     const first = hls.instances[0];
 
-    await userEvent.click(container.querySelectorAll('.chan')[1] as HTMLElement);
+    await userEvent.click(container.querySelectorAll('.crucix-media-channel')[1] as HTMLElement);
 
     expect(probe.path()).toBe('/media/rt');
     expect(probe.navigationType).toBe('PUSH');
@@ -125,7 +125,7 @@ describe('MediaApp routing', () => {
     act(() => {
       probe.navigate?.('/media/france24?grid=1');
     });
-    expect(container.querySelector('.chan.active .cname')?.textContent).toBe('France 24 English');
+    expect(container.querySelector('.crucix-media-channel--active .crucix-media-channel-name')?.textContent).toBe('France 24 English');
     expect(container.querySelector('#grid')).not.toBeNull();
   });
 });
@@ -217,7 +217,7 @@ describe('MediaApp error handling', () => {
       hls.instances[0].emit('hlsError', { fatal: true, type: 'mediaError' });
     });
     await userEvent.click(screen.getByRole('button', { name: 'Play via YouTube' }));
-    const frame = container.querySelector('iframe.vframe') as HTMLIFrameElement;
+    const frame = container.querySelector('iframe.crucix-media-frame') as HTMLIFrameElement;
     expect(frame).not.toBeNull();
     expect(frame.src).toContain('youtube.com/embed/');
     expect(screen.queryByText('Feed unavailable')).toBeNull();

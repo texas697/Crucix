@@ -1,41 +1,34 @@
-// Static map sources, layers and basemaps, ported from the legacy `jarvis.html`:
-//   - `setupMapLayers()` sources/layers (jarvis.html ~1791-1818)
-//   - the `BASEMAPS` table (jarvis.html ~1076-1080)
-//   - `applyThemeToMap()`'s theme -> basemap index rule (jarvis.html ~1059-1066)
-//
-// This module is intentionally free of any `maplibre-gl` *runtime* import so the definitions can be
-// imported by tests (jsdom has no WebGL) and by callers that only need the tables.
+import { MILITARY_AIR_COLOR, MILITARY_AIR_KEY, PLANE_ICON_ID } from './consts';
 
-import type { Theme } from '../../shared/theme';
-
-/** The eight GeoJSON source ids `setupMapLayers` ensures, in legacy order. */
 export const MAP_SOURCES = [
+  'src-space-track',
+  'src-draw',
   'src-corridors',
   'src-trails',
-  'src-draw',
-  'src-selected',
+  'src-conflict',
   'src-rings',
   'src-points',
-  'src-conflict',
-  'src-space-track',
+  'src-selected',
 ] as const;
 
 export type MapSourceId = (typeof MAP_SOURCES)[number];
 
-/**
- * A layer exactly as `setupMapLayers` adds it. Kept deliberately loose (rather than the strict
- * `LayerSpecification` union) so the legacy expression paint values port verbatim without casts
- * scattered through the table.
- */
 export interface MapLayerDefinition {
   id: string;
-  type: 'line' | 'fill' | 'circle';
+  type: 'line' | 'fill' | 'circle' | 'symbol';
   source: MapSourceId;
   paint: Record<string, unknown>;
   layout?: Record<string, unknown>;
+  filter?: unknown[];
 }
 
-/** The nine layers `setupMapLayers` adds, in legacy add order. */
+export const MILITARY_TEXT_FONT = [
+  'Montserrat Regular', 'Open Sans Regular', 'Noto Sans Regular', 'HanWangHeiLight Regular', 'NanumBarunGothic Regular',
+];
+
+const NOT_MILITARY = ['!=', ['get', 'type'], MILITARY_AIR_KEY];
+const IS_MILITARY = ['==', ['get', 'type'], MILITARY_AIR_KEY];
+
 export const MAP_LAYERS: MapLayerDefinition[] = [
   {
     id: 'lyr-space-track',
@@ -43,12 +36,7 @@ export const MAP_LAYERS: MapLayerDefinition[] = [
     source: 'src-space-track',
     paint: { 'line-color': 'rgba(255,255,255,0.45)', 'line-width': 1.1, 'line-dasharray': [2, 3] },
   },
-  {
-    id: 'lyr-draw-fill',
-    type: 'fill',
-    source: 'src-draw',
-    paint: { 'fill-color': 'rgba(220,226,236,0.16)' },
-  },
+  { id: 'lyr-draw-fill', type: 'fill', source: 'src-draw', paint: { 'fill-color': 'rgba(220,226,236,0.16)' } },
   {
     id: 'lyr-draw-line',
     type: 'line',
@@ -95,6 +83,7 @@ export const MAP_LAYERS: MapLayerDefinition[] = [
     id: 'lyr-points',
     type: 'circle',
     source: 'src-points',
+    filter: NOT_MILITARY,
     paint: {
       'circle-color': ['get', 'color'],
       'circle-radius': [
@@ -110,6 +99,34 @@ export const MAP_LAYERS: MapLayerDefinition[] = [
     },
   },
   {
+    id: 'lyr-military',
+    type: 'symbol',
+    source: 'src-points',
+    filter: IS_MILITARY,
+    layout: {
+      'icon-image': PLANE_ICON_ID,
+      'icon-size': 0.3,
+      'icon-rotate': ['coalesce', ['get', 'heading'], 0],
+      'icon-rotation-alignment': 'map',
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'text-field': ['step', ['zoom'], '', 4, ['coalesce', ['get', 'label'], '']],
+      'text-font': MILITARY_TEXT_FONT,
+      'text-size': 10,
+      'text-offset': [0, 1.1],
+      'text-anchor': 'top',
+      'text-optional': true,
+    },
+    paint: {
+      'icon-color': MILITARY_AIR_COLOR,
+      'icon-halo-color': 'rgba(5,7,11,0.7)',
+      'icon-halo-width': 0.6,
+      'text-color': MILITARY_AIR_COLOR,
+      'text-halo-color': 'rgba(5,7,11,0.9)',
+      'text-halo-width': 1,
+    },
+  },
+  {
     id: 'lyr-selected',
     type: 'circle',
     source: 'src-selected',
@@ -122,19 +139,9 @@ export const MAP_LAYERS: MapLayerDefinition[] = [
   },
 ];
 
-export interface BasemapDefinition {
-  name: string;
-  style: string;
+export function layersForSource(source: MapSourceId): MapLayerDefinition[] {
+  return MAP_LAYERS.filter((layer) => layer.source === source);
 }
 
-/** Carto basemaps; the legacy array index is meaningful (0 dark, 2 light). */
-export const BASEMAPS = [
-  { name: 'Dark', style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
-  { name: 'Muted', style: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json' },
-  { name: 'Light', style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
-] as const satisfies readonly BasemapDefinition[];
-
-/** Theme -> basemap URL, mirroring `currentTheme==='light' ? idx 2 : idx 0`. */
-export function basemapForTheme(theme: Theme): string {
-  return theme === 'light' ? BASEMAPS[2].style : BASEMAPS[0].style;
-}
+export { BASEMAPS, basemapForTheme } from './basemaps';
+export type { BasemapDefinition } from './basemaps';

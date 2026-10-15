@@ -147,7 +147,7 @@ describe('useLiveFeeds', () => {
     ]);
   });
 
-  it('keeps only alerts within the last hour and caps at ten', async () => {
+  it('keeps only alerts within the last hour', async () => {
     const nowMs = 1_700_000_000_000;
     const recent = { time: nowMs / 1000 - 60, cities: ['Kyiv'] };
     const old = { time: nowMs / 1000 - 7200, cities: ['Odesa'] };

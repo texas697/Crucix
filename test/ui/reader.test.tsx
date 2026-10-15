@@ -3,7 +3,8 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ApiClient } from '../../dashboard/react/api/client';
 import type { UserProfile } from '../../dashboard/react/api/types';
-import { Reader, type Article, type ReaderTarget } from '../../dashboard/react/features/reader/Reader';
+import { ThemeModeProvider } from '../../dashboard/react/app/AppProviders/components/ThemeModeProvider';
+import { Reader, type Article, type ReaderTarget } from '../../dashboard/react/features/reader';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -18,6 +19,10 @@ type FakeHandlers = {
   del?: (path: string) => Promise<unknown>;
   request?: (path: string) => Promise<unknown>;
 };
+
+function themed(node: React.ReactElement) {
+  return <ThemeModeProvider storage={null}>{node}</ThemeModeProvider>;
+}
 
 function fakeApi(overrides: FakeHandlers = {}) {
   const calls: { method: string; path: string; body?: unknown }[] = [];
@@ -53,10 +58,10 @@ function renderReader(target: ReaderTarget | null, props: Partial<React.Componen
       return {};
     },
   });
-  const utils = render(
+  const utils = render(themed(
     <Reader target={target} api={handlers.api} me={meWithKey} hasTavily={false}
       onClose={() => {}} onOpenSettings={() => {}} {...props} />,
-  );
+  ));
   return { ...utils, ...handlers };
 }
 
@@ -78,7 +83,7 @@ describe('Reader', () => {
     const { api } = fakeApi({
       get: async () => ({ ...article, title: '<img src=x onerror=alert(1)>', summaryMd: '<script>alert(1)</script>' }),
     });
-    render(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />);
+    render(themed(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).queryByRole('img')).toBeNull();
     expect(dialog.querySelector('script')).toBeNull();
@@ -87,7 +92,7 @@ describe('Reader', () => {
   it('does not POST summarize or research on render or rerender', async () => {
     const { api, calls, rerender } = renderReader({ id: 'a1' });
     await screen.findByText('A title');
-    rerender(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />);
+    rerender(themed(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />));
     await screen.findByText('A title');
     expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0);
   });
@@ -98,7 +103,7 @@ describe('Reader', () => {
       get: async (path: string) => (path.startsWith('/api/digest/article/') ? { ...article } : { state: 'none' }),
       post: async (path: string) => (path.endsWith('/feedback') ? { rating: -1 } : {}),
     });
-    render(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} onVote={onVote} />);
+    render(themed(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} onVote={onVote} />));
     await screen.findByText('A title');
     await userEvent.click(screen.getByLabelText('Less like this'));
     await waitFor(() => expect(onVote).toHaveBeenCalledWith('a1', -1));
@@ -113,8 +118,8 @@ describe('Reader', () => {
         return { state: 'none' };
       },
     });
-    const { rerender } = render(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />);
-    rerender(<Reader target={{ id: 'b1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />);
+    const { rerender } = render(themed(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />));
+    rerender(themed(<Reader target={{ id: 'b1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} />));
     await screen.findByText('B title');
     slowA.resolve({ ...article, title: 'A title (late)' });
     await new Promise((r) => setTimeout(r, 10));
@@ -134,7 +139,7 @@ describe('Reader', () => {
         return {};
       },
     });
-    render(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} pollMs={20} />);
+    render(themed(<Reader target={{ id: 'a1' }} api={api} me={meWithKey} hasTavily={false} onClose={() => {}} onOpenSettings={() => {}} pollMs={20} />));
     expect(await screen.findByText('Deep')).toBeInTheDocument();
     expect(polls).toBeGreaterThanOrEqual(2);
   });

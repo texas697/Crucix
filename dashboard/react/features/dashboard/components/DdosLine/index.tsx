@@ -1,6 +1,7 @@
+import Box from '@mui/material/Box';
 import { CLASSES } from '../../classes';
 import { asArr, asText, num, type Rec } from '../../coerce';
-import { STYLES } from '../../styles';
+import { ROW_STYLES, TONE_STYLES } from '../../styles';
 import { ddosTitle } from '../OutagesPanel/outages';
 
 export interface DdosLineProps {
@@ -11,17 +12,17 @@ export function DdosLine({ attacks }: DdosLineProps) {
   const l7 = asArr(attacks.l7Targets);
   if (!l7.length) return null;
   return (
-    <div className={CLASSES.siteRow} title={ddosTitle(attacks)}>
-      <span className={CLASSES.siteName} style={STYLES.ellipsis}>
-        <span className={CLASSES.ddosLabel} style={STYLES.faded}>DDoS targets 24h</span>{' '}
+    <Box className={CLASSES.siteRow} sx={ROW_STYLES.siteRow} title={ddosTitle(attacks)}>
+      <Box component="span" className={CLASSES.siteName} sx={TONE_STYLES.ellipsis}>
+        <Box component="span" className={CLASSES.ddosLabel} sx={TONE_STYLES.faded}>DDoS targets 24h</Box>{' '}
         {l7.slice(0, 3).map((x, i) => (
-          <span key={i} className={CLASSES.ddosTarget}>
+          <Box component="span" key={i} className={CLASSES.ddosTarget}>
             {i > 0 ? ' · ' : ''}
             {asText(x.name).replace('United States', 'US').replace('United Kingdom', 'UK')}
-            <span className={CLASSES.ddosShare} style={STYLES.faded}> {num(x.pct)}%</span>
-          </span>
+            <Box component="span" className={CLASSES.ddosShare} sx={TONE_STYLES.faded}> {num(x.pct)}%</Box>
+          </Box>
         ))}
-      </span>
-    </div>
+      </Box>
+    </Box>
   );
 }

@@ -1,15 +1,15 @@
-import type { CSSProperties } from 'react';
 import type { SweepData } from '../../../../api/types';
 import { asArr, asRec, num, str } from '../../coerce';
 import type { Label } from '../../label';
-import { STYLES } from '../../styles';
+
+export type RiskTone = 'warn' | 'accent' | 'inherit';
 
 export interface RiskMetric {
   key: string;
   label: string;
   value: string;
   title?: string;
-  valueStyle?: CSSProperties;
+  tone?: RiskTone;
 }
 
 export interface RiskGaugeView {
@@ -17,7 +17,6 @@ export interface RiskGaugeView {
   metrics: RiskMetric[];
 }
 
-const INHERIT: CSSProperties = { color: 'inherit' };
 
 export function riskGaugeView(data: SweepData, tr: Label): RiskGaugeView {
   const fred = asArr(data.fred);
@@ -39,12 +38,12 @@ export function riskGaugeView(data: SweepData, tr: Label): RiskGaugeView {
       {
         key: 'vix', label: tr('metrics.vix', 'VIX'), value: vixVal != null && vixVal !== 0 ? String(vixVal) : '--',
         title: vix && str(vix.date) ? `CBOE VIX close ${str(vix.date)}` : undefined,
-        valueStyle: num(vixVal) > 20 ? STYLES.warn : STYLES.accent,
+        tone: num(vixVal) > 20 ? 'warn' : 'accent',
       },
       {
         key: 'hy', label: tr('metrics.hySpread', 'HY spread'), value: hyVal != null ? `${Number(hyVal).toFixed(2)}%` : '--',
         title: hy && str(hy.date) ? `ICE BofA US High Yield option-adjusted spread ${str(hy.date)}` : undefined,
-        valueStyle: num(hyVal) > 5 ? STYLES.warn : INHERIT,
+        tone: num(hyVal) > 5 ? 'warn' : 'inherit',
       },
       { key: 'usd', label: tr('metrics.usdIndex', 'USD index'), value: usd?.value != null ? Number(usd.value).toFixed(1) : '--' },
       { key: 'claims', label: tr('metrics.joblessClaims', 'Jobless claims'), value: claims?.value != null ? Number(claims.value).toLocaleString() : '--' },

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type RefObject } from 'react';
 import type { MapViewHandle } from '../../../features/map/MapView';
-import type { PlotResult } from '../../../features/map/plot';
+import type { MapPoint, PlotResult } from '../../../features/map/plot';
 import { nearestMapPoint } from '../../../features/map/selection';
 import { copyToClipboard } from '../../../shared/copyToClipboard';
 import type { PopupInfo, SnapshotPopupState } from '../../types';
@@ -22,16 +22,19 @@ function projectedPercent(mapRef: RefObject<MapViewHandle | null>, lng: number, 
 export function useSnapshotPopup({ mapRef, plot }: UseSnapshotPopupArgs): SnapshotPopupState {
   const [popup, setPopup] = useState<PopupInfo | null>(null);
 
-  const onCanvasClick = useCallback((info: { lng: number; lat: number }) => {
-    if (!plot) return;
-    const point = nearestMapPoint(info.lat, info.lng, plot.mapPoints);
-    if (!point) return;
+  const onShowPoint = useCallback((point: MapPoint) => {
     const { left, top } = projectedPercent(mapRef, point.lng, point.lat);
     setPopup({
       head: point.popHead, text: point.popText, meta: point.popMeta, url: point.url, isNew: point._new,
       lng: point.lng, lat: point.lat, left, top,
     });
-  }, [plot, mapRef]);
+  }, [mapRef]);
+
+  const onCanvasClick = useCallback((info: { lng: number; lat: number }) => {
+    if (!plot) return;
+    const point = nearestMapPoint(info.lat, info.lng, plot.mapPoints);
+    if (point) onShowPoint(point);
+  }, [plot, onShowPoint]);
 
   const onClosePopup = useCallback(() => setPopup(null), []);
 
@@ -39,5 +42,8 @@ export function useSnapshotPopup({ mapRef, plot }: UseSnapshotPopupArgs): Snapsh
     if (popup) copyToClipboard(`${popup.lng.toFixed(4)},${popup.lat.toFixed(4)}`);
   }, [popup]);
 
-  return useMemo(() => ({ popup, onCanvasClick, onClosePopup, onCopyPopup }), [popup, onCanvasClick, onClosePopup, onCopyPopup]);
+  return useMemo(
+    () => ({ popup, onShowPoint, onCanvasClick, onClosePopup, onCopyPopup }),
+    [popup, onShowPoint, onCanvasClick, onClosePopup, onCopyPopup],
+  );
 }

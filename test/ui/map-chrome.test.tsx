@@ -1,17 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { ThemeModeProvider } from '../../dashboard/react/app/AppProviders/components/ThemeModeProvider';
 import { clampRegion, inRegionBox, textInRegion } from '../../dashboard/react/features/map/regions';
 import {
+  LAYER_DEFS,
   LAYER_INFO,
+  SELECTION_GROUP_LABELS,
   TIME_WINDOW_LIST,
   matchesLayerFilter,
   passesLayer,
   type LayerDef,
 } from '../../dashboard/react/features/map/layerDefs';
+import { CLASSES } from '../../dashboard/react/features/map/classes';
 import { RegionBar } from '../../dashboard/react/features/map/RegionBar';
 import { LayerInfoOverlay, MapLegend } from '../../dashboard/react/features/map/MapLegend';
 
 afterEach(cleanup);
+
+// The chrome reads theme.palette.crucix through sx, so it renders inside the app theme like the SPA does.
+const renderThemed = (ui: ReactElement) => render(<ThemeModeProvider storage={null}>{ui}</ThemeModeProvider>);
 
 describe('region predicates', () => {
   it('clamps ?region= values to a known key, falling back to world', () => {
@@ -23,13 +31,9 @@ describe('region predicates', () => {
   });
 
   it('inRegionBox keeps the legacy boxes and treats world/unknown as unbounded', () => {
-    // Inside the europe box [[-25,33],[45,72]].
     expect(inRegionBox(40, 10, 'europe')).toBe(true);
-    // Latitude below the europe box.
     expect(inRegionBox(10, 10, 'europe')).toBe(false);
-    // Longitude east of the europe box.
     expect(inRegionBox(40, 50, 'europe')).toBe(false);
-    // World (and unknown regions) filter nothing.
     expect(inRegionBox(0, 0, 'world')).toBe(true);
     expect(inRegionBox(0, 0, 'atlantis')).toBe(true);
   });
@@ -61,16 +65,11 @@ describe('layer predicates', () => {
       now,
     };
     expect(passesLayer({ type: 'air', lat: 0, lng: 0, ts: '2020-01-01T00:00:00Z' }, base)).toBe(true);
-    // Hidden layer fails.
     expect(passesLayer({ type: 'air', lat: 0, lng: 0 }, { ...base, visible: { air: false } })).toBe(false);
-    // Unknown layer (undefined visibility) fails, mirroring the legacy global default.
     expect(passesLayer({ type: 'ghost', lat: 0, lng: 0 }, base)).toBe(false);
-    // Out of the active region fails.
     expect(passesLayer({ type: 'air', lat: 0, lng: 10 }, { ...base, region: 'europe' })).toBe(false);
-    // A timestamp older than the window fails; a recent one passes.
     expect(passesLayer({ type: 'air', lat: 40, lng: 10, ts: '2026-01-01T11:00:00Z' }, { ...base, timeWindow: '1h' })).toBe(true);
     expect(passesLayer({ type: 'air', lat: 40, lng: 10, ts: '2026-01-01T09:00:00Z' }, { ...base, timeWindow: '1h' })).toBe(false);
-    // Missing timestamp always passes the time check (legacy `!ts`).
     expect(passesLayer({ type: 'air', lat: 40, lng: 10 }, { ...base, timeWindow: '1h' })).toBe(true);
   });
 
@@ -79,11 +78,27 @@ describe('layer predicates', () => {
   });
 });
 
+describe('military air layer definition', () => {
+  it('lists militaryAir right after air with its own colour, info card and selection label', () => {
+    const airIndex = LAYER_DEFS.findIndex((layer) => layer.key === 'air');
+    expect(LAYER_DEFS[airIndex + 1]).toEqual({ key: 'militaryAir', label: 'Military air', color: '#8fa7ff' });
+    expect(LAYER_INFO.militaryAir).toMatchObject({
+      purpose: 'Every military aircraft currently broadcasting ADS-B, plotted at its real position with heading',
+      source: 'OpenSky Network account feed plus the adsb.lol military database flag',
+      freshness: 'Refreshed every sweep (~15 min)',
+      confidence: LAYER_INFO.air!.confidence,
+      limitations: LAYER_INFO.air!.limitations,
+    });
+    expect(SELECTION_GROUP_LABELS.militaryAir).toBe('Military aircraft');
+    expect(matchesLayerFilter(LAYER_DEFS[airIndex + 1]!, 'military')).toBe(true);
+  });
+});
+
 describe('RegionBar', () => {
   function renderBar(overrides: Partial<React.ComponentProps<typeof RegionBar>> = {}) {
     const onRegion = vi.fn();
     const onSearch = vi.fn();
-    const utils = render(
+    const utils = renderThemed(
       <RegionBar
         region="world"
         sourcesOk={4}
@@ -103,8 +118,11 @@ describe('RegionBar', () => {
     for (const name of ['WORLD', 'AMERICAS', 'EUROPE', 'MIDDLE EAST', 'ASIA PACIFIC', 'AFRICA']) {
       expect(screen.getByRole('button', { name })).toBeInTheDocument();
     }
-    expect(screen.getByRole('button', { name: 'EUROPE' })).toHaveClass('active');
-    expect(screen.getByRole('button', { name: 'WORLD' })).not.toHaveClass('active');
+    const europe = screen.getByRole('button', { name: 'EUROPE' });
+    expect(europe).toHaveAttribute('aria-pressed', 'true');
+    expect(europe).toHaveClass(CLASSES.regionButtonActive);
+    expect(screen.getByRole('button', { name: 'WORLD' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'WORLD' })).not.toHaveClass(CLASSES.regionButtonActive);
   });
 
   it('calls onRegion with the clicked region key', () => {
@@ -124,8 +142,9 @@ describe('RegionBar', () => {
   });
 
   it('renders the live dot, meta line and hint', () => {
-    renderBar();
+    const { container } = renderBar();
     expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(container.querySelector(`.${CLASSES.barDot}`)).not.toBeNull();
     expect(screen.getByText('4/5 sources · 3 markers · 2 news')).toBeInTheDocument();
     expect(screen.getByText('Scroll to zoom · drag to pan')).toBeInTheDocument();
   });
@@ -140,7 +159,7 @@ describe('MapLegend', () => {
       onClearRegion: vi.fn(),
       onInfo: vi.fn(),
     };
-    const utils = render(
+    const utils = renderThemed(
       <MapLegend
         region="world"
         layerCounts={{ air: 5, thermal: 0, conflict: 3 }}
@@ -155,14 +174,23 @@ describe('MapLegend', () => {
 
   it('renders a chip only for layers with a positive count, marking hidden ones off', () => {
     const { container } = renderLegend();
-    const chips = container.querySelectorAll('.leg-chip');
+    const chips = container.querySelectorAll(`.${CLASSES.legendChip}`);
     expect(chips).toHaveLength(2);
     const air = container.querySelector('[data-layer="air"]')!;
     const conflict = container.querySelector('[data-layer="conflict"]')!;
     expect(container.querySelector('[data-layer="thermal"]')).toBeNull();
-    expect(air).not.toHaveClass('off');
-    expect(conflict).toHaveClass('off');
-    expect(conflict.querySelector('.leg-dot')).toHaveStyle({ background: '#f59a5e' });
+    expect(air).not.toHaveClass(CLASSES.legendChipOff);
+    expect(conflict).toHaveClass(CLASSES.legendChipOff);
+    expect(air.querySelector(`.${CLASSES.legendDot}`)).toHaveStyle({ background: '#7fe0c0' });
+    expect(air.querySelector(`.${CLASSES.legendCount}`)!.textContent).toBe('5');
+  });
+
+  it('shows the live military aircraft count on its own chip', () => {
+    const { container } = renderLegend({ layerCounts: { air: 5, militaryAir: 136 }, visible: { air: true, militaryAir: true } });
+    const chip = container.querySelector('[data-layer="militaryAir"]')!;
+    expect(chip.textContent).toContain('Military air');
+    expect(chip.querySelector(`.${CLASSES.legendCount}`)!.textContent).toBe('136');
+    expect(chip.querySelector(`.${CLASSES.legendDot}`)).toHaveStyle({ background: '#8fa7ff' });
   });
 
   it('toggles a layer and opens layer info', () => {
@@ -170,9 +198,8 @@ describe('MapLegend', () => {
     fireEvent.click(container.querySelector('[data-layer="air"]')!);
     expect(onToggleLayer).toHaveBeenCalledWith('air');
 
-    fireEvent.click(container.querySelector('[data-layer="air"] .leg-info')!);
+    fireEvent.click(container.querySelector(`[data-layer="air"] .${CLASSES.legendInfo}`)!);
     expect(onInfo).toHaveBeenCalledWith('air');
-    // The nested i button must not also toggle the chip.
     expect(onToggleLayer).toHaveBeenCalledTimes(1);
   });
 
@@ -186,19 +213,19 @@ describe('MapLegend', () => {
 
   it('shows the clear-region chip only off world and fires onClearRegion', () => {
     const world = renderLegend();
-    expect(world.container.querySelector('.leg-region')).toBeNull();
+    expect(world.container.querySelector(`.${CLASSES.legendRegion}`)).toBeNull();
     cleanup();
 
     const { onClearRegion } = renderLegend({ region: 'europe' });
-    const chip = screen.getByRole('button', { name: /Europe/ });
-    fireEvent.click(chip);
+    fireEvent.click(screen.getByRole('button', { name: /Europe/ }));
     expect(onClearRegion).toHaveBeenCalledTimes(1);
   });
 
   it('marks the active time window and fires onSetTimeWindow', () => {
     const { onSetTimeWindow } = renderLegend({ timeWindow: '24h' });
-    expect(screen.getByRole('button', { name: 'All time' })).not.toHaveClass('on');
-    expect(screen.getByRole('button', { name: '24h' })).toHaveClass('on');
+    expect(screen.getByRole('button', { name: 'All time' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: '24h' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '24h' })).toHaveClass(CLASSES.legendTimeOn);
     fireEvent.click(screen.getByRole('button', { name: '1h' }));
     expect(onSetTimeWindow).toHaveBeenCalledWith('1h');
   });
@@ -218,13 +245,14 @@ describe('MapLegend', () => {
 
 describe('LayerInfoOverlay', () => {
   it('renders nothing without a layer key or info', () => {
-    const { container } = render(<LayerInfoOverlay layerKey={null} info={null} />);
-    expect(container.querySelector('#layerOverlay')).toBeNull();
+    renderThemed(<LayerInfoOverlay layerKey={null} info={null} />);
+    expect(document.querySelector('#layerOverlay')).toBeNull();
   });
 
   it('renders the title and every info section from LAYER_INFO', () => {
     const onClose = vi.fn();
-    render(<LayerInfoOverlay layerKey="news" info={LAYER_INFO.news!} onClose={onClose} />);
+    renderThemed(<LayerInfoOverlay layerKey="news" info={LAYER_INFO.news!} onClose={onClose} />);
+    expect(document.querySelector('#layerOverlay')).not.toBeNull();
     expect(screen.getByText('News')).toBeInTheDocument();
     expect(screen.getByText('Geolocated world-news headlines.')).toBeInTheDocument();
     expect(screen.getByText('Purpose')).toBeInTheDocument();

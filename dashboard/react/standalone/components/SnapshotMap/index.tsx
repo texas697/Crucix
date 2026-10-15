@@ -20,11 +20,15 @@ export interface SnapshotMapProps {
   theme: Theme;
   sourcesOk: number;
   sourcesQueried: number;
+  markers: number;
   newsCount: number;
   onOpenGuide: () => void;
 }
 
-export function SnapshotMap({ map, theme, sourcesOk, sourcesQueried, newsCount, onOpenGuide }: SnapshotMapProps) {
+const PAN_HINT = 'Standalone snapshot · scroll to zoom · drag to pan';
+const DRAW_HINT = 'Draw mode — the markers inside your shape become the selection';
+
+export function SnapshotMap({ map, theme, sourcesOk, sourcesQueried, markers, newsCount, onOpenGuide }: SnapshotMapProps) {
   const { plot, region, layers, selection, popup } = map;
   if (!plot) return null;
   return (
@@ -33,11 +37,11 @@ export function SnapshotMap({ map, theme, sourcesOk, sourcesQueried, newsCount, 
         region={region.region}
         sourcesOk={sourcesOk}
         sourcesQueried={sourcesQueried}
-        markers={plot.points.features.length}
+        markers={markers}
         news={newsCount}
         onRegion={region.setRegion}
-        onSearch={region.onSearchRegion}
-        hint="Standalone snapshot · scroll to zoom · drag to pan"
+        onSearch={map.onSearch}
+        hint={selection.drawTool ? DRAW_HINT : PAN_HINT}
       />
       <Box className={CLASSES.mapContainer} sx={STYLES.mapContainer} id="mapContainer">
         <Suspense fallback={<SnapshotMapLoading />}>

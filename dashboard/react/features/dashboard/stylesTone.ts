@@ -1,0 +1,31 @@
+import type { SxProps, Theme } from '@mui/material/styles';
+import { LOCAL_COLORS } from './styleConsts';
+
+export const TONE_STYLES = {
+  ellipsis: { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  nowrap: { whiteSpace: 'nowrap' },
+  faded: { opacity: 0.6 },
+  softFaded: { opacity: 0.7 },
+  fadedSpaced: { opacity: 0.6, ml: '8px' },
+  fadedTight: { opacity: 0.4 },
+  halfFaded: { opacity: 0.5 },
+  danger: { color: (theme) => theme.palette.crucix.danger },
+  warn: { color: (theme) => theme.palette.crucix.warn },
+  warnFaded: { color: (theme) => theme.palette.crucix.warn, opacity: 0.7 },
+  accent: { color: 'primary.main' },
+  accent2: { color: (theme) => theme.palette.crucix.accent2 },
+  sky: { color: (theme) => theme.palette.crucix.sky },
+  mint: { color: (theme) => theme.palette.crucix.mint },
+  orange: { color: LOCAL_COLORS.orange },
+  violet: { color: LOCAL_COLORS.violet },
+  violetFaded: { color: LOCAL_COLORS.violet, opacity: 0.5 },
+  high: { color: LOCAL_COLORS.high },
+  text2: { color: (theme) => theme.palette.crucix.text2 },
+  dimText: { color: (theme) => theme.palette.crucix.dim },
+  inherit: { color: 'inherit' },
+  dimRow: { color: (theme) => theme.palette.crucix.text2, fontSize: 11.5 },
+  dimInline: { color: (theme) => theme.palette.crucix.text2, fontSize: 11 },
+  dimCause: { color: (theme) => theme.palette.crucix.dim2, fontSize: 11 },
+  scoreMuted: { opacity: 0.55, fontWeight: 400 },
+  liveBadge: { color: (theme) => theme.palette.crucix.sky, fontSize: 11, mr: '10px' },
+} satisfies Record<string, SxProps<Theme>>;

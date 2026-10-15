@@ -1,19 +1,25 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import Box from '@mui/material/Box';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { CLASSES } from '../../classes';
+import { withSx } from '../../sx';
+import { STYLES } from './styles';
 
 export interface EconRowProps {
   label: ReactNode;
   value: ReactNode;
   title?: string;
   valueId?: string;
-  valueStyle?: CSSProperties;
+  valueSx?: SxProps<Theme>;
 }
 
-export function EconRow({ label, value, title, valueId, valueStyle }: EconRowProps) {
+export function EconRow({ label, value, title, valueId, valueSx }: EconRowProps) {
   return (
-    <div className={CLASSES.econRow} title={title}>
-      <span className={CLASSES.econLabel}>{label}</span>
-      <span className={CLASSES.econValue} id={valueId} style={valueStyle}>{value}</span>
-    </div>
+    <Box className={CLASSES.econRow} sx={STYLES.econRow} title={title}>
+      <Box component="span" className={CLASSES.econLabel} sx={STYLES.econLabel}>{label}</Box>
+      <Box component="span" className={CLASSES.econValue} id={valueId} sx={withSx(STYLES.econValue, valueSx)}>
+        {value}
+      </Box>
+    </Box>
   );
 }

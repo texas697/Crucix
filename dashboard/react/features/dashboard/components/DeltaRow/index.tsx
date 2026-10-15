@@ -1,19 +1,23 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import Box from '@mui/material/Box';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { CLASSES } from '../../classes';
+import { withSx } from '../../sx';
+import { DOT_STYLES, STYLES, type DeltaKind } from './styles';
 
 export interface DeltaRowProps {
-  dotColor: string;
+  kind: DeltaKind;
   label: ReactNode;
-  labelStyle?: CSSProperties;
+  labelSx?: SxProps<Theme>;
   value?: ReactNode;
 }
 
-export function DeltaRow({ dotColor, label, labelStyle, value }: DeltaRowProps) {
+export function DeltaRow({ kind, label, labelSx, value }: DeltaRowProps) {
   return (
-    <div className={CLASSES.deltaRow}>
-      <span className={CLASSES.deltaDot} style={{ background: dotColor }} />
-      <span className={CLASSES.deltaLabel} style={labelStyle}>{label}</span>
-      {value !== undefined ? <span className={CLASSES.deltaValue}>{value}</span> : null}
-    </div>
+    <Box className={CLASSES.deltaRow} sx={STYLES.deltaRow}>
+      <Box component="span" className={CLASSES.deltaDot} sx={withSx(STYLES.deltaDot, DOT_STYLES[kind])} />
+      <Box component="span" className={CLASSES.deltaLabel} sx={withSx(STYLES.deltaLabel, labelSx)}>{label}</Box>
+      {value !== undefined ? <Box component="span" className={CLASSES.deltaValue} sx={STYLES.deltaValue}>{value}</Box> : null}
+    </Box>
   );
 }

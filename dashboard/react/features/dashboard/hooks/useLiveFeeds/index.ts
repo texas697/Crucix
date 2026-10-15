@@ -8,13 +8,13 @@ import { reshapeAlerts, reshapeMarkets, reshapeQuakes, reshapeTracks } from './r
 
 export interface UseLiveFeedsArgs {
   api: ApiClient;
-  enabled?: boolean;
+  isEnabled?: boolean;
   intervals?: LiveFeedIntervals;
   fetchImpl?: typeof fetch;
   now?: () => number;
 }
 
-export function useLiveFeeds({ api, enabled = true, intervals, fetchImpl = fetch, now = Date.now }: UseLiveFeedsArgs): LiveFeeds {
+export function useLiveFeeds({ api, isEnabled = true, intervals, fetchImpl = fetch, now = Date.now }: UseLiveFeedsArgs): LiveFeeds {
   const tracksMs = intervals?.tracks ?? DEFAULT_INTERVALS.tracks;
   const alertsMs = intervals?.alerts ?? DEFAULT_INTERVALS.alerts;
   const quakesMs = intervals?.quakes ?? DEFAULT_INTERVALS.quakes;
@@ -31,7 +31,7 @@ export function useLiveFeeds({ api, enabled = true, intervals, fetchImpl = fetch
   fetchRef.current = fetchImpl;
 
   useEffect(() => {
-    if (!enabled) return undefined;
+    if (!isEnabled) return undefined;
     let isAlive = true;
     const ids: ReturnType<typeof setInterval>[] = [];
 
@@ -53,12 +53,14 @@ export function useLiveFeeds({ api, enabled = true, intervals, fetchImpl = fetch
       setAlerts(reshapeAlerts(d, nowRef.current()));
     });
     const loadQuakes = guard(async () => {
-      const d: unknown = await (await fetchRef.current(QUAKES_URL)).json();
+      const fetchQuakes = fetchRef.current;
+      const d: unknown = await (await fetchQuakes(QUAKES_URL)).json();
       if (!isAlive) return;
       setQuakes(reshapeQuakes(d));
     });
     const loadMarkets = guard(async () => {
-      const d: unknown = await (await fetchRef.current(POLYMARKET_URL)).json();
+      const fetchMarkets = fetchRef.current;
+      const d: unknown = await (await fetchMarkets(POLYMARKET_URL)).json();
       if (!isAlive) return;
       setMarkets(reshapeMarkets(d));
     });
@@ -82,7 +84,7 @@ export function useLiveFeeds({ api, enabled = true, intervals, fetchImpl = fetch
       for (const id of ids) clearInterval(id);
       ids.length = 0;
     };
-  }, [api, enabled, tracksMs, alertsMs, quakesMs, marketsMs]);
+  }, [api, isEnabled, tracksMs, alertsMs, quakesMs, marketsMs]);
 
   return { tracks, alerts, quakes, markets };
 }

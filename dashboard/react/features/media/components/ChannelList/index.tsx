@@ -1,5 +1,7 @@
+import List from '@mui/material/List';
 import { CHANNELS } from '../../channels';
 import { CLASSES } from '../../classes';
+import { STYLES } from '../../styles';
 import { ChannelButton } from '../ChannelButton';
 
 export interface ChannelListProps {
@@ -9,10 +11,10 @@ export interface ChannelListProps {
 
 export function ChannelList({ channelIndex, onSelectChannel }: ChannelListProps) {
   return (
-    <div className={CLASSES.channels} id="channels" role="list">
+    <List disablePadding className={CLASSES.channels} sx={STYLES.channels} id="channels">
       {CHANNELS.map((c, i) => (
         <ChannelButton key={c.id} channel={c} index={i} isActive={i === channelIndex} onSelect={onSelectChannel} />
       ))}
-    </div>
+    </List>
   );
 }

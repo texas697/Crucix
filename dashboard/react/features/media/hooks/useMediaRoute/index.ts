@@ -23,7 +23,7 @@ export function useMediaRoute(): MediaRouteState {
   const syncUrl = useCallback((isPush: boolean, index: number, isGrid: boolean) => {
     if (isApplyingRouteRef.current) return;
     const settings = routeFromUrl(hrefRef.current)?.settings ?? '';
-    history.set(['media', channelAt(index).id], { grid: isGrid ? 1 : '', settings }, { push: isPush, state: { k: 'channel' } });
+    history.set(['media', channelAt(index).id], { grid: isGrid ? 1 : '', settings }, { isPush, state: { k: 'channel' } });
   }, [history]);
 
   const applyRoute = useCallback((href: string, isInitial: boolean) => {

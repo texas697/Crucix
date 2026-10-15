@@ -1,6 +1,9 @@
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import { CLASSES } from '../../classes';
 import { asText, type Rec } from '../../coerce';
-import { STYLES } from '../../styles';
+import { TONE_STYLES } from '../../styles';
+import { STYLES } from '../MacroCard/styles';
 
 export interface QuoteCardProps {
   quote: Rec;
@@ -17,16 +20,16 @@ export function QuoteCard({ quote: q }: QuoteCardProps) {
   const symbol = asText(q.symbol);
   const changePct = typeof q.changePct === 'number' ? q.changePct : null;
   const isUp = (changePct ?? 0) >= 0;
-  const tone = isUp ? STYLES.accent : STYLES.warn;
+  const tone = isUp ? TONE_STYLES.accent : TONE_STYLES.warn;
   const price = typeof q.price === 'number' ? q.price : null;
   const changeText = changePct == null ? '--' : `${changePct >= 0 ? '+' : ''}${changePct}%`;
   return (
-    <div className={CLASSES.macroCard}>
-      <div className={CLASSES.macroLabel}>{asText(q.name) || symbol}</div>
-      <span className={CLASSES.macroValue} style={tone}>{priceText(symbol, price)}</span>
-      <span className={CLASSES.macroSub} style={tone}>
+    <Paper className={CLASSES.macroCard} sx={STYLES.macroCard}>
+      <Box className={CLASSES.macroLabel} sx={STYLES.macroLabel}>{asText(q.name) || symbol}</Box>
+      <Box component="span" className={CLASSES.macroValue} sx={[STYLES.macroValue, tone]}>{priceText(symbol, price)}</Box>
+      <Box component="span" className={CLASSES.macroSub} sx={[STYLES.macroSub, tone]}>
         {changePct == null ? changeText : <>{isUp ? '▲' : '▼'} {changeText}</>}
-      </span>
-    </div>
+      </Box>
+    </Paper>
   );
 }

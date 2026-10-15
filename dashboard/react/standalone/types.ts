@@ -29,7 +29,6 @@ export interface PopupInfo {
 export interface SnapshotRegionState {
   region: RegionKey;
   setRegion: (region: RegionKey) => void;
-  onSearchRegion: (query: string) => void;
   onClearRegion: () => void;
 }
 
@@ -57,6 +56,7 @@ export interface SnapshotSelectionState {
 
 export interface SnapshotPopupState {
   popup: PopupInfo | null;
+  onShowPoint: (point: MapPoint) => void;
   onCanvasClick: (info: { lng: number; lat: number }) => void;
   onClosePopup: () => void;
   onCopyPopup: () => void;
@@ -70,11 +70,13 @@ export interface SnapshotMapState {
   layers: SnapshotLayersState;
   selection: SnapshotSelectionState;
   popup: SnapshotPopupState;
+  onSearch: (query: string) => void;
 }
 
 export interface SnapshotView {
   t?: ReturnType<typeof createTranslator>;
   tickerItems: TickerItem[];
+  tickerFeed: TickerItem[];
   meta: SweepMeta | null;
   health: HealthResponse | null;
   viewData: SweepData | null;

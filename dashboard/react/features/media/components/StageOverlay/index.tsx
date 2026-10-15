@@ -1,3 +1,6 @@
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
 import { CLASSES } from '../../classes';
 import { STYLES } from '../../styles';
@@ -15,33 +18,46 @@ export interface StageOverlayProps {
 
 export function StageOverlay({ phase, channelName, errorMsg, youTubeUrl, openUrl, onPlayYouTube, onRetry }: StageOverlayProps) {
   return (
-    <div className={clsx(CLASSES.overlay, CLASSES.overlayShow)} id="overlay" role={phase === 'error' ? 'alert' : 'status'}>
+    <Box className={CLASSES.overlay} sx={STYLES.overlay} id="overlay" role={phase === 'error' ? 'alert' : 'status'}>
       {phase === 'loading' && (
         <>
-          <div className={CLASSES.spinner} />
-          <div className={CLASSES.overlayTitle}>Loading stream</div>
-          <div className={CLASSES.overlaySub}>Connecting to {channelName}…</div>
+          <Box className={CLASSES.spinner} sx={STYLES.spinner} />
+          <Typography component="div" className={CLASSES.overlayTitle} sx={STYLES.overlayTitle}>Loading stream</Typography>
+          <Typography component="div" className={CLASSES.overlaySub} sx={STYLES.overlaySub}>Connecting to {channelName}…</Typography>
         </>
       )}
       {phase === 'error' && (
         <>
-          <div className={CLASSES.overlayTitle}>Feed unavailable</div>
-          <div className={CLASSES.overlaySub}>{errorMsg}</div>
-          <div className={CLASSES.overlayActions} style={STYLES.overlayActions}>
+          <Typography component="div" className={CLASSES.overlayTitle} sx={STYLES.overlayTitle}>Feed unavailable</Typography>
+          <Typography component="div" className={CLASSES.overlaySub} sx={STYLES.overlaySub}>{errorMsg}</Typography>
+          <Box className={CLASSES.overlayActions} sx={STYLES.overlayActions}>
             {youTubeUrl && (
-              <button type="button" className={clsx(CLASSES.button, CLASSES.buttonPrimary)} onClick={onPlayYouTube}>
+              <Button
+                variant="contained"
+                className={clsx(CLASSES.button, CLASSES.buttonPrimary)}
+                sx={[STYLES.button, STYLES.buttonPrimary]}
+                onClick={onPlayYouTube}
+              >
                 Play via YouTube
-              </button>
+              </Button>
             )}
             {openUrl && (
-              <a className={CLASSES.button} href={openUrl} target="_blank" rel="noopener noreferrer">
+              <Button
+                component="a"
+                variant="outlined"
+                className={CLASSES.button}
+                sx={STYLES.button}
+                href={openUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Open broadcaster page ↗
-              </a>
+              </Button>
             )}
-            <button type="button" className={CLASSES.button} onClick={onRetry}>Retry</button>
-          </div>
+            <Button variant="outlined" className={CLASSES.button} sx={STYLES.button} onClick={onRetry}>Retry</Button>
+          </Box>
         </>
       )}
-    </div>
+    </Box>
   );
 }
