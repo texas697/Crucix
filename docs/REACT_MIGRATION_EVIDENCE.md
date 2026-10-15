@@ -35,7 +35,17 @@ by which script the page loads (hashed `/assets` = React, `/js/` = legacy):
 
 Rollback is a single env-var change with a ~20s recovery; verified in both directions.
 
-## Still open
+## React login (P6), end to end
 
-- Sign in **through the React login** (`UI_LOGIN=react`) — the session used above was created via
-  the legacy login; the React login has only been verified to render.
+Signed in through the React login (`UI_LOGIN=react`) in a fresh browser profile:
+
+- `/login` served by React (hashed `/assets` module + Firebase compat SDK, no `/js/*`).
+- Google sign-in completed and redirected to `/`.
+- The resulting session authenticates: `/api/me` → 200 (`texas697@gmail.com`), `/api/data` → 200,
+  and the dashboard renders (map canvas, 17 panels, topbar, 0 page errors).
+
+## All gates closed
+
+Every flag (`UI_DASHBOARD`, `UI_DIGEST`, `UI_MEDIA`, `UI_LOGIN`, `UI_SITE`) is `react` on staging
+and verified there. Remaining production step: flip the same flags on production (see
+`docs/CLOUD_RUN.md`) and observe.
