@@ -359,6 +359,7 @@ crucix/
 | `npm run test:e2e` | `playwright test` | Browser tests under `test/e2e` |
 | `npm run fixtures:build` | `node test/scripts/build-fixtures.mjs` | Regenerate `test/fixtures/synthesized` from `test/fixtures/runs` |
 | `npm run serve:fixtures` | `node test/fixtures/server.mjs` | Serve fixtures on loopback for local work |
+| `npm run telegram:auth` | `node scripts/telegram-auth.mjs` | Sign in to your own Telegram account once (phone + code) and save `TELEGRAM_*` to `.env` for the read-only `/telegram` tab |
 
 `npm test` is unchanged: `node --test` over `test/*.test.mjs`, with integration files excluded.
 
@@ -391,6 +392,10 @@ When running `npm run dev`:
 | `GET /api/health` | Server status, uptime, source count, LLM status |
 | `GET /events` | SSE stream for live push updates |
 | `POST /api/map/region` | Area brief for a drawn shape: `{shape, markers, mode:"articles"\|"brief"}` → places, ranked headlines, and (brief mode) the LLM brief plus key owner and cost |
+| `GET /telegram` | Read-only view of the Telegram channels, groups and chats the signed-in Telegram account subscribes to (needs `npm run telegram:auth`) |
+| `GET /api/telegram/status` | Whether Telegram credentials and a session exist and the client is connected |
+| `GET /api/telegram/dialogs?limit=100` | Subscribed dialogs, newest first, cached 30 s |
+| `GET /api/telegram/messages/:id?limit=50` | Latest messages of one dialog, cached 15 s |
 
 ---
 
