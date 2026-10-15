@@ -75,6 +75,12 @@ export async function installVendorRoutes(page: Page): Promise<VendorRoutes> {
     const url = new URL(route.request().url());
     const host = url.hostname;
 
+    // blob:/data: are in-page buffers (hls.js/MSE), not network requests — pass them through and
+    // never flag them as unrouted third-party.
+    if (url.protocol === 'blob:' || url.protocol === 'data:') {
+      return route.continue();
+    }
+
     if (host === '127.0.0.1' || host === 'localhost' || host === '[::1]') {
       return route.continue();
     }
