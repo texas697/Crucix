@@ -27,7 +27,7 @@
 [data-surface="dashboard"] #bootLines .count{color:var(--accent);font-weight:600}
 [data-surface="dashboard"] #bootFinal{margin-top:24px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent);letter-spacing:0.15em;opacity:0}
 /* MAIN */
-[data-surface="dashboard"] #main,[data-surface="dashboard"] .dashboard-main{min-height:100vh;position:relative;padding:20px 24px 40px;display:flex;flex-direction:column;gap:16px}
+[data-surface="dashboard"] #main,[data-surface="dashboard"] .dashboard-main{min-height:100vh;position:relative;padding:0;display:flex;flex-direction:column;gap:16px}
 /* TOPBAR / HEADER */
 [data-surface="dashboard"] .topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;background:var(--glass);border:1px solid var(--border);border-radius:8px;backdrop-filter:blur(12px);transition:border-color .3s}
 [data-surface="dashboard"] .top-left{display:flex;align-items:center;gap:12px;flex:none;white-space:nowrap}

@@ -26,3 +26,18 @@
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Document reset. The legacy pages zeroed html/body in their own universal `*` reset and painted
+   the page background on `body`; scoping that reset to .crucix-surface leaves the browser's default
+   body margin and white canvas showing as a frame around every surface. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+}

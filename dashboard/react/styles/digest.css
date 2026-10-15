@@ -23,7 +23,7 @@
    copies. The reader modal is nested inside the digest surface, so both copies can apply to a modal
    element -- they are byte-identical, so there is no cascade conflict. */
 
-[data-surface="digest"]{padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(220,226,236,0.06),transparent 70%)}
+[data-surface="digest"]{padding:0;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(220,226,236,0.06),transparent 70%)}
 /* TOPBAR / NAV / BRAND */
 [data-surface="digest"] .topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
 [data-surface="digest"] .brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
