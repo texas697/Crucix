@@ -1,0 +1,28 @@
+/* Thin host for React surfaces. Every rule is scoped under .crucix-surface so the dashboard,
+   digest, media and login surfaces can share one document without colliding. This only sets the
+   page box, the theme background/color and the base font; each surface's own layout is added
+   later. Values come from tokens.css. */
+
+/* Box model. Mirrors the legacy universal reset (e.g. jarvis.html line 26) scoped to the surface. */
+.crucix-surface,
+.crucix-surface *,
+.crucix-surface *::before,
+.crucix-surface *::after {
+  box-sizing: border-box;
+}
+
+.crucix-surface *,
+.crucix-surface *::before,
+.crucix-surface *::after {
+  margin: 0;
+  padding: 0;
+}
+
+/* Page box, theme colors and base font, from the legacy body rules. */
+.crucix-surface {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
