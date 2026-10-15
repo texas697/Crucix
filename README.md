@@ -398,7 +398,7 @@ When running `npm run dev`:
 | `GET /api/telegram/dialogs?limit=100` | Only the dialogs listed in `TELEGRAM_CHATS` (server-side allowlist, ids or exact titles, optionally grouped as `Iran:id,id;Russia:id`), in that order with a `group` per dialog, cached 30 s |
 | `GET /api/telegram/avatar/:chatId` | Small profile photo of an allowlisted chat, cached like media |
 | `GET /api/telegram/media/:chatId/:msgId?kind=photo\|full\|thumb\|file\|webpage` | Photo, video poster, video/audio file (≤ 60 MB) or link-preview image of one post in an allowlisted chat, downloaded over MTProto once and cached under `RUNS_DIR/telegram-media` |
-| `GET /api/telegram/messages/:id?limit=50` | Latest messages of one allowlisted dialog, cached 15 s; 404 for anything else. Chats listed in `TELEGRAM_TRANSLATE` carry an English `translation` per post, produced by the operator LLM and cached per message |
+| `GET /api/telegram/messages/:id?limit=50` | Latest messages of one allowlisted dialog, cached 15 s; 404 for anything else. Chats listed in `TELEGRAM_TRANSLATE` carry an English `translation` per post, produced by the operator LLM once per message and persisted under `RUNS_DIR/telegram-translations` |
 
 ---
 

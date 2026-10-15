@@ -82,5 +82,6 @@ export const STYLES = {
   mediaAudio: { display: 'block', width: '100%' },
   mediaNote: { fontSize: 11.5, color: 'text.secondary', fontFamily: FONT_MONO },
   messageMedia: { fontSize: 11, fontWeight: 600, color: 'primary.main', mb: '4px', textTransform: 'uppercase' },
+  loadingLabel: { mt: '12px', fontSize: 12.5, color: 'text.secondary', fontFamily: FONT_MONO },
   emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', p: 4, color: 'text.secondary' },
 } as const;

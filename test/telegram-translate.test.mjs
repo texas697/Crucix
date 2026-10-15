@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createTranslator } from '../lib/telegram/translate.mjs';
 
 function fakeProvider(reply, calls) {
@@ -40,4 +43,19 @@ test('an unconfigured or missing provider is a no-op', async () => {
   const t = createTranslator({ provider: null });
   const msgs = [{ id: 1, text: 'x' }];
   assert.equal(await t.translate('c', msgs), msgs);
+});
+
+test('translations persist to the runs dir and survive a new translator instance', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tg-tr-'));
+  const calls = [];
+  const reply = (items) => JSON.stringify(items.map((m) => ({ id: m.id, from: 'fa', text: `EN(${m.text})` })));
+  const first = createTranslator({ provider: fakeProvider(reply, calls), runsDir: dir, log: { warn() {} } });
+  await first.translate('c9', [{ id: 7, text: 'الف' }]);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, 'telegram-translations', 'c9.json'), 'utf8')), { 7: { text: 'EN(الف)', from: 'fa' } });
+  const second = createTranslator({ provider: fakeProvider(reply, calls), runsDir: dir, log: { warn() {} } });
+  const out = await second.translate('c9', [{ id: 7, text: 'الف' }]);
+  assert.equal(calls.length, 1);
+  assert.equal(out[0].translation.text, 'EN(الف)');
+  assert.equal(second.cached('c9'), 1);
 });

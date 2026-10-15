@@ -47,6 +47,9 @@ export function MessageStream({ activeDialog, messages, isLoadingMessages }: Mes
         {isLoadingMessages ? (
           <Box sx={STYLES.emptyState}>
             <CircularProgress size={28} />
+            <Typography className={CLASSES.loadingLabel} sx={STYLES.loadingLabel}>
+              {activeDialog.translated ? 'Translating…' : 'Loading…'}
+            </Typography>
           </Box>
         ) : messages.length === 0 ? (
           <Box sx={STYLES.emptyState}>

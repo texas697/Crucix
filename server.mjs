@@ -112,7 +112,7 @@ if (llmProvider) console.log(`[Crucix] LLM enabled: ${llmProvider.name} (${llmPr
 // === Readers Digest ===
 const DIGEST_OPERATOR_WRITEUPS = (process.env.DIGEST_OPERATOR_WRITEUPS || 'false').toLowerCase() === 'true';
 const telegramMedia = createMediaStore({ runsDir: RUNS_DIR, getClient: telegramClient.getClient });
-const telegramTranslator = createTranslator({ provider: llmProvider?.isConfigured ? llmProvider : null });
+const telegramTranslator = createTranslator({ provider: llmProvider?.isConfigured ? llmProvider : null, runsDir: RUNS_DIR });
 const digest = createDigest({ db: () => authLib.db(), authEnabled: AUTH_ENABLED, operatorProvider: DIGEST_OPERATOR_WRITEUPS && llmProvider?.isConfigured ? llmProvider : null });
 if (llmProvider?.isConfigured && !DIGEST_OPERATOR_WRITEUPS) console.log('[Digest] operator write-ups off (set DIGEST_OPERATOR_WRITEUPS=true to spend the operator key on every ingested article)');
 if (AUTH_ENABLED) digest.init().catch(err => console.error('[Digest] init failed:', err.message));
@@ -810,7 +810,8 @@ app.get('/api/telegram/dialogs', async (req, res) => {
   try {
     const limit = Math.min(200, parseInt(req.query.limit, 10) || 100);
     const dialogs = await telegramClient.getTelegramDialogs({ limit });
-    res.json({ dialogs: groupDialogs(dialogs, readGroups()) });
+    const translated = parseAllowlist(process.env.TELEGRAM_TRANSLATE);
+    res.json({ dialogs: groupDialogs(dialogs, readGroups()).map((d) => ({ ...d, translated: isAllowed(d, translated) })) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

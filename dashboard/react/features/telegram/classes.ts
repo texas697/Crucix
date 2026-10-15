@@ -45,4 +45,5 @@ export const CLASSES = {
   mediaAudio: 'crucix-telegram-media-audio',
   mediaNote: 'crucix-telegram-media-note',
   emptyState: 'crucix-telegram-empty-state',
+  loadingLabel: 'crucix-telegram-loading-label',
 } as const;

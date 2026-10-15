@@ -15,6 +15,7 @@ export interface TelegramDialog {
   lastMessage: TelegramLastMessage | null;
   group?: string | null;
   hasPhoto?: boolean;
+  translated?: boolean;
 }
 
 export interface TelegramTranslation {
