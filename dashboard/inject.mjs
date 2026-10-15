@@ -127,7 +127,7 @@ function summarizeAirHotspots(hotspots = []) {
 
 // Military aircraft currently broadcasting (adsb.lol global feed), for real markers on the air layer
 function summarizeMilitary(list = []) {
-  return list.filter(a => typeof a.lat === 'number' && typeof a.lon === 'number').slice(0, 150).map(a => ({
+  return list.filter(a => typeof a.lat === 'number' && typeof a.lon === 'number').slice(0, 2000).map(a => ({
     hex: a.hex, cs: a.callsign || '', type: a.type || '', reg: a.reg || '', country: a.country || 'Unknown',
     lat: +a.lat.toFixed(3), lon: +a.lon.toFixed(3), alt: a.altFt ?? null, gs: a.gs ?? null, trk: a.track ?? null, sq: a.squawk || null,
   }));
