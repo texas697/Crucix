@@ -12,7 +12,6 @@ function createMockApi(overrides: Partial<ApiClient> = {}): ApiClient {
           configured: true,
           authenticated: true,
           connected: true,
-          user: { id: '12345', firstName: 'Rudy', username: 'rsanchez', phone: '+1***' },
         } as unknown as T;
       }
       if (path === '/api/telegram/dialogs') {
@@ -107,7 +106,7 @@ describe('TelegramApp', () => {
       </AppHarness>,
     );
 
-    expect(await screen.findByText('Connected (rsanchez)')).toBeInTheDocument();
+    expect(await screen.findByText('Connected')).toBeInTheDocument();
     const osintElements = await screen.findAllByText('OSINT Wire');
     expect(osintElements.length).toBeGreaterThan(0);
     expect(screen.getByText('Maritime Intel Group')).toBeInTheDocument();

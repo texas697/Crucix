@@ -11,7 +11,6 @@ export interface TelegramHeroProps {
 
 export function TelegramHero({ status }: TelegramHeroProps) {
   const isConnected = status?.connected === true;
-  const username = status?.user?.username || status?.user?.firstName || '';
 
   return (
     <Box className={CLASSES.hero} sx={STYLES.hero}>
@@ -20,7 +19,7 @@ export function TelegramHero({ status }: TelegramHeroProps) {
           Telegram Monitor
         </Typography>
         <Typography className={CLASSES.heroLead} sx={STYLES.heroLead}>
-          Read-only subscribed channels and intelligence chats synced directly with your account.
+          Read-only feed of selected Telegram channels and chats.
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -29,7 +28,7 @@ export function TelegramHero({ status }: TelegramHeroProps) {
             size="small"
             color="success"
             variant="outlined"
-            label={`Connected${username ? ` (${username})` : ''}`}
+            label="Connected"
           />
         ) : (
           <Chip

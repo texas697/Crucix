@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatDialog, formatMessage, maskPhone, resolveMediaType, toEntity } from '../lib/telegram/format.mjs';
+import { formatDialog, formatMessage, resolveMediaType, toEntity } from '../lib/telegram/format.mjs';
 
 test('formatDialog maps GramJS dialog fields to the API shape', () => {
   const out = formatDialog({ id: 123n, title: 'OSINT Wire', unreadCount: 3, isChannel: true, date: 1_700_000_000, message: { id: 9, message: 'hi', date: 1_700_000_000 } });
@@ -29,11 +29,6 @@ test('resolveMediaType classifies photos, documents by mime, and others', () => 
 test('formatMessage keeps ids, sender and reply linkage', () => {
   const out = formatMessage({ id: 5, message: 'text', date: 1_700_000_000, senderId: 42n, out: false, media: null, replyTo: { replyToMsgId: 4 } });
   assert.deepEqual(out, { id: 5, text: 'text', date: '2023-11-14T22:13:20.000Z', senderId: '42', out: false, mediaType: null, replyToMsgId: 4 });
-});
-
-test('maskPhone hides all but the last four digits', () => {
-  assert.equal(maskPhone('15551234567'), '+*******4567');
-  assert.equal(maskPhone(''), '');
 });
 
 test('toEntity turns numeric ids into BigInt and leaves usernames alone', () => {

@@ -35,7 +35,7 @@ export function DialogList({ dialogs, activeChatId, onSelectChat }: DialogListPr
       <Box className={CLASSES.dialogList} sx={STYLES.dialogList}>
         {filtered.length === 0 ? (
           <Box sx={STYLES.emptyState}>
-            <Typography variant="body2">No matching chats</Typography>
+            <Typography variant="body2">{query.trim() ? 'No matching chats' : 'No chats published yet'}</Typography>
           </Box>
         ) : (
           filtered.map((dialog) => (

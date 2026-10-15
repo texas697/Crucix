@@ -31,10 +31,4 @@ export interface TelegramStatus {
   connected: boolean;
   message?: string;
   error?: string;
-  user?: {
-    id: string;
-    firstName: string;
-    username: string;
-    phone: string;
-  };
 }

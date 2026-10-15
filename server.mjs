@@ -21,6 +21,7 @@ import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
 import { loadManifest, entryAssets, entryForSurface, hasSurface, renderSurfaceDocument, uiFlagsScript } from './dashboard/server/ui.mjs';
 import * as telegramClient from './lib/telegram/client.mjs';
+import { isAllowed, readAllowlist, selectDialogs } from './lib/telegram/selection.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -805,7 +806,7 @@ app.get('/api/telegram/dialogs', async (req, res) => {
   try {
     const limit = Math.min(200, parseInt(req.query.limit, 10) || 100);
     const dialogs = await telegramClient.getTelegramDialogs({ limit });
-    res.json({ dialogs });
+    res.json({ dialogs: selectDialogs(dialogs, readAllowlist()) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -813,8 +814,11 @@ app.get('/api/telegram/dialogs', async (req, res) => {
 
 app.get('/api/telegram/messages/:id', async (req, res) => {
   try {
+    const dialogs = await telegramClient.getTelegramDialogs({ limit: 200 });
+    const dialog = dialogs.find((d) => d.id === String(req.params.id));
+    if (!dialog || !isAllowed(dialog, readAllowlist())) return res.status(404).json({ error: 'chat not published' });
     const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);
-    const messages = await telegramClient.getTelegramMessages(req.params.id, { limit });
+    const messages = await telegramClient.getTelegramMessages(dialog.id, { limit });
     res.json({ messages });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -20,6 +20,7 @@
     "brief:save": "node apis/save-briefing.mjs",
     "diag": "node diag.mjs",
     "telegram:auth": "node scripts/telegram-auth.mjs",
+    "telegram:chats": "node scripts/telegram-chats.mjs",
     "clean": "node scripts/clean.mjs",
     "fresh-start": "npm run clean && npm start"
   },
