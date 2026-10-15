@@ -133,8 +133,10 @@ function summarizeMilitary(list = []) {
   }));
 }
 
-function loadOpenSkyFallback(currentTimestamp) {
-  const runsDir = join(ROOT, 'runs');
+function loadOpenSkyFallback(currentTimestamp, runsDirOverride) {
+  // Production reads the repository's runs/ directory. Tests pass an override so a fixture run can
+  // be resolved against a controlled directory instead of the operator's live sweep history.
+  const runsDir = runsDirOverride || join(ROOT, 'runs');
   if (!existsSync(runsDir)) return null;
 
   const currentMs = currentTimestamp ? new Date(currentTimestamp).getTime() : NaN;
@@ -403,11 +405,15 @@ export function generateIdeas(V2) {
 }
 
 // === Synthesize raw sweep data into dashboard format ===
-export async function synthesize(data) {
+// `deps` is a narrow test seam only: fetchNews injects the RSS fetcher (production uses the module
+// binding) and runsDir overrides the historical OpenSky fallback directory. Both default to the
+// existing production behavior so runtime call sites are unchanged.
+export async function synthesize(data, deps = {}) {
+  const fetchNews = deps.fetchNews || fetchAllNews;
   const liveAirHotspots = data.sources.OpenSky?.hotspots || [];
   const airFallback = sumAirHotspots(liveAirHotspots) > 0
     ? null
-    : loadOpenSkyFallback(data.sources.OpenSky?.timestamp || data.crucix?.timestamp);
+    : loadOpenSkyFallback(data.sources.OpenSky?.timestamp || data.crucix?.timestamp, deps.runsDir);
   const effectiveAirHotspots = airFallback?.hotspots || liveAirHotspots;
   const air = summarizeAirHotspots(effectiveAirHotspots);
   const milAir = summarizeMilitary(data.sources.OpenSky?.military || []);
@@ -730,7 +736,7 @@ export async function synthesize(data) {
   // Fetch RSS
   // Fetch RSS. A fresh Cloud Run instance synthesizes the stored run at startup with the CPU throttled, so the
   // 19 feeds can all time out; fall back to the news saved with the run rather than render an empty ticker.
-  let news = await fetchAllNews();
+  let news = await fetchNews();
   if (!news.length && Array.isArray(data.news) && data.news.length) {
     console.log(`[Crucix] RSS returned nothing — reusing ${data.news.length} stored news items from the last sweep`);
     news = data.news;

@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test $(ls test/*.test.mjs | grep -v integration)",
+    "test:e2e": "playwright test",
+    "serve:fixtures": "node test/fixtures/server.mjs",
+    "fixtures:build": "node test/scripts/build-fixtures.mjs",
     "dev": "node --trace-warnings server.mjs",
     "sweep": "node apis/briefing.mjs",
     "inject": "node dashboard/inject.mjs",
@@ -34,5 +37,8 @@
   },
   "overrides": {
     "undici": "^7.24.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }

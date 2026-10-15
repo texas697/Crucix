@@ -1,0 +1,991 @@
+{
+  "air": [
+    {
+      "coverage": "<script>alert(1)</script>",
+      "highAlt": 135,
+      "military": 2,
+      "militaryTop": [
+        {
+          "callsign": "</script>",
+          "hex": "<script>alert(1)</script>"
+        },
+        {
+          "callsign": "\"><img src=x onerror=alert(1)>",
+          "hex": "<!--"
+        }
+      ],
+      "noCallsign": 42,
+      "note": null,
+      "region": "\"><img src=x onerror=alert(1)>",
+      "sampledAt": "</script>",
+      "top": [
+        [
+          "Germany",
+          310
+        ],
+        [
+          "France",
+          260
+        ],
+        [
+          "United Kingdom",
+          180
+        ]
+      ],
+      "total": 1240,
+      "via": "{{APP_NAME}}"
+    }
+  ],
+  "airMeta": {
+    "fallback": false,
+    "liveTotal": 1240,
+    "militaryTotal": 2,
+    "openSky": {
+      "accessed": true,
+      "credits": 3800,
+      "rateLimitRemaining": 400
+    },
+    "signals": [
+      "<!--"
+    ],
+    "source": "<script>alert(1)</script>",
+    "timestamp": "</script>"
+  },
+  "bls": [
+    {
+      "date": "<script>alert(1)</script>",
+      "id": "\"><img src=x onerror=alert(1)>",
+      "label": "{{APP_NAME}}",
+      "momChange": 0.1,
+      "momChangePct": 2.33,
+      "recent": [
+        4.4
+      ],
+      "value": 4.4
+    },
+    {
+      "date": "\"><img src=x onerror=alert(1)>",
+      "id": "</script>",
+      "label": "<!--",
+      "momChange": 120,
+      "momChangePct": 0.08,
+      "recent": [
+        159000
+      ],
+      "value": 159000
+    },
+    {
+      "date": "</script>",
+      "id": "{{APP_NAME}}",
+      "label": "<script>alert(1)</script>",
+      "momChange": 0.3,
+      "momChangePct": 0.1,
+      "recent": [
+        315.2
+      ],
+      "value": 315.2
+    },
+    {
+      "date": "{{APP_NAME}}",
+      "id": "<!--",
+      "label": "\"><img src=x onerror=alert(1)>",
+      "momChange": 0.9,
+      "momChangePct": 0.36,
+      "recent": [
+        250.1
+      ],
+      "value": 250.1
+    }
+  ],
+  "chokepoints": [
+    {
+      "asOf": "{{APP_NAME}}",
+      "base": 20,
+      "daily": [
+        21,
+        20,
+        22
+      ],
+      "events": [
+        {
+          "from": "<!--",
+          "name": "<script>alert(1)</script>",
+          "ongoing": true,
+          "type": "</script>"
+        }
+      ],
+      "id": "<script>alert(1)</script>",
+      "label": "</script>",
+      "lat": 26.57,
+      "live": null,
+      "lon": 56.25,
+      "major": true,
+      "note": "<!--",
+      "pct": 5,
+      "perDay": 21,
+      "prior": 19,
+      "status": "\"><img src=x onerror=alert(1)>",
+      "tanker": 0.42,
+      "trend": 10.5
+    },
+    {
+      "asOf": "<!--",
+      "base": 56,
+      "daily": [
+        58,
+        57
+      ],
+      "events": [],
+      "id": "\"><img src=x onerror=alert(1)>",
+      "label": "{{APP_NAME}}",
+      "lat": 2.5,
+      "live": null,
+      "lon": 101.5,
+      "major": true,
+      "note": "<script>alert(1)</script>",
+      "pct": 3.6,
+      "perDay": 58,
+      "prior": 57,
+      "status": "</script>",
+      "tanker": 0.22,
+      "trend": 1.8
+    }
+  ],
+  "defense": [
+    {
+      "amount": 450000000,
+      "desc": "\"><img src=x onerror=alert(1)>",
+      "recipient": "<!--"
+    }
+  ],
+  "disasters": {
+    "asOf": "<!--",
+    "counts": {
+      "green": 2,
+      "orange": 1,
+      "red": 0
+    },
+    "error": null,
+    "events": [
+      {
+        "countries": [
+          "<!--"
+        ],
+        "country": "</script>",
+        "current": true,
+        "from": "\"><img src=x onerror=alert(1)>",
+        "id": "</script>",
+        "lat": 35.6,
+        "level": "{{APP_NAME}}",
+        "lon": 139.7,
+        "name": "<script>alert(1)</script>",
+        "score": 1.5,
+        "sev": "<script>alert(1)</script>",
+        "to": "{{APP_NAME}}",
+        "type": "<!--",
+        "typeLabel": "\"><img src=x onerror=alert(1)>",
+        "url": "https://example.com/%22%3E%3Cimg%20src=x%20onerror=alert(1)%3E"
+      }
+    ],
+    "signals": [
+      "</script>"
+    ]
+  },
+  "energy": {
+    "brent": 82.3,
+    "crudeStocks": 420000,
+    "natgas": 3.1,
+    "signals": [
+      "<script>alert(1)</script>"
+    ],
+    "wti": 78.5,
+    "wtiRecent": [
+      77.3,
+      78.5
+    ]
+  },
+  "epa": {
+    "stations": [
+      {
+        "analyte": "<script>alert(1)</script>",
+        "lat": 30.27,
+        "location": "\"><img src=x onerror=alert(1)>",
+        "lon": -97.74,
+        "result": 0.02,
+        "state": "{{APP_NAME}}",
+        "unit": "</script>"
+      }
+    ],
+    "totalReadings": 100
+  },
+  "fred": [
+    {
+      "date": "\"><img src=x onerror=alert(1)>",
+      "id": "</script>",
+      "label": "<!--",
+      "momChange": 1.5,
+      "momChangePct": 7.14,
+      "recent": [
+        21,
+        22.5
+      ],
+      "value": 22.5
+    },
+    {
+      "date": "</script>",
+      "id": "{{APP_NAME}}",
+      "label": "<script>alert(1)</script>",
+      "momChange": 0.1,
+      "momChangePct": 2.86,
+      "recent": [
+        3.5,
+        3.6
+      ],
+      "value": 3.6
+    },
+    {
+      "date": "{{APP_NAME}}",
+      "id": "<!--",
+      "label": "\"><img src=x onerror=alert(1)>",
+      "momChange": 0.05,
+      "momChangePct": 16.67,
+      "recent": [
+        0.3,
+        0.35
+      ],
+      "value": 0.35
+    }
+  ],
+  "gdelt": {
+    "byRegion": {
+      "Europe": 100,
+      "Middle East": 80
+    },
+    "byType": {
+      "Armed clash": 200,
+      "Protest": 90
+    },
+    "conflictEvents": 550,
+    "conflicts": 1,
+    "crisis": 0,
+    "docStatus": "</script>",
+    "economy": 1,
+    "geoPoints": [
+      {
+        "actors": "<!--",
+        "count": 12,
+        "country": "\"><img src=x onerror=alert(1)>",
+        "events": 12,
+        "goldstein": -8,
+        "lat": 50.4,
+        "latest": "</script>",
+        "lon": 30.5,
+        "name": "<!--",
+        "tone": -5,
+        "type": "{{APP_NAME}}",
+        "url": "https://example.com/\"><img src=x onerror=alert(1)>",
+        "worst": "<script>alert(1)</script>"
+      }
+    ],
+    "health": 1,
+    "signals": [
+      "<!--"
+    ],
+    "topCountries": [
+      {
+        "count": 50,
+        "name": "<script>alert(1)</script>"
+      },
+      {
+        "count": 40,
+        "name": "</script>"
+      }
+    ],
+    "topTitles": [
+      "<script>alert(1)</script>"
+    ],
+    "totalArticles": 4,
+    "totalEvents": 600,
+    "window": {
+      "files": 20,
+      "hours": 6,
+      "newest": "\"><img src=x onerror=alert(1)>",
+      "oldest": "{{APP_NAME}}"
+    }
+  },
+  "gscpi": {
+    "date": "<script>alert(1)</script>",
+    "interpretation": "</script>",
+    "value": 0.65
+  },
+  "health": [
+    {
+      "err": false,
+      "n": "OpenSky",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "FIRMS",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "Maritime",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "Safecast",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "KiwiSDR",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "WHO",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "GDACS",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "IODA",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "Cloudflare-Radar",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "SWPC",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "FRED",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "EIA",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "YFinance",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "Treasury",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "BLS",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "GSCPI",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "USAspending",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "NOAA",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "EPA",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "Space",
+      "stale": false
+    },
+    {
+      "err": false,
+      "n": "GDELT",
+      "stale": false
+    }
+  ],
+  "healthWatch": {
+    "activeDays": 90,
+    "asOf": "<script>alert(1)</script>",
+    "cdcOutbreaks": [
+      {
+        "cats": [
+          "\"><img src=x onerror=alert(1)>"
+        ],
+        "date": "<!--",
+        "title": "</script>"
+      }
+    ],
+    "error": null,
+    "notices": 2,
+    "outbreaks": [
+      {
+        "disease": "{{APP_NAME}}",
+        "don": "{{APP_NAME}}",
+        "first": "<!--",
+        "last": "\"><img src=x onerror=alert(1)>",
+        "pins": [],
+        "places": [
+          "<script>alert(1)</script>",
+          "</script>"
+        ],
+        "risk": "</script>",
+        "summary": "<script>alert(1)</script>",
+        "updates": 3,
+        "url": "https://example.com/%22%3E%3Cimg%20src=x%20onerror=alert(1)%3E"
+      }
+    ],
+    "recent": 1,
+    "recentDays": 30,
+    "signals": [
+      "{{APP_NAME}}"
+    ],
+    "travel": [
+      {
+        "countries": [
+          "{{APP_NAME}}"
+        ],
+        "date": "<script>alert(1)</script>",
+        "level": "<!--",
+        "n": 1,
+        "name": "\"><img src=x onerror=alert(1)>",
+        "pins": []
+      }
+    ],
+    "travelError": null
+  },
+  "ideas": [],
+  "ideasSource": "disabled",
+  "maritimeMeta": {
+    "access": "<script>alert(1)</script>",
+    "asOf": "<!--",
+    "disruptions": [
+      {
+        "affected": 1,
+        "from": "<!--",
+        "lat": 13,
+        "lon": 43,
+        "name": "<script>alert(1)</script>",
+        "type": "</script>"
+      }
+    ],
+    "error": null,
+    "lagDays": null,
+    "provider": "</script>",
+    "signals": [
+      "{{APP_NAME}}"
+    ],
+    "summary": "\"><img src=x onerror=alert(1)>"
+  },
+  "markets": {
+    "commodities": [
+      {
+        "change": 12,
+        "changePct": 0.45,
+        "history": [
+          {
+            "close": 2650
+          }
+        ],
+        "name": "</script>",
+        "price": 2650,
+        "symbol": "<script>alert(1)</script>"
+      }
+    ],
+    "crypto": [
+      {
+        "change": 500,
+        "changePct": 0.79,
+        "name": "\"><img src=x onerror=alert(1)>",
+        "price": 64000,
+        "symbol": "<!--"
+      }
+    ],
+    "indexes": [
+      {
+        "change": 20,
+        "changePct": 0.35,
+        "history": [
+          {
+            "close": 5800
+          }
+        ],
+        "name": "<!--",
+        "price": 5800,
+        "symbol": "</script>"
+      }
+    ],
+    "rates": [
+      {
+        "change": 0.02,
+        "changePct": 0.49,
+        "name": "{{APP_NAME}}",
+        "price": 4.1,
+        "symbol": "\"><img src=x onerror=alert(1)>"
+      }
+    ],
+    "timestamp": "{{APP_NAME}}",
+    "vix": {
+      "change": 1.5,
+      "changePct": 7.14,
+      "value": 22.5
+    }
+  },
+  "meta": {
+    "sourcesFailed": 0,
+    "sourcesOk": 21,
+    "sourcesQueried": 21,
+    "timestamp": "2026-10-14T11:00:00.000Z",
+    "totalDurationMs": 12345,
+    "version": "2.0.0"
+  },
+  "metals": {
+    "gold": 2650,
+    "goldChange": 12,
+    "goldChangePct": 0.45,
+    "goldRecent": [
+      2638,
+      2650
+    ],
+    "silver": 31.2,
+    "silverChange": 0.3,
+    "silverChangePct": 0.97,
+    "silverRecent": [
+      30.9,
+      31.2
+    ]
+  },
+  "milAir": [
+    {
+      "alt": 31000,
+      "country": "</script>",
+      "cs": "\"><img src=x onerror=alert(1)>",
+      "gs": 452,
+      "hex": "<!--",
+      "lat": 49.53,
+      "lon": 8.42,
+      "reg": "<script>alert(1)</script>",
+      "sq": "<!--",
+      "trk": 92,
+      "type": "{{APP_NAME}}"
+    }
+  ],
+  "news": [
+    {
+      "date": "2026-10-14T09:00:00.000Z",
+      "source": "{{APP_NAME}} Feed",
+      "title": "<script>alert(1)</script>",
+      "url": "javascript:alert(1)"
+    },
+    {
+      "date": "2026-10-14T08:00:00.000Z",
+      "source": "BBC",
+      "title": "</script><!--\"><img src=x onerror=alert(1)>",
+      "url": "https://example.com/news/\"><img src=x onerror=alert(1)>"
+    }
+  ],
+  "newsFeed": [
+    {
+      "headline": "<script>alert(1)</script>",
+      "region": "Global",
+      "source": "GDELT",
+      "timestamp": "2026-10-14T12:00:00.000Z",
+      "type": "gdelt",
+      "urgent": false
+    },
+    {
+      "headline": "<script>alert(1)</script>",
+      "source": "{{APP_NAME}} Feed",
+      "timestamp": "2026-10-14T09:00:00.000Z",
+      "type": "rss",
+      "urgent": false,
+      "url": "javascript:alert(1)"
+    },
+    {
+      "headline": "</script><!--\"><img src=x onerror=alert(1)>",
+      "source": "BBC",
+      "timestamp": "2026-10-14T08:00:00.000Z",
+      "type": "rss",
+      "urgent": false,
+      "url": "https://example.com/news/\"><img src=x onerror=alert(1)>"
+    }
+  ],
+  "noaa": {
+    "alerts": [
+      {
+        "event": "<script>alert(1)</script>",
+        "headline": "<!--",
+        "lat": 31,
+        "lon": -100,
+        "severity": "</script>"
+      }
+    ],
+    "totalAlerts": 12
+  },
+  "nuke": [
+    {
+      "alertUsvh": 1,
+      "anom": false,
+      "coverage": "</script>",
+      "cpm": 25,
+      "hot": 0,
+      "key": "<script>alert(1)</script>",
+      "last": null,
+      "lat": 35.68,
+      "lon": 139.69,
+      "maxCpm": 90,
+      "maxUsvh": 0.5,
+      "n": 5,
+      "nearest": null,
+      "note": null,
+      "radiusKm": 30,
+      "sensors": [
+        {
+          "at": "{{APP_NAME}}",
+          "cpm": 30,
+          "km": 2.1,
+          "lat": 35.69,
+          "lon": 139.7,
+          "name": "<!--",
+          "tube": "\"><img src=x onerror=alert(1)>",
+          "usvh": 0.18
+        }
+      ],
+      "site": "{{APP_NAME}}",
+      "usvh": 0.15
+    }
+  ],
+  "nukeMeta": {
+    "at": "<!--",
+    "error": null,
+    "feed": "</script>",
+    "liveSensors": 5,
+    "windowDays": 7
+  },
+  "nukeSignals": [
+    "<script>alert(1)</script>"
+  ],
+  "outages": {
+    "alerts": [
+      {
+        "cc": "</script>",
+        "drop": 60,
+        "ds": "<!--",
+        "name": "<script>alert(1)</script>",
+        "org": "{{APP_NAME}}",
+        "time": "\"><img src=x onerror=alert(1)>",
+        "type": "{{APP_NAME}}"
+      }
+    ],
+    "asOf": "</script>",
+    "countries": [
+      {
+        "asns": 2,
+        "cc": "\"><img src=x onerror=alert(1)>",
+        "drop": 85,
+        "events": 4,
+        "lat": 20,
+        "lon": 78,
+        "minor": true,
+        "name": "{{APP_NAME}}",
+        "national": false,
+        "regions": 1,
+        "score": 3.2,
+        "since": "\"><img src=x onerror=alert(1)>",
+        "sources": [
+          "<script>alert(1)</script>",
+          "<!--"
+        ]
+      }
+    ],
+    "counts": {
+      "alerts": 1,
+      "countries": 1
+    },
+    "error": null,
+    "radar": {
+      "annotations": [
+        {
+          "active": true,
+          "asns": [
+            "\"><img src=x onerror=alert(1)>"
+          ],
+          "cause": "<script>alert(1)</script>",
+          "cc": [
+            "</script>"
+          ],
+          "desc": "{{APP_NAME}}",
+          "end": null,
+          "id": "\"><img src=x onerror=alert(1)>",
+          "kind": "</script>",
+          "lat": null,
+          "lon": null,
+          "names": [
+            "<!--"
+          ],
+          "start": "<script>alert(1)</script>",
+          "type": "{{APP_NAME}}"
+        }
+      ],
+      "anomalies": [],
+      "asOf": "<script>alert(1)</script>",
+      "attacks": {
+        "l3Origins": [],
+        "l3Targets": [
+          {
+            "location": "\"><img src=x onerror=alert(1)>",
+            "value": 12
+          }
+        ],
+        "l7Targets": []
+      },
+      "enabled": true,
+      "signals": [
+        "{{APP_NAME}}"
+      ]
+    },
+    "signals": [
+      "<script>alert(1)</script>"
+    ],
+    "windowHours": 24
+  },
+  "sdr": {
+    "all": [
+      [
+        "{{APP_NAME}}",
+        50.4,
+        30.5,
+        "<script>alert(1)</script>",
+        "</script>"
+      ],
+      [
+        "<!--",
+        35.68,
+        139.69,
+        "\"><img src=x onerror=alert(1)>",
+        "{{APP_NAME}}"
+      ]
+    ],
+    "capacity": 2100,
+    "directory": "<script>alert(1)</script>",
+    "error": null,
+    "online": 430,
+    "private": 35,
+    "probed": 520,
+    "total": 640,
+    "unreachable": 90,
+    "users": 910,
+    "zones": [
+      {
+        "capacity": 48,
+        "count": 12,
+        "down": 2,
+        "online": 9,
+        "private": 1,
+        "receivers": [
+          {
+            "ant": "</script>",
+            "country": "\"><img src=x onerror=alert(1)>",
+            "gps": 1,
+            "hw": "<!--",
+            "lat": 50.4,
+            "live": "<script>alert(1)</script>",
+            "lon": 30.5,
+            "max": 4,
+            "name": "{{APP_NAME}}",
+            "snr": 12,
+            "url": "javascript:alert(1)",
+            "users": 3
+          }
+        ],
+        "region": "\"><img src=x onerror=alert(1)>",
+        "users": 30
+      }
+    ]
+  },
+  "shipsMeta": {
+    "connected": true,
+    "enabled": true,
+    "error": null,
+    "lastMessageAt": "{{APP_NAME}}",
+    "liveVessels": 42,
+    "since": "\"><img src=x onerror=alert(1)>",
+    "windowMinutes": 60
+  },
+  "space": {
+    "constellations": {
+      "oneweb": 630,
+      "starlink": 6000
+    },
+    "iss": {
+      "altitude": 415,
+      "apogee": 420,
+      "at": "<!--",
+      "epoch": "</script>",
+      "inclination": 51.64,
+      "lat": 10.2,
+      "lon": 45.1,
+      "name": "<script>alert(1)</script>",
+      "noradId": 25544,
+      "perigee": 410,
+      "period": 92.9,
+      "velocity": 27600
+    },
+    "issPosition": {
+      "lat": 10.2,
+      "lon": 45.1,
+      "name": "<script>alert(1)</script>"
+    },
+    "launchByCountry": {
+      "China": 3,
+      "United States": 5
+    },
+    "militaryByCountry": {
+      "China": 1,
+      "Russia": 2,
+      "United States": 5
+    },
+    "militarySats": 8,
+    "recentLaunches": [
+      {
+        "apogee": 550,
+        "country": "</script>",
+        "epoch": "<!--",
+        "name": "<script>alert(1)</script>",
+        "perigee": 540,
+        "type": "\"><img src=x onerror=alert(1)>"
+      }
+    ],
+    "signals": [
+      "{{APP_NAME}}"
+    ],
+    "stationPositions": [
+      {
+        "lat": 10.2,
+        "lon": 45.1,
+        "name": "<script>alert(1)</script>"
+      }
+    ],
+    "stations": [
+      {
+        "alt": 415,
+        "apogee": 420,
+        "at": "<!--",
+        "attached": false,
+        "epoch": "</script>",
+        "inclination": 51.64,
+        "lat": 10.2,
+        "live": null,
+        "lon": 45.1,
+        "name": "<script>alert(1)</script>",
+        "noradId": 25544,
+        "omm": {},
+        "perigee": 410,
+        "period": 92.9,
+        "primary": true,
+        "tle": null,
+        "vel": 27600
+      }
+    ],
+    "stationsSource": "{{APP_NAME}}",
+    "totalNewObjects": 42
+  },
+  "spaceWeather": {
+    "alerts": [
+      {
+        "message": "\"><img src=x onerror=alert(1)>"
+      }
+    ],
+    "asOf": "<script>alert(1)</script>",
+    "flare": {
+      "class": "</script>",
+      "time": "<!--"
+    },
+    "kp": 4.5,
+    "scales": {
+      "g": 1,
+      "r": 0,
+      "s": 0
+    },
+    "signals": [
+      "{{APP_NAME}}"
+    ]
+  },
+  "tSignals": [
+    "{{APP_NAME}}"
+  ],
+  "thermal": [
+    {
+      "det": 1850,
+      "fires": [
+        {
+          "at": "{{APP_NAME}}T<script>alert(1)</script>:00Z",
+          "conf": "</script>",
+          "frp": 220.5,
+          "lat": -3.21,
+          "lon": -60.14,
+          "night": false,
+          "sat": "\"><img src=x onerror=alert(1)>"
+        },
+        {
+          "at": "{{APP_NAME}}T<script>alert(1)</script>:00Z",
+          "conf": "</script>",
+          "frp": 180.2,
+          "lat": -12.44,
+          "lon": -55.71,
+          "night": false,
+          "sat": "\"><img src=x onerror=alert(1)>"
+        }
+      ],
+      "hc": 340,
+      "hi": 2,
+      "night": 420,
+      "region": "\"><img src=x onerror=alert(1)>"
+    }
+  ],
+  "thermalMeta": {
+    "access": "<script>alert(1)</script>",
+    "error": null,
+    "globalDetections": 9042,
+    "lastModified": "{{APP_NAME}}",
+    "satellites": [
+      "<!--",
+      "\"><img src=x onerror=alert(1)>"
+    ],
+    "window": "</script>"
+  },
+  "treasury": {
+    "signals": [
+      "<!--"
+    ],
+    "totalDebt": "<script>alert(1)</script>"
+  },
+  "who": [
+    {
+      "date": "<!--",
+      "summary": "\"><img src=x onerror=alert(1)>",
+      "title": "</script>"
+    }
+  ]
+}
