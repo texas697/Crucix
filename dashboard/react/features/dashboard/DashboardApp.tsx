@@ -3,7 +3,7 @@ import type { ApiClient } from '../../api/client';
 import type { HealthResponse, SweepData, UserProfile } from '../../api/types';
 import { createTransport, shouldUseSse } from '../../api/transport';
 import type { HistoryAdapter } from '../../state/history';
-import { parseUrl } from '../../state/url';
+import { parseUrl, shapeToUrl, type Shape } from '../../state/url';
 import {
   applyTheme as applyThemeClass, persistTheme, readStoredTheme, resolveTheme, toggleTheme as flipTheme,
   type Theme,
@@ -27,7 +27,11 @@ import { RegionBar } from '../map/RegionBar';
 import { MapLegend, LayerInfoOverlay } from '../map/MapLegend';
 import { LAYER_DEFS, LAYER_INFO, type TimeWindow } from '../map/layerDefs';
 import { REGION_LABEL, clampRegion, type RegionKey } from '../map/regions';
-import { plotData, type TrackRow, type QuakeRow } from '../map/plot';
+import { plotData, type TrackRow, type QuakeRow, type MapPoint } from '../map/plot';
+import { runSelection, nearestMapPoint, circleFeature, rectFeature, polyFeature, type DrawTool, type DrawFeature } from '../map/selection';
+import { MapPopup } from '../map/MapPopup';
+import { SelectionPanel } from '../map/SelectionPanel';
+import { AreaBrief, loadAreaBrief, markersPayload, EMPTY_AREA_BRIEF, type AreaBriefState } from '../map/AreaBrief';
 
 // MapLibre is large; load the map as its own lazy chunk so it never inflates the shell or the other
 // surfaces' bundles (the plan keeps map/media/login code out of unrelated page bundles).
@@ -77,6 +81,10 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
   const [layerVisible, setLayerVisible] = useState<Record<string, boolean>>(allLayersVisible);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('all');
   const [layerInfoKey, setLayerInfoKey] = useState<string | null>(null);
+  const [drawTool, setDrawTool] = useState<DrawTool | null>(null);
+  const [selected, setSelected] = useState<MapPoint[]>([]);
+  const [brief, setBrief] = useState<AreaBriefState>(EMPTY_AREA_BRIEF);
+  const [popup, setPopup] = useState<PopupInfo | null>(null);
   const settingsOpenedRef = useRef(false);
   const mapRef = useRef<MapViewHandle>(null);
   const seenMarkersRef = useRef<Set<string> | null>(null);
@@ -206,6 +214,61 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
   const setAllLayers = useCallback((on: boolean) => setLayerVisible(allLayersVisibleOn(on)), []);
   const clearRegion = useCallback(() => setRegion('world'), [setRegion]);
 
+  // Drawing a shape selects the markers inside it and loads the area brief (legacy runSelection +
+  // loadAreaBrief); the shape is written to ?shape= so it is shareable.
+  const clearSelection = useCallback(() => {
+    setSelected([]);
+    setBrief(EMPTY_AREA_BRIEF);
+    setDrawTool(null);
+  }, []);
+
+  const completeDraw = useCallback((shape: Shape) => {
+    setDrawTool(null);
+    const feature = shapeToFeature(shape);
+    setBrief(EMPTY_AREA_BRIEF);
+    if (plot) {
+      setSelected(runSelection(feature, plot.mapPoints));
+      void loadAreaBrief(api, {
+        shape,
+        markers: markersPayload(plot.mapPoints),
+        onUpdate: (patch) => setBrief((cur) => ({ ...cur, ...patch })),
+        onError: (err) => setSweepError(err.message),
+      });
+    }
+    history.set('/', { shape: shapeToUrl(shape) }, { push: true, state: { k: 'shape' } });
+  }, [plot, api, history]);
+
+  const focusSelection = useCallback((index: number) => {
+    const point = selected[index];
+    if (point) mapRef.current?.flyToPoint(point.lng, point.lat, 5);
+  }, [selected]);
+
+  const handleCanvasClick = useCallback((info: { lng: number; lat: number }) => {
+    if (!plot) return;
+    const point = nearestMapPoint(info.lat, info.lng, plot.mapPoints);
+    if (!point) return;
+    let left = 50;
+    let top = 50;
+    const map = mapRef.current?.getMap();
+    if (map) {
+      const projected = map.project([point.lng, point.lat]);
+      const container = map.getContainer();
+      const rect = container.getBoundingClientRect();
+      if (rect.width && rect.height) {
+        left = (projected.x / rect.width) * 100;
+        top = (projected.y / rect.height) * 100;
+      }
+    }
+    setPopup({ head: point.popHead, text: point.popText, meta: point.popMeta, url: point.url, isNew: point._new, lng: point.lng, lat: point.lat, left, top });
+  }, [plot]);
+
+  const selectedFC = useMemo(() => ({
+    type: 'FeatureCollection',
+    features: selected.map((p) => ({
+      type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+    })),
+  }) as GeoJSON.FeatureCollection, [selected]);
+
   const markers = plot?.points.features.length ?? 0;
 
   return (
@@ -246,8 +309,43 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
                     rings={plot.rings}
                     trails={plot.trails}
                     region={region}
+                    selected={selectedFC}
+                    drawTool={drawTool}
+                    onDrawComplete={completeDraw}
+                    onDrawCancel={() => setDrawTool(null)}
+                    onCanvasClick={handleCanvasClick}
                   />
                 </Suspense>
+                <div className="map-controls">
+                  <button type="button" className={`mc${drawTool === 'circle' ? ' on' : ''}`} aria-label="Draw circle" aria-pressed={drawTool === 'circle'} onClick={() => setDrawTool(drawTool === 'circle' ? null : 'circle')}>◯</button>
+                  <button type="button" className={`mc${drawTool === 'rect' ? ' on' : ''}`} aria-label="Draw rectangle" aria-pressed={drawTool === 'rect'} onClick={() => setDrawTool(drawTool === 'rect' ? null : 'rect')}>▭</button>
+                  <button type="button" className={`mc${drawTool === 'poly' ? ' on' : ''}`} aria-label="Draw polygon" aria-pressed={drawTool === 'poly'} onClick={() => setDrawTool(drawTool === 'poly' ? null : 'poly')}>⬠</button>
+                  <button type="button" className="mc" aria-label="Clear selection" onClick={clearSelection}>✕</button>
+                </div>
+                {popup && (
+                  <MapPopup
+                    head={popup.head}
+                    text={popup.text}
+                    meta={popup.meta}
+                    url={popup.url}
+                    isNew={popup.isNew}
+                    lng={popup.lng}
+                    lat={popup.lat}
+                    left={popup.left}
+                    top={popup.top}
+                    onClose={() => setPopup(null)}
+                    onCopy={() => {
+                      try { void navigator.clipboard?.writeText(`${popup.lng.toFixed(4)},${popup.lat.toFixed(4)}`); } catch { /* clipboard denied */ }
+                    }}
+                  />
+                )}
+                <SelectionPanel
+                  items={selected}
+                  onFocus={focusSelection}
+                  onClear={clearSelection}
+                  brief={<AreaBrief state={brief} />}
+                  hasBrief={brief.status !== 'idle'}
+                />
                 <MapLegend
                   region={region}
                   layerCounts={plot.layerCounts}
@@ -305,6 +403,27 @@ export function DashboardApp({ api, me, history, location, onMeChange, onLogout,
 
 function allLayersVisibleOn(on: boolean): Record<string, boolean> {
   return Object.fromEntries(LAYER_DEFS.map((l) => [l.key, on]));
+}
+
+interface PopupInfo {
+  head?: string;
+  text?: string;
+  meta?: string;
+  url?: string;
+  isNew?: boolean;
+  lng: number;
+  lat: number;
+  left: number;
+  top: number;
+}
+
+/** Convert a URL Shape back to the drawable feature the selection helpers consume. */
+function shapeToFeature(shape: Shape): DrawFeature {
+  if (shape.kind === 'circle') return circleFeature({ lng: shape.center.lng, lat: shape.center.lat }, shape.radiusKm);
+  if (shape.kind === 'rect') {
+    return rectFeature({ lng: shape.sw.lng, lat: shape.sw.lat }, { lng: shape.ne.lng, lat: shape.ne.lat });
+  }
+  return polyFeature(shape.ring.map((p) => [p.lng, p.lat] as [number, number]));
 }
 
 function locationHost(): string {

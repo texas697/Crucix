@@ -14,6 +14,18 @@ import type {
   GeoJSONSource, GeoJSONSourceSpecification, LayerSpecification, Map as MaplibreMap,
 } from 'maplibre-gl';
 import { basemapForTheme, MAP_LAYERS, MAP_SOURCES } from './mapLayers';
+import {
+  circleFeature,
+  emptyDrawState,
+  featureToShape,
+  haversineKm,
+  polyFeature,
+  rectFeature,
+  type DrawState,
+  type DrawTool,
+  type LngLat,
+} from './selection';
+import type { Shape } from '../../state/url';
 import type { Theme } from '../../shared/theme';
 
 export interface MapViewHandle {
@@ -21,12 +33,35 @@ export interface MapViewHandle {
   flyToRegion(region: string): void;
   flyToPoint(lng: number, lat: number, zoom?: number): void;
   getMap(): MaplibreMap | null;
+  /** Project a lng/lat to container pixels (legacy `map.project`), or null before load. */
+  project(lng: number, lat: number): { x: number; y: number } | null;
+  /** Enable/disable drag-pan (the popup and draw tools use this). */
+  enableDragPan(enabled: boolean): void;
 }
 
 export interface MapLabel {
   text: string;
   anchor: [number, number];
   region?: string;
+}
+
+/** The subset of a rendered feature's properties the popup reads (legacy `feats[0].properties`). */
+export interface PopupFeature {
+  head?: string;
+  text?: string;
+  meta?: string;
+  url?: string;
+  isNew?: boolean;
+  [key: string]: unknown;
+}
+
+/** The payload `onCanvasClick` hands the caller for a non-draw click. */
+export interface CanvasClickInfo {
+  lng: number;
+  lat: number;
+  features: PopupFeature[];
+  /** The nearest plotted marker `[lng, lat]` within ~25 km, legacy `nearestMapPoint`. */
+  point?: [number, number];
 }
 
 export interface MapViewProps {
@@ -37,8 +72,16 @@ export interface MapViewProps {
   trails: GeoJSON.FeatureCollection;
   spaceTrack?: GeoJSON.FeatureCollection;
   region: string;
+  /** Highlighted selection markers (legacy `src-selected`). */
+  selected?: GeoJSON.FeatureCollection;
+  /** The armed draw tool; null disarms and clears the preview (legacy `drawTool`). */
+  drawTool?: DrawTool | null;
+  /** Called with the finished circle/rect/poly shape (legacy `runSelection`'s shape). */
+  onDrawComplete?: (shape: Shape) => void;
+  /** Called when a draw is disarmed without producing a shape. */
+  onDrawCancel?: () => void;
   onReady?: () => void;
-  onCanvasClick?: (lng: number, lat: number, features: unknown[]) => void;
+  onCanvasClick?: (info: CanvasClickInfo) => void;
 }
 
 // Legacy `flatRegionBounds` (jarvis.html ~2230-2233). `world` is handled by flyTo in flyToRegion.
@@ -55,6 +98,28 @@ function emptyFC(): GeoJSON.FeatureCollection {
   return { type: 'FeatureCollection', features: [] };
 }
 
+/** Nearest plotted Point feature `[lng, lat]` within ~25 km (legacy `nearestMapPoint`). */
+function nearestPointFeature(
+  fc: GeoJSON.FeatureCollection | undefined,
+  lng: number,
+  lat: number,
+): [number, number] | undefined {
+  if (!fc) return undefined;
+  let best: [number, number] | undefined;
+  let bd = 0.25;
+  for (const f of fc.features) {
+    const g = f.geometry;
+    if (!g || g.type !== 'Point') continue;
+    const c = g.coordinates as [number, number];
+    const d = Math.hypot(c[1] - lat, c[0] - lng);
+    if (d < bd) {
+      bd = d;
+      best = [c[0], c[1]];
+    }
+  }
+  return best;
+}
+
 export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(props, ref) {
   const { theme, labels } = props;
 
@@ -63,6 +128,8 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const readyRef = useRef(false);
   const styleReloadRef = useRef(false);
+  // The live draw state (legacy `drawing`/`drawStart`/`drawPoly`/`drawGeo`), mutated by the mouse handlers.
+  const drawRef = useRef<DrawState>(emptyDrawState());
   // The currently applied basemap URL; guards the initial theme effect against a pointless setStyle.
   const styleRef = useRef<string>(basemapForTheme(theme));
 
@@ -91,6 +158,12 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
     const src = map.getSource(id) as GeoJSONSource | undefined;
     if (src && typeof src.setData === 'function') src.setData(data ?? emptyFC());
   }, []);
+
+  /** Push the in-progress draw feature into `src-draw` (legacy `drawPreview`). */
+  const drawPreview = useCallback(() => {
+    const feature = drawRef.current.feature;
+    setSource('src-draw', feature ? { type: 'FeatureCollection', features: [feature] } : emptyFC());
+  }, [setSource]);
 
   const applyData = useCallback(() => {
     const current = propsRef.current;
@@ -150,22 +223,101 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       if (readyRef.current && !styleReloadRef.current) ensureSourcesAndLayers();
     };
 
+    // A finished draw: publish the preview and hand the shape to the caller (legacy `runSelection`).
+    const completeDraw = (feature: ReturnType<typeof circleFeature>) => {
+      drawRef.current.feature = feature;
+      drawRef.current.poly = [];
+      drawRef.current.start = null;
+      drawPreview();
+      propsRef.current.onDrawComplete?.(featureToShape(feature));
+    };
+
     const onClick = (e: maplibregl.MapMouseEvent) => {
+      const tool = propsRef.current.drawTool ?? null;
+      // Polygon builds up on each click; the double-click closes it (legacy click handler).
+      if (tool === 'poly') {
+        drawRef.current.poly.push([e.lngLat.lng, e.lngLat.lat]);
+        drawRef.current.feature = polyFeature(drawRef.current.poly);
+        drawPreview();
+        return;
+      }
+      if (tool) return;
       const cb = propsRef.current.onCanvasClick;
       if (!cb) return;
-      let features: unknown[] = [];
       const layers = ['lyr-points', 'lyr-conflict', 'lyr-rings', 'lyr-corridors'].filter((id) => map.getLayer(id));
-      if (layers.length) {
-        const hits = map.queryRenderedFeatures(e.point, { layers });
-        features = hits ? Array.from(hits) : [];
+      const hits = layers.length ? map.queryRenderedFeatures(e.point, { layers }) : [];
+      const features: PopupFeature[] = (hits ? Array.from(hits) : []).map((hit) => {
+        const p = (hit.properties || {}) as Record<string, unknown>;
+        return {
+          head: typeof p.head === 'string' ? p.head : undefined,
+          text: typeof p.text === 'string' ? p.text : undefined,
+          meta: typeof p.meta === 'string' ? p.meta : undefined,
+          url: typeof p.url === 'string' ? p.url : undefined,
+          isNew: p.isNew === '1',
+        };
+      });
+      cb({
+        lng: e.lngLat.lng,
+        lat: e.lngLat.lat,
+        features,
+        point: nearestPointFeature(propsRef.current.points, e.lngLat.lng, e.lngLat.lat),
+      });
+    };
+
+    const onDblClick = () => {
+      if ((propsRef.current.drawTool ?? null) !== 'poly') return;
+      if (drawRef.current.poly.length >= 3) completeDraw(polyFeature(drawRef.current.poly));
+    };
+
+    const onMouseDown = (e: maplibregl.MapMouseEvent) => {
+      const tool = propsRef.current.drawTool ?? null;
+      if (!tool || tool === 'poly') return;
+      drawRef.current.drawing = true;
+      drawRef.current.start = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      if (map.dragPan) map.dragPan.disable();
+    };
+
+    const onMouseMove = (e: maplibregl.MapMouseEvent) => {
+      const state = drawRef.current;
+      if (!state.drawing || !state.start) return;
+      const end: LngLat = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      const tool = propsRef.current.drawTool ?? null;
+      if (tool === 'circle') state.feature = circleFeature(state.start, haversineKm(state.start, end));
+      else if (tool === 'rect') state.feature = rectFeature(state.start, end);
+      drawPreview();
+    };
+
+    const onMouseUp = (e: maplibregl.MapMouseEvent) => {
+      const state = drawRef.current;
+      if (!state.drawing) return;
+      state.drawing = false;
+      const start = state.start;
+      const end: LngLat = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      const tool = propsRef.current.drawTool ?? null;
+      let feature: ReturnType<typeof circleFeature> | null = null;
+      if (start && tool === 'circle') {
+        const r = haversineKm(start, end);
+        if (r > 3) feature = circleFeature(start, r);
+      } else if (start && tool === 'rect') {
+        if (Math.abs(end.lat - start.lat) > 0.2 || Math.abs(end.lng - start.lng) > 0.2) feature = rectFeature(start, end);
       }
-      cb(e.lngLat.lng, e.lngLat.lat, features);
+      state.start = null;
+      if (feature) completeDraw(feature);
+      else {
+        state.feature = null;
+        drawPreview();
+        propsRef.current.onDrawCancel?.();
+      }
     };
 
     map.on('load', onLoad);
     map.on('styledata', onStyledata);
     map.on('zoomend', zoomClass);
     map.on('click', onClick);
+    map.on('dblclick', onDblClick);
+    map.on('mousedown', onMouseDown);
+    map.on('mousemove', onMouseMove);
+    map.on('mouseup', onMouseUp);
     // The legacy swallows map errors; keep that until there is somewhere to surface them.
     map.on('error', () => {});
 
@@ -176,7 +328,7 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       mapRef.current = null;
       map.remove();
     };
-  }, [ensureSourcesAndLayers, applyData, renderLabels]);
+  }, [ensureSourcesAndLayers, applyData, renderLabels, drawPreview]);
 
   // Theme change: swap the basemap, then re-add sources/layers and re-apply data once the style idles
   // (the legacy applyThemeToMap -> setStyle -> once('idle', setupMapLayers + plotMarkers)).
@@ -193,6 +345,28 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       styleReloadRef.current = false;
     });
   }, [theme, ensureSourcesAndLayers, applyData]);
+
+  // Arm/disarm a draw tool (legacy `setDrawTool`): reset the in-progress draw, swap the cursor and
+  // lock panning while a tool is active. Disarming clears the `src-draw` preview.
+  useEffect(() => {
+    const tool = props.drawTool ?? null;
+    drawRef.current = { ...drawRef.current, drawing: false, start: null, poly: [] };
+    const map = mapRef.current;
+    if (!map) return;
+    const canvas = map.getCanvas?.();
+    if (canvas?.style) canvas.style.cursor = tool ? 'crosshair' : 'grab';
+    if (map.dragPan) {
+      if (tool) map.dragPan.disable();
+      else map.dragPan.enable();
+    }
+    if (!tool) {
+      drawRef.current.feature = null;
+      drawPreview();
+    }
+  }, [props.drawTool, drawPreview]);
+
+  // Push the selection highlight into `src-selected` (legacy `reselect`).
+  useEffect(() => { setSource('src-selected', props.selected); }, [props.selected, setSource]);
 
   // Push data to the sources whenever the props change (no-op until the map has loaded).
   useEffect(() => { setSource('src-points', props.points); }, [props.points, setSource]);
@@ -235,6 +409,18 @@ export const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
       mapRef.current?.flyTo({ center: [lng, lat], zoom });
     },
     getMap() { return mapRef.current; },
+    project(lng: number, lat: number) {
+      const map = mapRef.current;
+      if (!map || typeof map.project !== 'function') return null;
+      const p = map.project({ lng, lat });
+      return { x: p.x, y: p.y };
+    },
+    enableDragPan(enabled: boolean) {
+      const map = mapRef.current;
+      if (!map || !map.dragPan) return;
+      if (enabled) map.dragPan.enable();
+      else map.dragPan.disable();
+    },
   }), []);
 
   return <div id="map" ref={containerRef} />;
