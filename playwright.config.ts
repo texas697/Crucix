@@ -26,18 +26,16 @@ export default defineConfig({
     baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    // Deterministic rendering: freeze the clock the tests can control and disable animations.
-    launchOptions: { args: ['--force-color-profile=srgb'] },
   },
   projects: [
-    { name: 'chromium-desktop', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'chromium-mobile', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Pixel 7'] } },
+    { name: 'chromium-desktop', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, launchOptions: { args: ['--force-color-profile=srgb'] } } },
+    { name: 'chromium-mobile', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Pixel 7'], launchOptions: { args: ['--force-color-profile=srgb'] } } },
     // Smoke coverage on the other engines (core navigation/reader/media) per section 6.
     { name: 'firefox-smoke', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } }, grep: /@smoke/ },
     { name: 'webkit-smoke', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } }, grep: /@smoke/ },
     // Migrated React surfaces, served from the built bundle on the second fixture server.
-    { name: 'react-chromium', testMatch: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, baseURL: reactBaseURL } },
-    { name: 'react-mobile', testMatch: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Pixel 7'], baseURL: reactBaseURL } },
+    { name: 'react-chromium', testMatch: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, baseURL: reactBaseURL, launchOptions: { args: ['--force-color-profile=srgb'] } } },
+    { name: 'react-mobile', testMatch: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Pixel 7'], baseURL: reactBaseURL, launchOptions: { args: ['--force-color-profile=srgb'] } } },
   ],
   webServer: [
     {
