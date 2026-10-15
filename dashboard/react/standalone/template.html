@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crucix — Standalone Snapshot</title>
+
+  <!--
+    Standalone snapshot template (P8).
+
+    `npm run build:standalone` (vite.standalone.config.ts) emits an IIFE bundle with the dashboard
+    CSS inlined into a single stylesheet next to this template:
+        dashboard/dist/standalone/crucix-standalone.js
+        dashboard/dist/standalone/crucix-standalone.css
+    Both are referenced by relative path (base: './') so the page runs from `file:` with no server.
+
+    `dashboard/inject.mjs` copies/rewrites this template into `dashboard/dist/standalone/index.html`
+    with the synthesized snapshot substituted into the marker below.
+  -->
+  <link rel="stylesheet" href="./crucix-standalone.css" />
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // SNAPSHOT INJECTION MARKER — do not rename.
+    //
+    // `cliInject` (dashboard/inject.mjs) replaces the *entire* assignment statement below with
+    // `window.__CRUCIX_SNAPSHOT__ = <escaped JSON>;`. The matcher keys on the global name followed by
+    // an assignment ending in `;` and the trailing `/* CRUCIX_SNAPSHOT */` sentinel comment, so keep
+    // the `{}` placeholder and the sentinel exactly as written. A template without this marker (and
+    // without a legacy `let D = ...;` line) is rejected by cliInject and never overwritten.
+    window.__CRUCIX_SNAPSHOT__ = {}; /* CRUCIX_SNAPSHOT */
+  </script>
+  <script src="./crucix-standalone.js"></script>
+</body>
+</html>

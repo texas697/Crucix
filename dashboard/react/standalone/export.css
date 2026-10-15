@@ -1,0 +1,27 @@
+/*
+ * Page-level styling for the standalone snapshot export.
+ *
+ * The ported dashboard stylesheets (tokens/shell/dashboard/reader, pulled in through `PageShell`)
+ * assume they are mounted inside the app document and leave `html`/`body` to the legacy page. A
+ * snapshot opened directly from `file:` has no such document, so this stylesheet supplies just the
+ * document-level sizing and background. It is imported by `entry.tsx` after the dashboard styles so
+ * it wins those few properties without touching any component styling.
+ */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  /* `tokens.css` defines these; the literals are the dark defaults for the first paint race. */
+  background: var(--bg, #0b0f14);
+  color: var(--text, #e9ecf2);
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
