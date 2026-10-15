@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import type { Surface } from './surfaces';
 import '../styles/tokens.css';
 import '../styles/shell.css';
+import '../styles/dashboard.css';
+import '../styles/reader.css';
 
 export interface PageShellProps {
   surface: Surface;

@@ -125,6 +125,16 @@ if (AUTH) {
 
 // ─── Page routes ───────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
+  if (reactSurface('dashboard')) {
+    const html = renderSurfaceDocument({
+      surface: 'dashboard',
+      title: 'Dashboard',
+      assets: entryAssets(reactManifest, 'dashboard'),
+      head: `<script>window.__CRUCIX_LOCALE__=${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`,
+      navigation: true,
+    });
+    return res.type('html').send(html);
+  }
   if (!ready()) return res.sendFile('loading.html', { root: publicDir });
   let html = readFileSync(join(publicDir, 'jarvis.html'), 'utf8');
   const localeScript = `<script>window.__CRUCIX_LOCALE__ = ${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`;

@@ -122,6 +122,25 @@ export interface SharedLlmInfo {
   model: string | null;
 }
 
+/** A BYOK provider the UI can offer (mirrors lib/auth/users.mjs SUPPORTED_PROVIDERS). */
+export interface LlmProvider {
+  id: string;
+  label: string;
+  needsKey?: boolean;
+  defaultModel?: string;
+  needsBaseUrl?: boolean;
+}
+
+/** The public (non-secret) fields of a user's saved BYOK settings. */
+export interface PublicLlm {
+  provider: string;
+  model: string | null;
+  baseUrl: string | null;
+  hasKey: boolean;
+  keyHint: string | null;
+  autoIdeas: boolean;
+}
+
 /** Response shape of the gated `/api/me` endpoint. */
 export interface UserProfile {
   uid: string;
@@ -130,9 +149,9 @@ export interface UserProfile {
   /** The user's saved ideas payload, if any. */
   ideas?: unknown;
   /** The user's per-account BYOK LLM settings (public fields only), if configured. */
-  llm?: unknown;
+  llm?: PublicLlm | null;
   /** Providers the UI can offer for BYOK. */
-  providers: string[];
+  providers: LlmProvider[];
   /** Whether BYOK is available on this deployment. */
   byokEnabled: boolean;
   /** The shared/operator LLM, or null when none is configured. */

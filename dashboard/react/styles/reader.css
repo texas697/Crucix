@@ -1,0 +1,66 @@
+/* Article reader styles, ported verbatim from dashboard/public/css/reader.css (the reader-modal
+   section; the "digest cards" section of that file belongs to the digest surface and is out of
+   scope here). Every legacy selector is scoped under [data-surface="reader"] and .rd-overlay is
+   renamed to .reader-overlay, the class React's Reader renders (features/reader/Reader.tsx). Values
+   are unchanged; var() fallbacks are kept as the legacy wrote them.
+
+   Visibility: the legacy markup toggles .rd-overlay + .rd-overlay.show (opacity 0 -> 1) because the
+   overlay stayed mounted. The React Reader returns null when closed and mounts .reader-overlay only
+   while open, so the shown state carries the base rule and the .show variant is dropped. */
+
+[data-surface="reader"].reader-overlay{position:fixed;inset:0;z-index:1300;background:rgba(5,7,11,0.78);backdrop-filter:blur(10px);opacity:1;pointer-events:auto;transition:opacity .2s}
+[data-surface="reader"] .rd-modal{position:absolute;left:16px;right:16px;top:3vh;margin:0 auto;max-width:980px;max-height:94vh;display:flex;flex-direction:column;background:var(--panel,#0a0d14);border:1px solid var(--border-bright,rgba(255,255,255,0.14));border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,0.6);overflow:hidden}
+[data-surface="reader"] .rd-head{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;gap:14px;padding:14px 18px 12px;border-bottom:1px solid var(--border,rgba(255,255,255,0.05));background:rgba(10,13,20,0.98)}
+[data-surface="reader"] .rd-head .rd-meta{flex:1;min-width:0}
+[data-surface="reader"] .rd-kicker{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--sans,inherit);font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:var(--dim)}
+[data-surface="reader"] .rd-src{color:var(--sky,#8fb8d8);border:1px solid rgba(143,184,216,0.3);border-radius:5px;padding:2px 7px}
+[data-surface="reader"] .rd-src.thinktank{color:#c3a6ff;border-color:rgba(180,140,255,0.4)}
+[data-surface="reader"] .rd-title{font-size:19px;font-weight:600;line-height:1.25;margin-top:6px;font-family:var(--sans)}
+[data-surface="reader"] .rd-actions{display:flex;align-items:center;gap:8px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+[data-surface="reader"] .rd-btn{cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;padding:8px 12px;border:1px solid var(--border,rgba(255,255,255,0.05));border-radius:5px;background:var(--raised,#111520);color:var(--text);white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+[data-surface="reader"] .rd-btn:hover{border-color:var(--border-bright);color:var(--text);background:var(--raised-2,#171c2a)}
+[data-surface="reader"] .rd-btn.primary{color:var(--on-accent,#0a0f1f);background:var(--accent);border-color:var(--accent)}
+[data-surface="reader"] .rd-btn.primary:hover{background:#eef1f6;color:#0a0f1f}
+[data-surface="reader"] .rd-btn:disabled{opacity:.5;cursor:wait}
+[data-surface="reader"] .rd-close{width:34px;height:34px;font-size:20px;padding:0;justify-content:center}
+[data-surface="reader"] .rd-thumbs{display:flex;gap:4px}
+[data-surface="reader"] .rd-thumb{cursor:pointer;width:40px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border,rgba(255,255,255,0.05));border-radius:5px;background:transparent;font-size:16px;color:var(--dim);transition:all .15s}
+[data-surface="reader"] .rd-thumb:hover{border-color:var(--border-bright);color:var(--text)}
+[data-surface="reader"] .rd-thumb.on.up{color:var(--on-accent,#0a0f1f);background:var(--accent);border-color:var(--accent)}
+[data-surface="reader"] .rd-thumb.on.down{color:var(--on-accent,#0a0f1f);background:var(--danger);border-color:var(--danger)}
+[data-surface="reader"] .rd-thumbs-label{font-family:var(--sans);font-size:11px;letter-spacing:.02em;color:var(--dim);text-transform:uppercase;align-self:center;margin-right:2px}
+[data-surface="reader"] .rd-body{overflow:auto;padding:18px 22px 28px;font-size:14px;line-height:1.7;color:var(--text);font-family:var(--sans)}
+[data-surface="reader"] .rd-body h2{font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border,rgba(255,255,255,0.05))}
+[data-surface="reader"] .rd-body h3{font-size:14px;font-weight:600;margin:16px 0 6px;color:var(--text)}
+[data-surface="reader"] .rd-body p{margin:0 0 10px}
+[data-surface="reader"] .rd-body ul,[data-surface="reader"] .rd-body ol{margin:0 0 10px 20px}
+[data-surface="reader"] .rd-body li{margin:3px 0}
+[data-surface="reader"] .rd-body blockquote{border-left:2px solid var(--accent);margin:8px 0;padding:4px 12px;color:var(--sub)}
+[data-surface="reader"] .rd-body a{color:var(--accent)}
+[data-surface="reader"] .rd-body code{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,0.06);border-radius:4px;padding:1px 4px}
+[data-surface="reader"] .rd-body hr{border:0;border-top:1px solid var(--border);margin:16px 0}
+[data-surface="reader"] .rd-topics{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+[data-surface="reader"] .rd-topic{font-family:var(--sans);font-size:12px;letter-spacing:0;text-transform:none;padding:4px 10px;border:1px solid rgba(255,255,255,0.08);border-radius:5px;color:var(--dim);cursor:pointer}
+[data-surface="reader"] .rd-topic:hover{border-color:var(--border-bright);color:var(--text)}
+[data-surface="reader"] .rd-section{margin-top:22px;padding-top:16px;border-top:1px solid var(--border);}
+[data-surface="reader"] .rd-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+[data-surface="reader"] .rd-section-head h2{margin:0;border:0;padding:0}
+[data-surface="reader"] .rd-note{font-family:var(--sans);font-size:12px;color:var(--dim);line-height:1.55}
+[data-surface="reader"] .rd-note.err{color:var(--danger)}
+[data-surface="reader"] .rd-progress{height:4px;border-radius:4px;background:rgba(255,255,255,0.08);margin:8px 0;overflow:hidden}
+[data-surface="reader"] .rd-progress span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-2,oklch(0.74 0.010 248)),var(--accent));transition:width .4s}
+[data-surface="reader"] .rd-cta{padding:18px 14px;border:1px dashed rgba(220,226,236,0.4);border-radius:8px;background:rgba(220,226,236,0.05);text-align:center}
+[data-surface="reader"] .rd-cta .big{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--accent);margin-bottom:6px}
+[data-surface="reader"] .rd-cta p{font-size:12.5px;color:var(--dim);margin:0 auto 10px;max-width:460px}
+[data-surface="reader"] .rd-sources{font-size:12px;color:var(--dim)}
+[data-surface="reader"] .rd-sources li{margin:2px 0}
+[data-surface="reader"] .rd-loading{font-family:var(--sans);font-size:12px;color:var(--dim);padding:30px;text-align:center;letter-spacing:.02em}
+@media (max-width:640px){[data-surface="reader"] .rd-modal{inset:0;max-height:100vh;border-radius:0}[data-surface="reader"] .rd-head{flex-direction:column;gap:10px}[data-surface="reader"] .rd-actions{width:100%;justify-content:flex-start}[data-surface="reader"] .rd-title{font-size:16px}[data-surface="reader"] .rd-body{padding:16px}}
+/* light theme */
+html.light [data-surface="reader"].reader-overlay{background:rgba(15,23,42,0.4)}
+html.light [data-surface="reader"] .rd-head{background:#ffffff}
+html.light [data-surface="reader"] .rd-modal{box-shadow:0 30px 80px rgba(16,24,40,0.28)}
+html.light [data-surface="reader"] .rd-body code{background:rgba(16,24,40,0.06)}
+html.light [data-surface="reader"] .rd-topic{border-color:rgba(16,24,40,0.12)}
+html.light [data-surface="reader"] .rd-progress{background:rgba(16,24,40,0.08)}
+html.light [data-surface="reader"] .rd-src{color:#2b5f86}
