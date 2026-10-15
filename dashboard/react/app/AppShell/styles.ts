@@ -1,6 +1,7 @@
 import { keyframes, type SxProps, type Theme } from '@mui/material/styles';
 import { FONT_MONO, FONT_SANS } from '../../theme';
 
+const CONTROL_H = 34;
 const TABLET = '@media (max-width:1100px)';
 const NARROW = '@media (max-width:720px)';
 const PHONE = '@media (max-width:640px)';
@@ -48,13 +49,17 @@ export const STYLES = {
     [TABLET]: { width: '100%', gap: '6px' },
     [PHONE]: { justifyContent: 'space-between', flexWrap: 'nowrap' },
   },
+  control: { height: CONTROL_H, minHeight: CONTROL_H, boxSizing: 'border-box', borderRadius: '9px' },
+  iconControl: { width: CONTROL_H, height: CONTROL_H, borderRadius: '9px' },
   status: {
     display: 'inline-flex',
     alignItems: 'stretch',
+    height: CONTROL_H,
+    boxSizing: 'border-box',
     bgcolor: 'background.paper',
     border: '1px solid',
     borderColor: 'divider',
-    borderRadius: '10px',
+    borderRadius: '9px',
     p: '2px',
     boxShadow: '0 1px 2px rgba(0,0,0,0.18)',
     overflow: 'hidden',
@@ -66,7 +71,7 @@ export const STYLES = {
     alignItems: 'center',
     gap: '7px',
     px: '12px',
-    py: '6px',
+    py: 0,
     fontFamily: FONT_SANS,
     fontSize: 12.5,
     color: (theme) => theme.palette.crucix.dim,
@@ -74,7 +79,7 @@ export const STYLES = {
     borderRadius: '8px',
     '& + &': { boxShadow: (theme) => `inset 1px 0 0 ${theme.palette.crucix.border}` },
     [NARROW]: { '& + &': { boxShadow: 'none' } },
-    [PHONE]: { px: '9px', py: '5px', fontSize: 12 },
+    [PHONE]: { px: '9px', fontSize: 12 },
   },
   live: { color: 'text.primary' },
   dot: (theme) => ({
@@ -93,11 +98,12 @@ export const STYLES = {
   keyCta: {
     fontWeight: 600,
     px: '14px',
+    height: CONTROL_H,
     boxShadow: '0 0 0 0 rgba(220,226,236,0.6)',
     animation: `${byokPulse} 2.2s 4`,
     [LOW_PERF]: { animation: 'none' },
   },
-  userChip: { gap: '8px', px: '6px', py: '4px', borderRadius: '9px', fontSize: 13 },
+  userChip: { gap: '8px', px: '6px', py: 0, height: CONTROL_H, borderRadius: '9px', fontSize: 13 },
   userChipExit: { color: 'primary.main', fontWeight: 500 },
   outlet: { minHeight: 0 },
 } satisfies Record<string, SxProps<Theme>>;

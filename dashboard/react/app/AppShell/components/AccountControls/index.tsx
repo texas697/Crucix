@@ -19,7 +19,7 @@ export function AccountControls({ me, onOpenSettings, onLogout }: AccountControl
     <>
       {me.llm
         ? (
-          <Button variant="outlined" className={CLASSES.keyPill} onClick={onOpenSettings}>
+          <Button variant="outlined" className={CLASSES.keyPill} sx={STYLES.control} onClick={onOpenSettings}>
             AI key
             <Box component="span" className={CLASSES.keyPillValue} sx={STYLES.keyPillValue}>
               {me.llm.provider.toUpperCase()}
@@ -31,7 +31,7 @@ export function AccountControls({ me, onOpenSettings, onLogout }: AccountControl
             ⚡ Add your AI key
           </Button>
         )}
-      <IconButton className={CLASSES.settingsButton} onClick={onOpenSettings} aria-label="Settings">
+      <IconButton className={CLASSES.settingsButton} sx={STYLES.iconControl} onClick={onOpenSettings} aria-label="Settings">
         <SettingsIcon className={CLASSES.settingsIcon} fontSize="small" />
       </IconButton>
       <Button variant="text" className={CLASSES.userChip} sx={STYLES.userChip} onClick={onLogout}>

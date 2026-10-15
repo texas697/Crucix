@@ -24,6 +24,7 @@ function createMockApi(overrides: Partial<ApiClient> = {}): ApiClient {
               type: 'channel',
               group: 'Iran',
               hasPhoto: true,
+              translated: true,
               date: '2026-10-15T12:00:00Z',
               lastMessage: { id: 1, text: 'Breaking news update', date: '2026-10-15T12:00:00Z' },
             },
@@ -248,5 +249,27 @@ describe('TelegramApp', () => {
     const avatars = [...document.querySelectorAll('.crucix-telegram-dialog-item img')].map((img) => img.getAttribute('src'));
     expect(avatars).toEqual(['/api/telegram/avatar/1001']);
     expect(document.querySelectorAll('.crucix-telegram-dialog-item .MuiAvatar-root')).toHaveLength(1);
+  });
+
+  it('says Translating while a translated chat loads', async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const base = createMockApi();
+    const api = createMockApi({
+      get: async <T = unknown>(path: string): Promise<T> => {
+        if (path.startsWith('/api/telegram/messages/')) await gate;
+        return base.get<T>(path);
+      },
+    });
+    render(
+      <AppHarness api={api} href="/telegram">
+        <TelegramApp />
+      </AppHarness>,
+    );
+
+    expect(await screen.findByText('Translating…')).toBeInTheDocument();
+    release();
+    expect(await screen.findByText('Reconnaissance sweep completed over Black Sea.')).toBeInTheDocument();
+    expect(screen.queryByText('Translating…')).toBeNull();
   });
 });
