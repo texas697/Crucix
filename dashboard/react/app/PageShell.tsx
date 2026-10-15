@@ -5,6 +5,7 @@ import '../styles/shell.css';
 import '../styles/dashboard.css';
 import '../styles/reader.css';
 import '../styles/media.css';
+import '../styles/digest.css';
 
 export interface PageShellProps {
   surface: Surface;
