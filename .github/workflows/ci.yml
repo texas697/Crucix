@@ -57,6 +57,8 @@ jobs:
         run: npm run fixtures:build
       - name: Synthesized fixtures are current
         run: git diff --exit-code -- test/fixtures/synthesized
+      - name: Build frontend (for the react-* browser projects)
+        run: npm run build
       - name: Browser tests
         run: npm run test:e2e
       - uses: actions/upload-artifact@v4

@@ -8,6 +8,10 @@ import { defineConfig, devices } from '@playwright/test';
 // over test/*.test.mjs) never collects these files.
 const PORT = Number(process.env.FIXTURE_PORT) || 4173;
 const baseURL = `http://127.0.0.1:${PORT}`;
+// A second fixture server serves the built React surfaces (requires `npm run build`); the react-*
+// specs target it. When the build is absent the server falls back to legacy and those specs skip.
+const REACT_PORT = PORT + 1;
+const reactBaseURL = `http://127.0.0.1:${REACT_PORT}`;
 
 export default defineConfig({
   testDir: './test/e2e',
@@ -26,23 +30,42 @@ export default defineConfig({
     launchOptions: { args: ['--force-color-profile=srgb'] },
   },
   projects: [
-    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'chromium-mobile', use: { ...devices['Pixel 7'] } },
+    { name: 'chromium-desktop', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    { name: 'chromium-mobile', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Pixel 7'] } },
     // Smoke coverage on the other engines (core navigation/reader/media) per section 6.
-    { name: 'firefox-smoke', use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } }, grep: /@smoke/ },
-    { name: 'webkit-smoke', use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } }, grep: /@smoke/ },
+    { name: 'firefox-smoke', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } }, grep: /@smoke/ },
+    { name: 'webkit-smoke', testIgnore: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } }, grep: /@smoke/ },
+    // Migrated React surfaces, served from the built bundle on the second fixture server.
+    { name: 'react-chromium', testMatch: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, baseURL: reactBaseURL } },
+    { name: 'react-mobile', testMatch: /[\\/]react-[^\\/]*\.spec\.ts$/, use: { ...devices['Pixel 7'], baseURL: reactBaseURL } },
   ],
-  webServer: {
-    command: 'node test/fixtures/server.mjs',
-    url: `${baseURL}/api/healthz`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
-    env: {
-      PORT: String(PORT),
-      FIXTURE: process.env.FIXTURE || 'minimal',
-      FIXTURE_STATE: process.env.FIXTURE_STATE || 'ready',
-      AUTH_MODE: process.env.AUTH_MODE || 'off',
-      HOSTING_PROXY: process.env.HOSTING_PROXY || 'false',
+  webServer: [
+    {
+      command: 'node test/fixtures/server.mjs',
+      url: `${baseURL}/api/healthz`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 30_000,
+      env: {
+        PORT: String(PORT),
+        FIXTURE: process.env.FIXTURE || 'minimal',
+        FIXTURE_STATE: process.env.FIXTURE_STATE || 'ready',
+        AUTH_MODE: process.env.AUTH_MODE || 'off',
+        HOSTING_PROXY: process.env.HOSTING_PROXY || 'false',
+      },
     },
-  },
+    {
+      command: 'node test/fixtures/server.mjs',
+      url: `${reactBaseURL}/api/healthz`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 30_000,
+      env: {
+        PORT: String(REACT_PORT),
+        FIXTURE: process.env.FIXTURE || 'minimal',
+        FIXTURE_STATE: process.env.FIXTURE_STATE || 'ready',
+        AUTH_MODE: process.env.AUTH_MODE || 'off',
+        HOSTING_PROXY: process.env.HOSTING_PROXY || 'false',
+        FIXTURE_UI: 'react',
+      },
+    },
+  ],
 });

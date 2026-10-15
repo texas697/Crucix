@@ -16,6 +16,7 @@ import express from 'express';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadManifest, entryAssets, hasSurface, renderSurfaceDocument } from '../../dashboard/server/ui.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -26,6 +27,17 @@ const STATE = process.env.FIXTURE_STATE || 'ready';
 const AUTH = (process.env.AUTH_MODE || 'off') === 'on';
 const HOSTING_PROXY = (process.env.HOSTING_PROXY || 'false') === 'true';
 const LOCALE = process.env.LOCALE || 'en';
+// FIXTURE_UI=react serves the built React surfaces (dashboard/dist) instead of the legacy pages, so
+// the browser harness can exercise migrated surfaces the same way it exercises legacy ones.
+const FIXTURE_UI = process.env.FIXTURE_UI || 'legacy';
+const reactManifest = FIXTURE_UI === 'react' ? loadManifest(ROOT) : null;
+const reactSurface = (surface) => FIXTURE_UI === 'react' && hasSurface(reactManifest, surface);
+
+// Synthetic digest items so the React digest (and the legacy one) render cards deterministically.
+const DIGEST_ITEMS = [
+  { id: 'dg-1', title: 'Example think-tank piece', source: 'Carnegie', kind: 'thinktank', publishedAt: '2026-10-14T12:00:00.000Z', description: 'A short description.', topics: ['AI', 'Policy'], hasWriteup: false, vote: 0 },
+  { id: 'dg-2', title: 'Example news piece', source: 'BBC', kind: 'news', publishedAt: '2026-10-14T12:00:00.000Z', description: 'Another description.', topics: ['Europe'], hasWriteup: true, vote: 0 },
+];
 
 // Fixed instant so anything time-derived in the legacy UI is reproducible.
 const NOW = Date.parse('2026-10-14T12:00:00.000Z');
@@ -75,6 +87,11 @@ app.get('/api/status', (req, res) => {
 
 // ─── Public site pages ─────────────────────────────────────────────────────
 app.use('/brand', express.static(join(publicDir, 'brand')));
+// Built React assets (dashboard/dist/assets) so the FIXTURE_UI=react surfaces actually boot.
+const DIST_ASSETS = join(ROOT, 'dashboard', 'dist', 'assets');
+if (existsSync(DIST_ASSETS)) {
+  app.use('/assets', express.static(DIST_ASSETS, { index: false, immutable: true, maxAge: '1y' }));
+}
 for (const [route, file] of [['/mfb-think-tank', null], ['/support', null], ['/privacy', null], ['/terms', null]]) {
   app.get(route, (req, res) => res.status(200).type('html').send(`<!doctype html><title>${file || route}</title>`));
 }
@@ -115,6 +132,16 @@ app.get('/', (req, res) => {
   res.type('html').send(html);
 });
 app.get(['/digest', '/digest/:id'], (req, res) => {
+  if (reactSurface('digest')) {
+    const html = renderSurfaceDocument({
+      surface: 'digest',
+      title: 'Readers Digest',
+      assets: entryAssets(reactManifest, 'digest'),
+      head: '<script>window.__HAS_TAVILY__=false;</script>',
+      navigation: true,
+    });
+    return res.type('html').send(html);
+  }
   const html = readFileSync(join(publicDir, 'digest.html'), 'utf8')
     .replace('</head>', `<script>window.__HAS_TAVILY__=false;</script>\n</head>`);
   res.type('html').send(html);
@@ -171,9 +198,29 @@ app.get('/api/tracks', (req, res) => res.json({ updated: SWEEP_ISO, count: 0, tr
 app.post('/api/map/region', (req, res) => res.json({ places: [], fallback: false, articles: [], total: 0, liveErr: null, ms: 1 }));
 
 // ─── Digest API ────────────────────────────────────────────────────────────
-app.get('/api/digest/list', (req, res) => res.json({ items: [], total: 0, mode: 'all', votes: {}, topics: [], taste: null, sources: [], storeSize: 0 }));
-app.get('/api/digest/article/:id', (req, res) => res.status(404).json({ error: 'not found' }));
-app.post('/api/digest/open', (req, res) => res.status(400).json({ error: 'no article' }));
+app.get('/api/digest/list', (req, res) => {
+  const filter = String(req.query.filter || 'all');
+  const topic = String(req.query.topic || '');
+  const q = String(req.query.q || '').toLowerCase();
+  let items = DIGEST_ITEMS;
+  if (filter === 'thinktank') items = items.filter((i) => i.kind === 'thinktank');
+  if (filter === 'news') items = items.filter((i) => i.kind === 'news');
+  if (topic) items = items.filter((i) => (i.topics || []).includes(topic));
+  if (q) items = items.filter((i) => i.title.toLowerCase().includes(q));
+  res.json({
+    items, total: items.length, mode: 'all', votes: {}, minVotesForAffinity: 5,
+    topics: [{ topic: 'AI', count: 1 }, { topic: 'Policy', count: 1 }, { topic: 'Europe', count: 1 }],
+    taste: null, sources: [], storeSize: items.length,
+  });
+});
+app.get('/api/digest/article/:id', (req, res) => {
+  const item = DIGEST_ITEMS.find((i) => i.id === req.params.id);
+  if (!item) return res.status(404).json({ error: 'not found' });
+  res.json({ ...item, summaryMd: '## Write-up\n\nA **summary** with a [link](https://example.com).', extracted: true, research: { state: 'none' } });
+});
+app.post('/api/digest/open', (req, res) => {
+  res.json({ ...DIGEST_ITEMS[0], summaryMd: 'Opened by URL.', extracted: true, research: { state: 'none' } });
+});
 app.post('/api/digest/:id/feedback', (req, res) => res.json({ rating: req.body?.rating ?? null }));
 app.post('/api/digest/:id/summarize', (req, res) => res.status(404).json({ error: 'not found' }));
 app.post('/api/digest/:id/research', (req, res) => res.json({ state: 'none' }));
