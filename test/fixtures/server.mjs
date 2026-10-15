@@ -16,7 +16,7 @@ import express from 'express';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadManifest, entryAssets, hasSurface, renderSurfaceDocument } from '../../dashboard/server/ui.mjs';
+import { loadManifest, entryAssets, entryForSurface, hasSurface, renderSurfaceDocument, uiFlagsScript } from '../../dashboard/server/ui.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -32,6 +32,12 @@ const LOCALE = process.env.LOCALE || 'en';
 const FIXTURE_UI = process.env.FIXTURE_UI || 'legacy';
 const reactManifest = FIXTURE_UI === 'react' ? loadManifest(ROOT) : null;
 const reactSurface = (surface) => FIXTURE_UI === 'react' && hasSurface(reactManifest, surface);
+const UI_FLAGS = { dashboard: 'react', digest: 'react', media: 'react', login: 'react' };
+function spaDocument(surface, title) {
+  const localeScript = `<script>window.__CRUCIX_LOCALE__=${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`;
+  const head = `${uiFlagsScript(UI_FLAGS)}\n  ${localeScript}\n  <script>window.__HAS_TAVILY__=false;</script>`;
+  return renderSurfaceDocument({ surface: 'app', title, assets: entryAssets(reactManifest, entryForSurface(surface)), head });
+}
 
 // Synthetic digest items so the React digest (and the legacy one) render cards deterministically.
 const DIGEST_ITEMS = [
@@ -106,7 +112,7 @@ app.get('/login', (req, res) => {
     const sdk = '<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>'
       + '<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>';
     return res.type('html').send(renderSurfaceDocument({
-      surface: 'login', title: 'Sign in', assets: entryAssets(reactManifest, 'login'), head: `${sdk}\n${boot}`,
+      surface: 'login', title: 'Sign in', assets: entryAssets(reactManifest, entryForSurface('login')), head: `${sdk}\n${boot}`,
     }));
   }
   const html = readFileSync(join(ROOT, 'dashboard', 'auth', 'login.html'), 'utf8')
@@ -133,16 +139,7 @@ if (AUTH) {
 
 // ─── Page routes ───────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
-  if (reactSurface('dashboard')) {
-    const html = renderSurfaceDocument({
-      surface: 'dashboard',
-      title: 'Dashboard',
-      assets: entryAssets(reactManifest, 'dashboard'),
-      head: `<script>window.__CRUCIX_LOCALE__=${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`,
-      navigation: true,
-    });
-    return res.type('html').send(html);
-  }
+  if (reactSurface('dashboard')) return res.type('html').send(spaDocument('dashboard', 'Dashboard'));
   if (!ready()) return res.sendFile('loading.html', { root: publicDir });
   let html = readFileSync(join(publicDir, 'jarvis.html'), 'utf8');
   const localeScript = `<script>window.__CRUCIX_LOCALE__ = ${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`;
@@ -150,30 +147,13 @@ app.get('/', (req, res) => {
   res.type('html').send(html);
 });
 app.get(['/digest', '/digest/:id'], (req, res) => {
-  if (reactSurface('digest')) {
-    const html = renderSurfaceDocument({
-      surface: 'digest',
-      title: 'Readers Digest',
-      assets: entryAssets(reactManifest, 'digest'),
-      head: '<script>window.__HAS_TAVILY__=false;</script>',
-      navigation: true,
-    });
-    return res.type('html').send(html);
-  }
+  if (reactSurface('digest')) return res.type('html').send(spaDocument('digest', 'Readers Digest'));
   const html = readFileSync(join(publicDir, 'digest.html'), 'utf8')
     .replace('</head>', `<script>window.__HAS_TAVILY__=false;</script>\n</head>`);
   res.type('html').send(html);
 });
 app.get(['/media', '/media/:id'], (req, res) => {
-  if (reactSurface('media')) {
-    const html = renderSurfaceDocument({
-      surface: 'media',
-      title: 'Live media',
-      assets: entryAssets(reactManifest, 'media'),
-      navigation: true,
-    });
-    return res.type('html').send(html);
-  }
+  if (reactSurface('media')) return res.type('html').send(spaDocument('media', 'Live media'));
   res.sendFile('media.html', { root: publicDir });
 });
 

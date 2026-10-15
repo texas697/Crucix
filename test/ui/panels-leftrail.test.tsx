@@ -1,16 +1,14 @@
-import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, within } from '@testing-library/react';
 import type { SweepData } from '../../dashboard/react/api/types';
-import {
-  LeftRail,
-  NuclearWatch,
-  RiskGauges,
-  SensorGrid,
-} from '../../dashboard/react/features/dashboard/panels/LeftRail';
+import { LeftRail } from '../../dashboard/react/features/dashboard/components/LeftRail';
+import { NuclearWatch } from '../../dashboard/react/features/dashboard/components/NuclearWatch';
+import { RiskGauges } from '../../dashboard/react/features/dashboard/components/RiskGauges';
+import { SensorGrid } from '../../dashboard/react/features/dashboard/components/SensorGrid';
 import minimal from '../fixtures/synthesized/minimal.json';
 import partial from '../fixtures/synthesized/partial.json';
 import hostile from '../fixtures/synthesized/hostile.json';
+import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
@@ -81,7 +79,7 @@ describe('LeftRail', () => {
   });
 
   it('never uses dangerouslySetInnerHTML', () => {
-    const source = readFileSync('dashboard/react/features/dashboard/panels/LeftRail.tsx', 'utf8');
+    const source = readTreeSources('dashboard/react/features/dashboard/components');
     expect(source).not.toContain('dangerouslySetInnerHTML');
   });
 

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ApiClient } from '../../dashboard/react/api/client';
 import type { LlmProvider, PublicLlm, UserProfile } from '../../dashboard/react/api/types';
+import { ThemeModeProvider } from '../../dashboard/react/app/AppProviders/components/ThemeModeProvider';
 import { SettingsOverlay } from '../../dashboard/react/features/settings/SettingsOverlay';
 
 type FakeHandlers = {
@@ -57,23 +58,25 @@ function renderOverlay(props: Partial<React.ComponentProps<typeof SettingsOverla
   const onProfileChange = vi.fn();
   const onIdeas = vi.fn();
   const utils = render(
-    <SettingsOverlay
-      open
-      me={profile()}
-      api={handlers.api}
-      onClose={onClose}
-      onProfileChange={onProfileChange}
-      onIdeas={onIdeas}
-      confirmRemove={() => true}
-      {...props}
-    />,
+    <ThemeModeProvider storage={null}>
+      <SettingsOverlay
+        isOpen
+        me={profile()}
+        api={handlers.api}
+        onClose={onClose}
+        onProfileChange={onProfileChange}
+        onIdeas={onIdeas}
+        onConfirmRemove={() => true}
+        {...props}
+      />
+    </ThemeModeProvider>,
   );
   return { ...utils, ...handlers, onClose, onProfileChange, onIdeas };
 }
 
 describe('SettingsOverlay', () => {
   it('renders nothing when closed', () => {
-    renderOverlay({ open: false });
+    renderOverlay({ isOpen: false });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 

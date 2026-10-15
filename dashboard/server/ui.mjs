@@ -27,16 +27,20 @@ export function loadManifest(root) {
 }
 
 /**
- * Resolve the script and stylesheet URLs for a surface entry (entries/<surface>.tsx).
+ * Resolve the script and stylesheet URLs for an entry (entries/<entry>.tsx).
  * Returns null when the manifest has no such entry.
  *
  * CSS is NOT always on the entry's own `css` array: Vite attaches imported CSS to the shared chunk
  * that imports it (e.g. the PageShell chunk), leaving the entry's `css` empty. So walk the entry's
  * `imports` graph and collect every referenced chunk's CSS, or the pages ship unstyled.
  */
-export function entryAssets(manifest, surface) {
+export function entryForSurface(surface) {
+  return surface === 'login' ? 'login' : 'app';
+}
+
+export function entryAssets(manifest, entryName) {
   if (!manifest) return null;
-  const key = Object.keys(manifest).find((k) => k.replace(/\\/g, '/').endsWith(`entries/${surface}.tsx`));
+  const key = Object.keys(manifest).find((k) => k.replace(/\\/g, '/').endsWith(`entries/${entryName}.tsx`));
   if (!key) return null;
   const entry = manifest[key];
   if (!entry?.file) return null;
@@ -58,10 +62,23 @@ export function entryAssets(manifest, surface) {
 
 /** True when the surface can be served from the React build. */
 export function hasSurface(manifest, surface) {
-  return entryAssets(manifest, surface) !== null;
+  return entryAssets(manifest, entryForSurface(surface)) !== null;
 }
 
-const SPECULATION_RULES = `<script type="speculationrules">{"prerender":[{"source":"list","urls":["/","/digest","/media"],"eagerness":"moderate"}]}</script>`;
+export function escapeInlineJson(value) {
+  return JSON.stringify(value).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+}
+
+export function uiFlagsScript(flags) {
+  return `<script>window.__CRUCIX_UI__=${escapeInlineJson(flags)};</script>`;
+}
+
+const HEAD_LINKS = `<link rel="icon" href="/brand/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
+  <link rel="apple-touch-icon" href="/brand/apple-touch-icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">`;
 
 /**
  * Build the full HTML document for a React surface.
@@ -71,9 +88,8 @@ const SPECULATION_RULES = `<script type="speculationrules">{"prerender":[{"sourc
  * @param {{js: string[], css: string[]}} opts.assets
  * @param {string} [opts.head] extra markup for <head> (locale/config boot scripts)
  * @param {string} [opts.body] markup rendered inside <body> before the script
- * @param {boolean} [opts.navigation] include speculation rules + view-transition opt-in
  */
-export function renderSurfaceDocument({ surface, title, assets, head = '', body = '', navigation = false }) {
+export function renderSurfaceDocument({ surface, title, assets, head = '', body = '' }) {
   const css = assets.css.map((f) => `  <link rel="stylesheet" href="/${f}">`).join('\n');
   const js = assets.js.map((f) => `  <script type="module" src="/${f}"></script>`).join('\n');
   return `<!doctype html>
@@ -82,9 +98,8 @@ export function renderSurfaceDocument({ surface, title, assets, head = '', body 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
-${css ? css + '\n' : ''}  <style>@view-transition { navigation: auto; }</style>
-  ${navigation ? SPECULATION_RULES : ''}
-${head ? '  ' + head + '\n' : ''}</head>
+  ${HEAD_LINKS}
+${css ? css + '\n' : ''}${head ? '  ' + head + '\n' : ''}</head>
 <body data-surface="${escapeHtml(surface)}">
   <div id="root">${body}</div>
 ${js}

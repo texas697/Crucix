@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import type { ApiClient } from '../../dashboard/react/api/client';
-import { useLiveFeeds } from '../../dashboard/react/features/dashboard/useLiveFeeds';
+import { useLiveFeeds } from '../../dashboard/react/features/dashboard/hooks/useLiveFeeds';
 
 afterEach(() => {
   cleanup();
@@ -46,7 +46,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes: { features: [] }, markets: [] });
 
     const { result } = renderHook(() =>
-      useLiveFeeds(api, { fetchImpl: fetchImpl as unknown as typeof fetch, now: () => 1_700_000_000_000 }),
+      useLiveFeeds({ api,  fetchImpl: fetchImpl as unknown as typeof fetch, now: () => 1_700_000_000_000 }),
     );
 
     await waitFor(() => expect(result.current.tracks).not.toBeNull());
@@ -85,7 +85,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes, markets: [] });
 
     const { result } = renderHook(() =>
-      useLiveFeeds(api, { fetchImpl: fetchImpl as unknown as typeof fetch }),
+      useLiveFeeds({ api,  fetchImpl: fetchImpl as unknown as typeof fetch }),
     );
 
     await waitFor(() => expect(result.current.quakes).not.toBeNull());
@@ -137,7 +137,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes: { features: [] }, markets: events });
 
     const { result } = renderHook(() =>
-      useLiveFeeds(api, { fetchImpl: fetchImpl as unknown as typeof fetch }),
+      useLiveFeeds({ api,  fetchImpl: fetchImpl as unknown as typeof fetch }),
     );
 
     await waitFor(() => expect(result.current.markets).not.toBeNull());
@@ -157,7 +157,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes: { features: [] }, markets: [] });
 
     const { result } = renderHook(() =>
-      useLiveFeeds(api, { fetchImpl: fetchImpl as unknown as typeof fetch, now: () => nowMs }),
+      useLiveFeeds({ api,  fetchImpl: fetchImpl as unknown as typeof fetch, now: () => nowMs }),
     );
 
     await waitFor(() => expect(result.current.alerts).not.toBeNull());
@@ -174,7 +174,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes: { features: [] }, markets: [] });
 
     const { unmount } = renderHook(() =>
-      useLiveFeeds(api, {
+      useLiveFeeds({ api, 
         fetchImpl: fetchImpl as unknown as typeof fetch,
         intervals: { tracks: 1000, alerts: 1000, quakes: 1000, markets: 1000 },
         now: () => 0,
@@ -209,7 +209,7 @@ describe('useLiveFeeds', () => {
 
     renderHook(
       () =>
-        useLiveFeeds(api, {
+        useLiveFeeds({ api, 
           fetchImpl: fetchImpl as unknown as typeof fetch,
           intervals: { tracks: 1000, alerts: 1000, quakes: 1000, markets: 1000 },
           now: () => 0,
@@ -250,7 +250,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes: { features: [] }, markets: [] });
 
     const { result } = renderHook(() =>
-      useLiveFeeds(api, {
+      useLiveFeeds({ api, 
         fetchImpl: fetchImpl as unknown as typeof fetch,
         intervals: { tracks: 1000, alerts: 1000, quakes: 1000, markets: 1000 },
         now: () => 0,
@@ -284,7 +284,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes: { features: [] }, markets: [] });
 
     renderHook(() =>
-      useLiveFeeds(api, { fetchImpl: fetchImpl as unknown as typeof fetch, now: () => 0 }),
+      useLiveFeeds({ api,  fetchImpl: fetchImpl as unknown as typeof fetch, now: () => 0 }),
     );
     await settle();
 
@@ -311,7 +311,7 @@ describe('useLiveFeeds', () => {
     const fetchImpl = makeFetch({ quakes: { features: [] }, markets: [] });
 
     const { result, unmount } = renderHook(() =>
-      useLiveFeeds(api, { fetchImpl: fetchImpl as unknown as typeof fetch, now: () => 0 }),
+      useLiveFeeds({ api,  fetchImpl: fetchImpl as unknown as typeof fetch, now: () => 0 }),
     );
     await waitFor(() => expect(result.current.tracks).not.toBeNull());
     unmount();

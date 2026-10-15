@@ -20,17 +20,6 @@
    and `.gridmode` keep the legacy visibility model, both toggled by mount in React. */
 
 [data-surface="media"] .media-app{padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(220,226,236,0.06),transparent 70%)}
-/* TOPBAR / NAV (host chrome -- ported but with no React counterpart in MediaApp) */
-[data-surface="media"] .topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
-[data-surface="media"] .brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
-[data-surface="media"] .brand-logo{height:34px;width:auto;display:block;flex:none}
-[data-surface="media"] .brand-logo-light{display:none}
-html.light [data-surface="media"] .brand-logo-dark{display:none}
-html.light [data-surface="media"] .brand-logo-light{display:block}
-[data-surface="media"] .mainnav{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
-[data-surface="media"] .nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center}
-[data-surface="media"] .nav-tab:hover{color:var(--text)}
-[data-surface="media"] .nav-tab.active{background:var(--raised-2);color:var(--text)}
 [data-surface="media"] .spacer{flex:1}
 [data-surface="media"] .pill{font-family:var(--sans);font-size:12.5px;padding:6px 12px;border:1px solid var(--border);border-radius:5px;color:var(--dim);text-decoration:none;background:rgba(255,255,255,0.02)}
 [data-surface="media"] .pill:hover{border-color:var(--border-bright);color:var(--text)}
@@ -84,8 +73,6 @@ html.light [data-surface="media"] .brand-logo-light{display:block}
 @media (max-width:900px){[data-surface="media"] .layout{grid-template-columns:1fr}[data-surface="media"] .channels{max-height:none;flex-direction:row;flex-wrap:wrap}[data-surface="media"] .chan{width:auto}}
 /* LIGHT THEME */
 html.light [data-surface="media"] .media-app{background-image:none}
-html.light [data-surface="media"] .mainnav{background:var(--seg-bg)}
-html.light [data-surface="media"] .nav-tab.active{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,0.14)}
 html.light [data-surface="media"] .pill{background:var(--raised)}
 html.light [data-surface="media"] .overlay{background:rgba(238,241,246,0.9)}
 html.light [data-surface="media"] .ctrl:hover{color:var(--text)}

@@ -96,13 +96,38 @@ Routing rules:
    ```
 
    - Prefix is `crucix-<feature>-`. One `classes.ts` per feature; shared shell/app classes live
-     in `app/classes.ts` with prefix `crucix-app-`.
+     in `app/classes.ts` with prefix `crucix-app-`. When the dictionary outgrows the file-size
+     rule it is composed from `classes<Area>.ts` parts and a `classModifiers.ts` (dynamic
+     modifier maps such as layer dots or CDC levels); `classes.ts` stays the single import.
+   - A feature still on the legacy stylesheet bridge (see below) carries the legacy selector as
+     the **second token** of the dictionary value (`card: 'crucix-dashboard-card col-card'`),
+     and legacy modifiers get their own keys (`cardBodyPadSm: '... pad-sm'`). The first token is
+     the DevTools locator; the second is deleted together with the stylesheet when the feature
+     moves to `styled()`. Never write the legacy token anywhere except the dictionary.
    - Always `className={CLASSES.x}`; never an inline string literal. Modifiers:
      `clsx(CLASSES.tab, isActive && \`${CLASSES.tab}--active\`)`.
    - A class with no style rule behind it is fine: it is the DevTools locator.
 8. `interface` for object contracts, `type` for unions/aliases. No `any`.
+   Hooks take one `UseXArgs` object (`useSurfacePreload({ loaders, flags })`), never positional
+   arguments, and return a memoised state object whose handlers are `useCallback`s.
+   Other roots reuse shell pieces only through `app/AppShell/kit.ts` (StatusCluster, ThemeToggle,
+   `SHELL_STYLES`, `modelLabel`, `sweepAge`); everything else under `app/AppShell` is private.
 9. Every behavior ported from the legacy page keeps its API calls, URL contract and text; visual
    design matches the legacy dark theme (tokens in `theme/palette.ts`).
+
+## Legacy stylesheet bridge (temporary)
+
+`features/dashboard`, `features/digest` and `features/media` are rule-compliant React trees that
+still render the legacy markup contract, so their `styles/*.css` files are delivered through MUI
+`GlobalStyles` by exactly three files:
+
+- `features/dashboard/components/DashboardLegacyStyles/index.tsx` (`styles/dashboard.css`)
+- `features/digest/components/DigestLegacyStyles/index.tsx` (`styles/digest.css`, `styles/reader.css`)
+- `features/media/components/MediaLegacyStyles/index.tsx` (`styles/media.css`)
+
+`scripts/ui-rules-check.mjs` rejects a `.css?inline` import anywhere else. When a feature's
+visuals move to `styled()`/`sx`, delete its bridge file, its stylesheet and the second token of
+every value in its `classes.ts`.
 
 ## Verification before reporting done
 

@@ -8,16 +8,14 @@
   <!--
     Standalone snapshot template (P8).
 
-    `npm run build:standalone` (vite.standalone.config.ts) emits an IIFE bundle with the dashboard
-    CSS inlined into a single stylesheet next to this template:
+    `npm run build:standalone` (vite.standalone.config.ts) emits one IIFE bundle next to this
+    template; every style (the MUI theme and the legacy dashboard rules) is injected by the bundle:
         dashboard/dist/standalone/crucix-standalone.js
-        dashboard/dist/standalone/crucix-standalone.css
-    Both are referenced by relative path (base: './') so the page runs from `file:` with no server.
+    It is referenced by relative path (base: './') so the page runs from `file:` with no server.
 
     `dashboard/inject.mjs` copies/rewrites this template into `dashboard/dist/standalone/index.html`
     with the synthesized snapshot substituted into the marker below.
   -->
-  <link rel="stylesheet" href="./crucix-standalone.css" />
 </head>
 <body>
   <div id="root"></div>

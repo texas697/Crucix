@@ -1,23 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ApiClient } from '../../dashboard/react/api/client';
-import type { HistoryAdapter } from '../../dashboard/react/state/history';
-import { DigestApp, type DigestCardItem } from '../../dashboard/react/features/digest/DigestApp';
-
-interface FakeHistory {
-  set: ReturnType<typeof vi.fn>;
-  afterClose: ReturnType<typeof vi.fn>;
-  here: ReturnType<typeof vi.fn>;
-}
-
-function fakeHistory(): FakeHistory {
-  return {
-    set: vi.fn(() => true),
-    afterClose: vi.fn(() => 'rewrite'),
-    here: vi.fn(() => '/digest'),
-  } as unknown as FakeHistory;
-}
+import { DigestApp, type DigestCardItem } from '../../dashboard/react/features/digest';
+import { AppHarness, createRouterProbe } from './helpers/appHarness';
 
 const card: DigestCardItem = {
   id: 'a1',
@@ -34,7 +20,6 @@ const card: DigestCardItem = {
 interface SetupOptions {
   href?: string;
   items?: DigestCardItem[];
-  history?: FakeHistory;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -62,24 +47,15 @@ function setup(options: SetupOptions = {}) {
   });
 
   const api = { request: vi.fn(), get, post, put: vi.fn(), del: vi.fn() } as unknown as ApiClient;
-  const history = options.history ?? fakeHistory();
+  const probe = createRouterProbe();
   const element = (
-    <DigestApp
-      api={api}
-      me={null}
-      hasTavily={false}
-      history={history as unknown as HistoryAdapter}
-      location={{
-        href: options.href ?? 'https://x.test/digest',
-        pathname: '/digest',
-        search: '',
-      }}
-      onOpenSettings={() => {}}
-    />
+    <AppHarness api={api} me={null} href={options.href ?? 'https://x.test/digest'} probe={probe}>
+      <DigestApp hasTavily={false} />
+    </AppHarness>
   );
 
   const utils = render(element);
-  return { ...utils, element, api, get, post, history };
+  return { ...utils, element, api, get, post, probe };
 }
 
 function listCalls(get: ReturnType<typeof vi.fn>): string[] {
@@ -104,14 +80,38 @@ describe('DigestApp', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'For you' }));
 
-    expect(h.history.set).toHaveBeenCalledWith(
-      ['digest', ''],
-      { filter: 'foryou', topic: '', q: '' },
-      { push: true, state: { k: 'list' } },
-    );
+    expect(h.probe.path()).toBe('/digest?filter=foryou');
+    expect(h.probe.navigationType).toBe('PUSH');
+    expect(h.probe.location?.state).toEqual({ k: 'list' });
     await waitFor(() =>
       expect(h.get).toHaveBeenCalledWith('/api/digest/list?filter=foryou&topic=&q='),
     );
+  });
+
+  it('re-applies the route and refetches when the browser goes back', async () => {
+    const h = setup();
+    await screen.findByText('Card one');
+    await userEvent.click(screen.getByRole('button', { name: 'For you' }));
+    await waitFor(() => expect(h.get).toHaveBeenCalledWith('/api/digest/list?filter=foryou&topic=&q='));
+    const before = listCalls(h.get).length;
+
+    act(() => { h.probe.navigate?.(-1); });
+
+    await waitFor(() => expect(h.probe.path()).toBe('/digest'));
+    await waitFor(() => expect(listCalls(h.get).length).toBe(before + 1));
+    expect(listCalls(h.get).at(-1)).toBe('/api/digest/list?filter=all&topic=&q=');
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('opens an article by pushing /digest/:id without remounting the list', async () => {
+    const h = setup();
+    await screen.findByText('Card one');
+    const before = listCalls(h.get).length;
+    await userEvent.click(screen.getByText('Card one'));
+    expect(h.probe.path()).toBe('/digest/a1');
+    expect(h.probe.location?.state).toEqual({ k: 'read' });
+    expect(await screen.findByText('Deep article')).toBeInTheDocument();
+    expect(listCalls(h.get).length).toBe(before);
   });
 
   it('debounces a burst of search input into a single list request', async () => {

@@ -1,12 +1,12 @@
-import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, within } from '@testing-library/react';
 import type { SweepData } from '../../dashboard/react/api/types';
-import { RowC } from '../../dashboard/react/features/dashboard/panels/RowC';
+import { RowC } from '../../dashboard/react/features/dashboard/components/RowC';
 import minimal from '../fixtures/synthesized/minimal.json';
 import partial from '../fixtures/synthesized/partial.json';
 import stale from '../fixtures/synthesized/stale.json';
 import hostile from '../fixtures/synthesized/hostile.json';
+import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
@@ -147,7 +147,7 @@ describe('RowC', () => {
   // --- Safety ------------------------------------------------------------------------------------
 
   it('never uses dangerouslySetInnerHTML', () => {
-    const source = readFileSync('dashboard/react/features/dashboard/panels/RowC.tsx', 'utf8');
+    const source = readTreeSources('dashboard/react/features/dashboard/components');
     expect(source).not.toContain('dangerouslySetInnerHTML');
   });
 

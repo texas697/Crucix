@@ -1,18 +1,16 @@
-import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, within } from '@testing-library/react';
 import type { SweepData } from '../../dashboard/react/api/types';
-import {
-  DisastersPanel,
-  OutagesPanel,
-  RowB,
-  SignalCore,
-  SweepDelta,
-  type QuakeItem,
-} from '../../dashboard/react/features/dashboard/panels/RowB';
+import { DisastersPanel } from '../../dashboard/react/features/dashboard/components/DisastersPanel';
+import { OutagesPanel } from '../../dashboard/react/features/dashboard/components/OutagesPanel';
+import { RowB } from '../../dashboard/react/features/dashboard/components/RowB';
+import { SignalCore } from '../../dashboard/react/features/dashboard/components/SignalCore';
+import { SweepDelta } from '../../dashboard/react/features/dashboard/components/SweepDelta';
+import type { QuakeItem } from '../../dashboard/react/features/dashboard/types';
 import minimal from '../fixtures/synthesized/minimal.json';
 import partial from '../fixtures/synthesized/partial.json';
 import hostile from '../fixtures/synthesized/hostile.json';
+import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
@@ -119,7 +117,7 @@ describe('RowB', () => {
   });
 
   it('never uses dangerouslySetInnerHTML', () => {
-    const source = readFileSync('dashboard/react/features/dashboard/panels/RowB.tsx', 'utf8');
+    const source = readTreeSources('dashboard/react/features/dashboard/components');
     expect(source).not.toContain('dangerouslySetInnerHTML');
   });
 

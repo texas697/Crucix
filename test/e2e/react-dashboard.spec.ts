@@ -17,9 +17,9 @@ test.describe('React dashboard', () => {
       testInfo.skip(true, 'React dashboard entry not present in dashboard/dist — run `npm run build`');
     }
 
-    // The shell shows the startup state, then the top bar once the fixture transport delivers data.
-    await expect(page.locator('header.topbar, .topbar')).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator('.mainnav')).toBeVisible();
+    // The AppShell bar and nav are present from the first paint; the ticker arrives with the data.
+    await expect(page.locator('.crucix-app-bar')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.crucix-app-nav')).toBeVisible();
     await expect(page.getByText('Live news')).toBeVisible({ timeout: 10_000 });
 
     routes.assertAllRouted();

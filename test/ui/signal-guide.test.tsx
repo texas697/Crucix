@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
-import { SignalGuide, signalGuideItems } from '../../dashboard/react/features/dashboard/SignalGuide';
+import { SignalGuide, signalGuideItems } from '../../dashboard/react/features/dashboard/components/SignalGuide';
 
 afterEach(cleanup);
 

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { HistoryAdapter } from '../../dashboard/react/state/history';
-import { MediaApp } from '../../dashboard/react/features/media/MediaApp';
+import { MediaApp } from '../../dashboard/react/features/media';
+import { AppHarness, createRouterProbe } from './helpers/appHarness';
 
 // Fake hls.js. `instances` records every Hls constructed so tests can assert lifetimes (destroy on
 // channel/grid transitions and unmount) and drive the lifecycle events the real player emits.
@@ -47,24 +47,14 @@ function setCanPlayType(value: string): void {
   });
 }
 
-function createFakeHistory() {
-  return {
-    set: vi.fn((..._args: unknown[]) => true),
-    afterClose: vi.fn(() => 'rewrite' as const),
-    here: vi.fn(() => '/media'),
-  };
-}
-
 function setup(href = 'https://x.test/media/aljazeera') {
-  const history = createFakeHistory();
-  const url = new URL(href);
+  const probe = createRouterProbe();
   const utils = render(
-    <MediaApp
-      history={history as unknown as HistoryAdapter}
-      location={{ href, pathname: url.pathname, search: url.search }}
-    />,
+    <AppHarness href={href} probe={probe}>
+      <MediaApp />
+    </AppHarness>,
   );
-  return { ...utils, history };
+  return { ...utils, probe };
 }
 
 function videoEl(container: HTMLElement): HTMLVideoElement {
@@ -108,33 +98,32 @@ describe('MediaApp routing', () => {
   });
 
   it('pushes a history entry on channel change and destroys the previous player', async () => {
-    const { container, history } = setup('https://x.test/media/aljazeera');
+    const { container, probe } = setup('https://x.test/media/aljazeera');
     expect(hls.instances).toHaveLength(1);
     const first = hls.instances[0];
 
     await userEvent.click(container.querySelectorAll('.chan')[1] as HTMLElement);
 
-    expect(history.set).toHaveBeenCalledWith(['media', 'rt'], { grid: '' }, { push: true, state: { k: 'channel' } });
+    expect(probe.path()).toBe('/media/rt');
+    expect(probe.navigationType).toBe('PUSH');
+    expect(probe.location?.state).toEqual({ k: 'channel' });
     expect(first.destroy).toHaveBeenCalled();
     expect(hls.instances).toHaveLength(2);
     expect(container.querySelector('#nowName')?.textContent).toBe('RT');
   });
 
   it('replaces (rather than pushes) the history entry when grid mode toggles', async () => {
-    const { container, history } = setup('https://x.test/media/rt');
+    const { container, probe } = setup('https://x.test/media/rt');
     await userEvent.click(container.querySelector('#btnGrid') as HTMLElement);
-    expect(history.set).toHaveBeenLastCalledWith(
-      ['media', 'rt'],
-      { grid: 1 },
-      { push: false, state: { k: 'channel' } },
-    );
+    expect(probe.path()).toBe('/media/rt?grid=1');
+    expect(probe.navigationType).toBe('REPLACE');
+    expect(probe.location?.state).toEqual({ k: 'channel' });
   });
 
-  it('restores the route on popstate', () => {
-    const { container } = setup('https://x.test/media/aljazeera');
-    window.history.replaceState({}, '', '/media/france24?grid=1');
+  it('applies a router navigation (back/forward) to the channel and grid state', () => {
+    const { container, probe } = setup('https://x.test/media/aljazeera');
     act(() => {
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      probe.navigate?.('/media/france24?grid=1');
     });
     expect(container.querySelector('.chan.active .cname')?.textContent).toBe('France 24 English');
     expect(container.querySelector('#grid')).not.toBeNull();
@@ -256,10 +245,11 @@ describe('MediaApp controls', () => {
   });
 
   it('drives channel, mute and fullscreen from the keyboard', () => {
-    const { container, history } = setup('https://x.test/media/aljazeera');
+    const { container, probe } = setup('https://x.test/media/aljazeera');
 
     fireEvent.keyDown(document, { key: 'ArrowRight' });
-    expect(history.set).toHaveBeenLastCalledWith(['media', 'rt'], { grid: '' }, { push: true, state: { k: 'channel' } });
+    expect(probe.path()).toBe('/media/rt');
+    expect(probe.location?.state).toEqual({ k: 'channel' });
     expect(container.querySelector('#nowName')?.textContent).toBe('RT');
 
     fireEvent.keyDown(document, { key: 'ArrowLeft' });
@@ -273,17 +263,16 @@ describe('MediaApp controls', () => {
   });
 
   it('wraps around the channel list on ArrowLeft from the first channel', () => {
-    const { container, history } = setup('https://x.test/media/aljazeera');
+    const { container, probe } = setup('https://x.test/media/aljazeera');
     fireEvent.keyDown(document, { key: 'ArrowLeft' });
-    expect(history.set).toHaveBeenLastCalledWith(['media', 'france24'], { grid: '' }, { push: true, state: { k: 'channel' } });
+    expect(probe.path()).toBe('/media/france24');
     expect(container.querySelector('#nowName')?.textContent).toBe('France 24 English');
   });
 
   it('ignores shortcuts while an input is focused', () => {
-    const { container, history } = setup('https://x.test/media/aljazeera');
-    const calls = history.set.mock.calls.length;
+    const { container, probe } = setup('https://x.test/media/aljazeera');
     fireEvent.keyDown(container.querySelector('#vol') as HTMLElement, { key: 'ArrowRight' });
-    expect(history.set.mock.calls.length).toBe(calls);
+    expect(probe.path()).toBe('/media/aljazeera');
     expect(container.querySelector('#nowName')?.textContent).toBe('Al Jazeera English');
   });
 });

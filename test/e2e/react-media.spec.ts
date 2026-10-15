@@ -18,7 +18,7 @@ test.describe('React media', () => {
     }
 
     // The channel list renders (buttons/cells with the broadcaster names).
-    await expect(page.locator('.crucix-surface[data-surface="media"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[data-surface="media"] .channels')).toBeVisible({ timeout: 10_000 });
 
     routes.assertAllRouted();
   });

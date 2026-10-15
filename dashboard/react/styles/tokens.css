@@ -55,7 +55,7 @@
    auth/login.html ships its own palette (Space Grotesk / IBM Plex Mono, accent #dce2ec, a
    translucent panel) and no light theme. Scope those values to the login surface so the other
    surfaces keep the shared palette. Values are copied verbatim from login.html line 18. */
-.crucix-surface[data-surface='login'] {
+[data-surface='login'] {
   --bg: #05070b; --panel: rgba(10,13,20,0.82);
   --border: rgba(220,226,236,0.12); --border-bright: rgba(220,226,236,0.32);
   --text: #e9ecf2; --dim: #8a94a8; --accent: #dce2ec; --accent2: #c2cbd8;

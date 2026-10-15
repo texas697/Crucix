@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiClient } from '../../dashboard/react/api/client';
 import type { UserProfile } from '../../dashboard/react/api/types';
 import type { TransportOptions } from '../../dashboard/react/api/transport';
@@ -46,18 +46,21 @@ vi.mock('maplibre-gl', () => {
   return { default: { Map, Marker }, Map, Marker };
 });
 
-import { DashboardApp } from '../../dashboard/react/features/dashboard/DashboardApp';
+import { DashboardApp } from '../../dashboard/react/features/dashboard';
+import { AppHarness, createRouterProbe } from './helpers/appHarness';
 
 const api = { get: async () => ({}), post: async () => ({}), put: async () => ({}), del: async () => ({}), request: async () => ({}) } as unknown as ApiClient;
 
 const me: UserProfile = { uid: 'u', email: 'ana@example.com', providers: [], byokEnabled: true, sharedLlm: null };
 
-const history = { set: vi.fn(() => true), afterClose: vi.fn(() => 'rewrite' as const), here: () => '/' };
-
-function renderApp(location = { href: 'https://x.test/', pathname: '/', search: '' }, profile: UserProfile | null = me) {
-  return render(
-    <DashboardApp api={api} me={profile} history={history} location={location} onMeChange={() => {}} onLogout={() => {}} now={() => Date.parse('2026-10-14T12:00:00.000Z')} />,
+function renderApp(href = 'https://x.test/', profile: UserProfile | null = me) {
+  const probe = createRouterProbe();
+  const utils = render(
+    <AppHarness api={api} me={profile} href={href} probe={probe} isLiveSweep>
+      <DashboardApp now={() => Date.parse('2026-10-14T12:00:00.000Z')} />
+    </AppHarness>,
   );
+  return { ...utils, probe };
 }
 
 const sweep = {
@@ -93,19 +96,26 @@ describe('DashboardApp shell', () => {
     expect(screen.getByText('alert(1)')).toBeInTheDocument();
   });
 
-  it('shows sources status from the sweep meta', async () => {
+  it('shows the region sources status from the sweep meta', async () => {
     renderApp();
     captured.options?.onData(sweep as unknown as Parameters<NonNullable<TransportOptions['onData']>>[0]);
-    await waitFor(() => expect(document.querySelector('.tb-status')?.textContent).toContain('29/30'));
+    await waitFor(() => expect(document.querySelector('.map-bar-meta')?.textContent).toContain('29/30 sources'));
   });
 
-  it('opens settings from a /?settings=1 deep link once the profile resolves', async () => {
-    renderApp({ href: 'https://x.test/?settings=1', pathname: '/', search: '?settings=1' });
-    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+  it('renders no top bar of its own (the shell owns it)', async () => {
+    renderApp();
+    captured.options?.onData(sweep as unknown as Parameters<NonNullable<TransportOptions['onData']>>[0]);
+    await waitFor(() => expect(screen.getByText('Ticker item one')).toBeInTheDocument());
+    expect(document.querySelector('.topbar')).toBeNull();
+    expect(document.querySelector('header')).toBeNull();
   });
 
-  it('does not open settings on a deep link when auth is off', () => {
-    renderApp({ href: 'https://x.test/?settings=1', pathname: '/', search: '?settings=1' }, null);
-    expect(screen.queryByRole('dialog')).toBeNull();
+  it('pushes the region into the router URL when a region is chosen', async () => {
+    const { probe } = renderApp();
+    captured.options?.onData(sweep as unknown as Parameters<NonNullable<TransportOptions['onData']>>[0]);
+    await waitFor(() => expect(screen.getByText('Ticker item one')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /^europe$/i }));
+    await waitFor(() => expect(probe.path()).toBe('/?region=europe'));
+    expect(probe.location?.state).toEqual({ k: 'region' });
   });
 });

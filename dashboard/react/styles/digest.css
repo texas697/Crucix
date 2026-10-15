@@ -24,17 +24,6 @@
    element -- they are byte-identical, so there is no cascade conflict. */
 
 [data-surface="digest"]{padding:20px 24px 40px;background-image:radial-gradient(1200px 600px at 50% -200px,rgba(220,226,236,0.06),transparent 70%)}
-/* TOPBAR / NAV / BRAND */
-[data-surface="digest"] .topbar{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:10px 12px 10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--glass);backdrop-filter:blur(12px)}
-[data-surface="digest"] .brand{display:flex;align-items:center;gap:12px;line-height:1.15;text-decoration:none;color:var(--text)}
-[data-surface="digest"] .brand-logo{height:34px;width:auto;display:block;flex:none}
-[data-surface="digest"] .brand-logo-light{display:none}
-html.light [data-surface="digest"] .brand-logo-dark{display:none}
-html.light [data-surface="digest"] .brand-logo-light{display:block}
-[data-surface="digest"] .mainnav{display:flex;gap:2px;padding:3px;background:#07090e;border:1px solid var(--border);border-radius:6px}
-[data-surface="digest"] .nav-tab{border:0;cursor:pointer;font:500 13px var(--sans);padding:7px 14px;border-radius:5px;background:transparent;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center}
-[data-surface="digest"] .nav-tab:hover{color:var(--text)}
-[data-surface="digest"] .nav-tab.active{background:var(--raised-2);color:var(--text)}
 [data-surface="digest"] .spacer{flex:1}
 [data-surface="digest"] .nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 [data-surface="digest"] .pill{font-family:var(--sans);font-size:12.5px;letter-spacing:0;padding:6px 12px;border:1px solid var(--border);border-radius:5px;color:var(--dim);text-decoration:none;background:rgba(255,255,255,0.02);cursor:pointer}
@@ -61,7 +50,6 @@ html.light [data-surface="digest"] .brand-logo-light{display:block}
 [data-surface="digest"] .taste{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--sans);font-size:12px;color:var(--dim);margin-bottom:12px}
 [data-surface="digest"] .taste b{color:var(--accent)}
 [data-surface="digest"] .empty{padding:48px;text-align:center;color:var(--dim);font-family:var(--sans);font-size:12.5px;border:1px dashed var(--border);border-radius:8px}
-[data-surface="digest"] .byok-cta{cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 14px;border:1px solid var(--accent);border-radius:5px;color:var(--on-accent);background:var(--accent)}
 /* DIGEST CARDS (legacy reader.css "digest cards") */
 [data-surface="digest"] .rd-src{color:var(--sky,#8fb8d8);border:1px solid rgba(143,184,216,0.3);border-radius:5px;padding:2px 7px}
 [data-surface="digest"] .rd-src.thinktank{color:#c3a6ff;border-color:rgba(180,140,255,0.4)}
@@ -83,10 +71,8 @@ html.light [data-surface="digest"] .brand-logo-light{display:block}
 [data-surface="digest"] .dg-tag{font-family:var(--sans);font-size:11.5px;letter-spacing:0;text-transform:none;padding:3px 8px;border:0;border-radius:6px;background:var(--raised);color:var(--dim)}
 [data-surface="digest"] .dg-tag.ai{color:#c3a6ff;background:rgba(180,140,255,0.12)}
 /* RESPONSIVE */
-@media (max-width:640px){[data-surface="digest"]{padding:12px}[data-surface="digest"] .topbar{padding:10px}[data-surface="digest"] .hero h1{font-size:24px}}
+@media (max-width:640px){[data-surface="digest"]{padding:12px}[data-surface="digest"] .hero h1{font-size:24px}}
 /* LIGHT THEME */
 html.light [data-surface="digest"]{background-image:none}
-html.light [data-surface="digest"] .mainnav{background:var(--seg-bg)}
-html.light [data-surface="digest"] .nav-tab.active{background:#fff;box-shadow:0 1px 3px rgba(16,24,40,0.14)}
 html.light [data-surface="digest"] .pill{background:var(--raised)}
 html.light [data-surface="digest"] .rd-src{color:#2b5f86}

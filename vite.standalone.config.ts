@@ -2,12 +2,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { join } from 'node:path';
 
-// P8 standalone snapshot build. Emits one self-contained IIFE with the dashboard CSS inlined into a
-// single stylesheet, so the exported HTML runs from `file:` with no ESM imports, no code-split chunks
-// and no server-origin asset URLs:
+// P8 standalone snapshot build. Emits one self-contained IIFE (styles are injected at runtime by the
+// MUI theme and the legacy GlobalStyles), so the exported HTML runs from `file:` with no ESM imports,
+// no code-split chunks and no server-origin asset URLs:
 //
 //   dashboard/dist/standalone/crucix-standalone.js
-//   dashboard/dist/standalone/crucix-standalone.css
 //
 // `base: './'` keeps the template's relative `<link>`/`<script src>` working from any directory. The
 // MapLibre worker and all lazy imports are folded into the single chunk via `inlineDynamicImports`
@@ -21,6 +20,12 @@ export default defineConfig({
   root: reactRoot,
   base: './',
   plugins: [react()],
+  resolve: {
+    // Same per-icon ESM alias as vite.config.ts (rolldown's CJS interop breaks the icon default export).
+    alias: [{ find: /^@mui\/icons-material\/(?!esm\/)([A-Za-z0-9]+)$/, replacement: '@mui/icons-material/esm/$1' }],
+  },
+  // Library builds leave `process.env.NODE_ENV` for the consumer; a `file:` page has no consumer.
+  define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   build: {
     outDir: join(repoRoot, 'dashboard', 'dist', 'standalone'),
     emptyOutDir: true,

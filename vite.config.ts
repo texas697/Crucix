@@ -11,6 +11,12 @@ const reactRoot = join(repoRoot, 'dashboard', 'react');
 export default defineConfig({
   root: reactRoot,
   plugins: [react()],
+  resolve: {
+    // @mui/icons-material/<Icon> resolves to a CommonJS file whose default export rolldown's interop
+    // hands back as a namespace object (React error #130 in the built bundle). Point the per-icon
+    // path imports at the package's ESM copies instead; the typed import path stays conventional.
+    alias: [{ find: /^@mui\/icons-material\/(?!esm\/)([A-Za-z0-9]+)$/, replacement: '@mui/icons-material/esm/$1' }],
+  },
   build: {
     outDir: join(repoRoot, 'dashboard', 'dist'),
     emptyOutDir: true,
@@ -19,9 +25,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         app: join(reactRoot, 'entries', 'app.tsx'),
-        dashboard: join(reactRoot, 'entries', 'dashboard.tsx'),
-        digest: join(reactRoot, 'entries', 'digest.tsx'),
-        media: join(reactRoot, 'entries', 'media.tsx'),
         login: join(reactRoot, 'entries', 'login.tsx'),
       },
       output: {

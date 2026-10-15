@@ -1,11 +1,11 @@
-import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, within } from '@testing-library/react';
 import type { SweepData } from '../../dashboard/react/api/types';
-import { HealthWatchPanel } from '../../dashboard/react/features/dashboard/panels/HealthWatch';
+import { HealthWatchPanel } from '../../dashboard/react/features/dashboard/components/HealthWatchPanel';
 import minimal from '../fixtures/synthesized/minimal.json';
 import partial from '../fixtures/synthesized/partial.json';
 import hostile from '../fixtures/synthesized/hostile.json';
+import { readTreeSources } from './helpers/readTreeSources';
 
 afterEach(cleanup);
 
@@ -108,10 +108,7 @@ describe('HealthWatchPanel', () => {
   });
 
   it('never uses dangerouslySetInnerHTML', () => {
-    const source = readFileSync(
-      'dashboard/react/features/dashboard/panels/HealthWatch.tsx',
-      'utf8',
-    );
+    const source = readTreeSources('dashboard/react/features/dashboard/components');
     expect(source).not.toContain('dangerouslySetInnerHTML');
   });
 

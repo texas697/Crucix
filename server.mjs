@@ -19,7 +19,7 @@ import * as users from './lib/auth/users.mjs';
 import * as feedback from './lib/feedback.mjs';
 import { createDigest } from './lib/digest/index.mjs';
 import { parseShape, placesInShape, collectArticles, writeBrief, createBudget } from './lib/map/region-news.mjs';
-import { loadManifest, entryAssets, hasSurface, renderSurfaceDocument } from './dashboard/server/ui.mjs';
+import { loadManifest, entryAssets, entryForSurface, hasSurface, renderSurfaceDocument, uiFlagsScript } from './dashboard/server/ui.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -67,30 +67,20 @@ function reactSurface(surface) {
 }
 // Render a React surface document. In dev the Vite client + raw entry module are served by the
 // middleware adapter; in production it is the manifest-resolved hashed entry.
-function sendReactSurface(res, surface, { head = '', body = '', navigation = false } = {}) {
+function sendReactSurface(res, surface, { head = '', body = '' } = {}) {
   const title = `${config.site?.appName || 'Crucix'} — ${UI_TITLES[surface] || surface}`;
-  let html;
-  if (viteDev) {
-    html = renderSurfaceDocument({
-      surface,
-      title,
-      assets: { js: [`/@vite/client`, `/entries/${surface}.tsx`], css: [] },
-      head,
-      body,
-      navigation: navigation && surface !== 'login',
-    });
-  } else {
-    const assets = entryAssets(uiManifest, surface);
-    html = renderSurfaceDocument({
-      surface,
-      title,
-      assets,
-      head,
-      body,
-      navigation: navigation && surface !== 'login',
-    });
-  }
+  const entry = entryForSurface(surface);
+  const assets = viteDev
+    ? { js: [`/@vite/client`, `/entries/${entry}.tsx`], css: [] }
+    : entryAssets(uiManifest, entry);
+  const html = renderSurfaceDocument({ surface: entry === 'login' ? 'login' : 'app', title, assets, head, body });
   res.set('Cache-Control', 'private, no-cache').type('html').send(html);
+}
+function spaHead() {
+  const locale = getLocale();
+  const localeScript = `<script>window.__CRUCIX_LOCALE__ = ${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`;
+  const tavilyScript = `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>`;
+  return `${uiFlagsScript(UI_FLAGS)}\n  ${localeScript}\n  ${tavilyScript}`;
 }
 
 // Ensure directories exist
@@ -326,6 +316,8 @@ if (AUTH_ENABLED) {
   const gate = authLib.requireAuth();
   app.use((req, res, next) => (req.path.startsWith('/api/internal/') ? next() : gate(req, res, next)));
 } else {
+  // No sign-in exists when auth is off: /login lands on the dashboard instead of a 404.
+  app.get('/login', (req, res) => res.redirect(302, '/'));
   app.use((req, res, next) => { req.user = { uid: 'local', email: 'local@localhost' }; next(); });
 }
 
@@ -366,11 +358,7 @@ app.use(express.static(join(ROOT, 'dashboard/public'), { index: false }));
 app.get('/', (req, res) => {
   // Root's loading screen follows the dashboard flag: the React dashboard owns both the startup and
   // ready states once selected.
-  if (reactSurface('dashboard')) {
-    const locale = getLocale();
-    const localeScript = `<script>window.__CRUCIX_LOCALE__ = ${JSON.stringify(locale).replace(/<\/script>/gi, '<\\/script')};</script>`;
-    return sendReactSurface(res, 'dashboard', { head: localeScript, navigation: true });
-  }
+  if (reactSurface('dashboard')) return sendReactSurface(res, 'dashboard', { head: spaHead() });
   if (!currentData) {
     // Express 5.2 / send 1.2 resolve an absolute sendFile path as not-found; use the {@code root}
     // form so the pre-first-sweep startup page actually loads.
@@ -585,16 +573,14 @@ if (AUTH_ENABLED) {
 // ─── Readers Digest ───────────────────────────────────────────────────────
 const digestHtml = readFileSync(join(ROOT, 'dashboard/public/digest.html'), 'utf-8');
 app.get(['/digest', '/digest/:id'], (req, res) => {
-  if (reactSurface('digest')) {
-    return sendReactSurface(res, 'digest', { head: `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>`, navigation: true });
-  }
+  if (reactSurface('digest')) return sendReactSurface(res, 'digest', { head: spaHead() });
   res.type('html').send(digestHtml.replace('</head>', `<script>window.__HAS_TAVILY__=${!!process.env.TAVILY_API_KEY};</script>\n</head>`));
 });
 
 // ─── Live media (broadcaster HLS channels) ─────────────────────────────────
 const mediaHtml = readFileSync(join(ROOT, 'dashboard/public/media.html'), 'utf-8');
 app.get(['/media', '/media/:id'], (req, res) => {
-  if (reactSurface('media')) return sendReactSurface(res, 'media', { navigation: true });
+  if (reactSurface('media')) return sendReactSurface(res, 'media', { head: spaHead() });
   res.type('html').send(mediaHtml);
 });
 
