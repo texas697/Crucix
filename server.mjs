@@ -270,7 +270,12 @@ if (AUTH_ENABLED) {
   app.get('/login', (req, res) => {
     const cfg = JSON.stringify(configFor(req)).replace(/<\/script>/gi, '<\\/script>');
     const boot = `<script>window.__FIREBASE_CONFIG__=${cfg};window.__ALLOW_SIGNUP__=${authLib.allowSignup};</script>`;
-    if (reactSurface('login')) return sendReactSurface(res, 'login', { head: boot });
+    if (reactSurface('login')) {
+      // The React login reads the compat SDK as globals, so the entry document loads it (gstatic).
+      const sdk = '<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>'
+        + '<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>';
+      return sendReactSurface(res, 'login', { head: `${sdk}\n${boot}` });
+    }
     res.type('html').send(loginHtml.replace('</head>', `${boot}\n</head>`));
   });
 

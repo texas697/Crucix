@@ -101,8 +101,16 @@ function sessionUser() { return { uid: 'fixture', email: 'fixture@example.com', 
 
 app.get('/__/firebase/init.json', (req, res) => res.json({ projectId: 'fixture', apiKey: 'fixture', authDomain: req.hostname }));
 app.get('/login', (req, res) => {
+  const boot = `<script>window.__FIREBASE_CONFIG__={"projectId":"fixture","apiKey":"fixture","authDomain":"${req.hostname}"};window.__ALLOW_SIGNUP__=true;</script>`;
+  if (reactSurface('login')) {
+    const sdk = '<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>'
+      + '<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>';
+    return res.type('html').send(renderSurfaceDocument({
+      surface: 'login', title: 'Sign in', assets: entryAssets(reactManifest, 'login'), head: `${sdk}\n${boot}`,
+    }));
+  }
   const html = readFileSync(join(ROOT, 'dashboard', 'auth', 'login.html'), 'utf8')
-    .replace('</head>', `<script>window.__FIREBASE_CONFIG__={"projectId":"fixture","apiKey":"fixture","authDomain":"${req.hostname}"};window.__ALLOW_SIGNUP__=true;</script>\n</head>`);
+    .replace('</head>', `${boot}\n</head>`);
   res.type('html').send(html);
 });
 app.post('/api/session', (req, res) => res.status(400).json({ error: 'fixture server does not exchange sessions' }));
